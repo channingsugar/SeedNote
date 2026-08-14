@@ -1,0 +1,60 @@
+/* Source-specific lightbox. Visuals stay on tokens. */
+
+.report-section h3 {
+  color: var(--ink);
+  font-size: var(--text-h3);
+  line-height: 1.3;
+}
+
+.report-section__stack > h3 + p {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+[data-lightbox-src] { cursor: zoom-in; }
+
+.report-lightbox {
+  width: min(1100px, calc(100vw - 32px));
+  max-width: none;
+  padding: 0;
+  border: var(--line-thin) solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+}
+.report-lightbox::backdrop {
+  background: color-mix(in srgb, var(--ink) 62%, transparent);
+}
+.report-lightbox__frame {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+.report-lightbox__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.report-lightbox__count {
+  color: var(--faint);
+  font: 11px/1.2 var(--font-mono);
+  letter-spacing: .06em;
+}
+.report-lightbox__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+.report-lightbox img {
+  display: block;
+  width: 100%;
+  max-height: min(78vh, 860px);
+  object-fit: contain;
+  background: var(--surface-soft);
+}
+.report-lightbox figcaption {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}

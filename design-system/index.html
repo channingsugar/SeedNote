@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>知识汇报 · HTML 设计系统画布</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <header class="theme-bar" aria-label="主题管理">
+    <div class="theme-bar__label"><span>THEME</span><strong id="activeThemeName">Minimal Mono</strong></div>
+    <select id="themeSelect" aria-label="切换主题"></select>
+    <button type="button" id="newTheme">新建</button>
+    <button type="button" id="saveTheme">保存</button>
+    <button type="button" id="renameTheme">重命名</button>
+    <button type="button" id="deleteTheme">删除</button>
+    <button type="button" id="exportTheme">导出</button>
+    <button type="button" id="importTheme">导入</button>
+    <input id="themeFileInput" type="file" accept="application/json" hidden>
+  </header>
+  <div class="app-shell">
+    <aside class="side-nav" aria-label="设计系统导航">
+      <div class="brand">
+        <div class="brand-mark">K</div>
+        <h1>Knowledge<br>Report System</h1>
+        <p>知识汇报的原子、父组件与页面壳</p>
+      </div>
+      <div class="nav-label">Foundations</div>
+      <nav>
+        <a href="#colors">颜色</a>
+        <a href="#typography">字体层级</a>
+        <a href="#geometry">几何与节奏</a>
+        <a href="#atoms">原子元素</a>
+        <a href="#components">父组件</a>
+        <a href="#pages">页面</a>
+      </nav>
+      <p class="nav-help">点击画布中的任意资产进行调整。蓝色虚线表示可选对象，属性面板仅在选中后出现。</p>
+    </aside>
+
+    <main class="workspace" id="workspace">
+      <article class="canvas">
+        <header class="canvas-header">
+          <div class="eyebrow">Interactive component canvas · v0.1</div>
+          <h1>让内容像文档一样完整，像汇报一样有节奏。</h1>
+          <p>每种原子与父组件在这张画布中只定义一次。页面是壳和分区，格子里套这些父组件，不另做一套皮肤。</p>
+        </header>
+
+        <section class="spec-section" id="colors">
+          <header class="spec-heading">
+            <span class="spec-index">01 / FOUNDATION</span>
+            <div><h2>语义颜色</h2><p>颜色按信息角色命名，而不是按具体色值命名。选择色块后可修改父 Token。</p></div>
+          </header>
+          <div class="collection-head"><span>Color Tokens</span><button type="button" class="add-token" data-add-token="colors">＋ 添加颜色</button></div>
+          <div class="color-groups" id="colorTokenGrid"></div>
+        </section>
+
+        <section class="spec-section" id="typography">
+          <header class="spec-heading">
+            <span class="spec-index">02 / FOUNDATION</span>
+            <div><h2>字体与字号层级</h2><p>组件中的文字只能引用这里定义的层级。选中任意文字后，可以在这些角色之间切换。</p></div>
+          </header>
+          <div class="collection-head"><span>Type Scale</span><button type="button" class="add-token" data-add-token="typeScale">＋ 添加字号</button></div>
+          <div class="type-scale" id="typeScaleList" data-editable data-kind="type-system" data-node-label="字体系统"></div>
+        </section>
+
+        <section class="spec-section" id="geometry">
+          <header class="spec-heading">
+            <span class="spec-index">03 / FOUNDATION</span>
+            <div><h2>几何与节奏</h2><p>圆角、线条和间距构成页面的结构语气。默认保持克制，避免卡片化过度。</p></div>
+          </header>
+          <div class="token-collection">
+            <div class="collection-head"><span>Radius</span><button type="button" class="add-token" data-add-token="radii">＋ 添加圆角</button></div>
+            <div class="foundation-row" id="radiusTokenGrid"></div>
+          </div>
+          <div class="token-collection">
+            <div class="collection-head"><span>Line Width</span><button type="button" class="add-token" data-add-token="lineWidths">＋ 添加粗细</button></div>
+            <div class="foundation-row" id="lineTokenGrid"></div>
+          </div>
+          <div class="token-collection">
+            <div class="collection-head"><span>Space</span><button type="button" class="add-token" data-add-token="spaces">＋ 添加间距</button></div>
+            <div class="foundation-row" id="spaceTokenGrid"></div>
+          </div>
+        </section>
+
+        <section class="spec-section" id="atoms">
+          <header class="spec-heading">
+            <span class="spec-index">04 / ATOMS</span>
+            <div><h2>基础原子</h2><p>这些原子为组件提供有限且一致的表达选项。</p></div>
+          </header>
+
+          <p class="spec-caption">Actions</p>
+          <div class="atom-row">
+            <button class="button primary" data-editable data-kind="button-atom" data-node-label="主要按钮">主要操作</button>
+            <button class="button" data-editable data-kind="button-atom" data-node-label="次要按钮">次要操作</button>
+            <button class="button subtle" data-editable data-kind="button-atom" data-node-label="弱化按钮">辅助操作</button>
+            <a class="text-link" href="#components" data-editable data-kind="link-atom" data-node-label="文字链接">查看组件规范 ↗</a>
+          </div>
+
+          <h3 class="subheading">状态与标签</h3>
+          <div class="atom-row">
+            <span class="badge success" data-editable data-kind="badge-atom" data-node-label="成功状态">推荐</span>
+            <span class="badge warning" data-editable data-kind="badge-atom" data-node-label="注意状态">待核实</span>
+            <span class="badge danger" data-editable data-kind="badge-atom" data-node-label="风险状态">高风险</span>
+          </div>
+
+          <h3 class="subheading">分割</h3>
+          <hr class="divider" data-editable data-kind="divider-atom" data-node-label="分割线">
+        </section>
+
+        <section class="spec-section" id="components">
+          <header class="spec-heading">
+            <span class="spec-index">05 / COMPONENTS</span>
+            <div>
+              <h2>知识汇报父组件</h2>
+              <p>每个虚线框只包含一个父组件定义。点击组件，再点击其内部元素，可逐层检查和调整。</p>
+              <p>配图页在「页面」里：一边固定是图，另一边放默认文案或可替换的父组件。图片默认 Fit 完整露出、不裁切，可选 Fill 铺满。窗口比例可改（1:1 / 4:3 / 3:4 / 9:16）。界面截图锁定 9:16。超长横图左对齐横滑。同一窗口要切换多张图时，用 Media Switch。</p>
+            </div>
+          </header>
+
+          <div class="component-stack">
+            <div class="component-frame">
+              <div class="component-name"><span>Section Header</span><span>结构 / 章节开场 · 编号在上</span></div>
+              <header class="section-header" data-editable data-kind="section-header" data-node-label="章节标题" data-component-root data-component-id="sectionHeader">
+                <span class="section-header__no" data-editable data-kind="text-child" data-node-label="章节编号">01 · 核心发现</span>
+                <div data-editable data-kind="content-group" data-node-label="标题内容">
+                  <h2 class="section-header__title" data-editable data-kind="text-child" data-node-label="章节主标题">需求并没有消失，只是被复杂流程阻挡</h2>
+                  <p class="section-header__intro" data-editable data-kind="text-child" data-node-label="章节导语">用一句完整判断建立本节方向，再用导语交代范围、证据和阅读预期。</p>
+                </div>
+              </header>
+            </div>
+
+            <div class="component-frame">
+              <div class="component-name"><span>Card Grid</span><span>内容 / 概览</span></div>
+              <div class="card-grid" data-editable data-kind="grid-component" data-node-label="观点卡片组" data-component-root data-component-id="cardGrid">
+                <article class="report-card accent" data-editable data-kind="card-child" data-node-label="观点卡片">
+                  <span class="report-card__kicker" data-editable data-kind="text-child" data-node-label="卡片标签">SIGNAL 01</span>
+                  <h3 class="report-card__title" data-editable data-kind="text-child" data-node-label="卡片标题">用户需要一个明确入口</h3>
+                  <p class="report-card__body" data-editable data-kind="text-child" data-node-label="卡片正文">把分散信息收拢成一条连续路径，减少反复确认。</p>
+                </article>
+                <article class="report-card accent"><span class="report-card__kicker">SIGNAL 02</span><h3 class="report-card__title">比较必须使用同一口径</h3><p class="report-card__body">价格、条件和履约方式需要在相同维度下呈现。</p></article>
+                <article class="report-card accent"><span class="report-card__kicker">SIGNAL 03</span><h3 class="report-card__title">证据要紧邻结论</h3><p class="report-card__body">截图、数据和来源不应与所支持的判断分离。</p></article>
+                <article class="report-card accent"><span class="report-card__kicker">SIGNAL 04</span><h3 class="report-card__title">行动需要明确优先级</h3><p class="report-card__body">让读者知道下一步先做什么，以及为什么。</p></article>
+                <article class="report-card accent"><span class="report-card__kicker">SIGNAL 05</span><h3 class="report-card__title">风险必须显式呈现</h3><p class="report-card__body">把不确定性与事实分开，避免过度推断。</p></article>
+                <article class="report-card accent"><span class="report-card__kicker">SIGNAL 06</span><h3 class="report-card__title">口径决定比较质量</h3><p class="report-card__body">统一时间、范围和统计方式后再比较。</p></article>
+              </div>
+            </div>
+
+            <div class="component-frame">
+              <div class="component-name"><span>Stat Grid</span><span>数据 / 摘要指标 · 数字标题说明左对齐</span></div>
+              <div class="card-grid" style="--component-columns: 4" data-editable data-kind="grid-component" data-node-label="指标卡片组" data-component-root data-component-id="statGrid">
+                <article class="report-card" data-editable data-kind="card-child" data-node-label="指标卡片"><b class="stat-value" data-editable data-kind="text-child" data-node-label="指标数值">72%</b><h3 class="report-card__title" data-editable data-kind="text-child" data-node-label="指标标题">核心覆盖率</h3><p class="report-card__body">大数字用于建立尺度，说明文字交代口径。</p></article>
+                <article class="report-card"><b class="stat-value">3.4×</b><h3 class="report-card__title">效率提升</h3><p class="report-card__body">与现有基线相比的相对变化。</p></article>
+                <article class="report-card"><b class="stat-value">18 项</b><h3 class="report-card__title">有效样本</h3><p class="report-card__body">避免让数字脱离样本范围。</p></article>
+                <article class="report-card"><b class="stat-value">6 周</b><h3 class="report-card__title">观察周期</h3><p class="report-card__body">说明变化发生在哪一段时间内。</p></article>
+              </div>
+            </div>
+
+            <div class="component-frame">
+              <div class="component-name"><span>Labeled List</span><span>规则 / 事实清单</span></div>
+              <div class="list-block" data-editable data-kind="list-component" data-node-label="标签列表" data-component-root data-component-id="labeledList">
+                <div class="list-row" data-editable data-kind="list-row" data-node-label="列表项"><span class="list-row__label" data-editable data-kind="text-child" data-node-label="项目标签">适用场景</span><p class="list-row__text" data-editable data-kind="text-child" data-node-label="项目内容">需要用固定维度解释规则、条件或事实时。</p></div>
+                <div class="list-row"><span class="list-row__label">信息密度</span><p class="list-row__text">每项保持一个明确主题，避免在同一行堆叠多个结论。</p></div>
+                <div class="list-row"><span class="list-row__label">移动端</span><p class="list-row__text">标签列缩短，但仍保留横向关系，不退化为无结构段落。</p></div>
+              </div>
+            </div>
+
+            <div class="component-frame">
+              <div class="component-name"><span>Process Steps</span><span>流程 / 顺序与侧轨</span></div>
+              <div class="steps" data-editable data-kind="steps-component" data-node-label="步骤流程" data-component-root data-component-id="processSteps">
+                <article class="step" data-editable data-kind="step-row" data-node-label="流程步骤"><span class="step__index" data-editable data-kind="text-child" data-node-label="步骤编号">01</span><div><h3 class="step__title" data-editable data-kind="text-child" data-node-label="步骤标题">先确定核心命题</h3><p class="step__body" data-editable data-kind="text-child" data-node-label="步骤说明">确认这份汇报最终要让读者理解或决定什么。</p></div></article>
+                <article class="step"><span class="step__index">02</span><div><h3 class="step__title">组织章节推进</h3><p class="step__body">让每一节回答一个问题，并自然引出下一节。</p></div></article>
+                <article class="step"><span class="step__index">03</span><div><h3 class="step__title">把证据放在判断旁边</h3><p class="step__body">数据、图片和案例共同构成可追溯的论证。</p></div></article>
+              </div>
+            </div>
+
+            <div class="component-frame">
+              <div class="component-name"><span>Data Table</span><span>数据 / 结构化比较</span></div>
+              <div class="table-wrap" data-editable data-kind="table-component" data-node-label="数据表格" data-component-root data-component-id="dataTable">
+                <table class="data-table">
+                  <thead><tr data-editable data-kind="table-row" data-node-label="表头"><th data-editable data-kind="table-cell" data-node-label="表头单元格">方案</th><th>覆盖能力</th><th>实施成本</th><th>结论</th></tr></thead>
+                  <tbody>
+                    <tr data-editable data-kind="table-row" data-node-label="数据行"><td data-editable data-kind="table-cell" data-node-label="数据单元格"><strong>方案 A</strong></td><td>完整</td><td>中等</td><td class="cell-best">优先验证</td></tr>
+                    <tr><td><strong>方案 B</strong></td><td>局部</td><td>较低</td><td>作为补充</td></tr>
+                    <tr><td><strong>方案 C</strong></td><td>有限</td><td>较高</td><td class="cell-weak">暂不采用</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="component-frame">
+              <div class="component-name"><span>Bar Compare</span><span>数据 / 比较条图</span></div>
+              <div class="bar-compare" data-editable data-kind="bar-compare-component" data-node-label="比较条图" data-component-root data-component-id="barCompare">
+                <div class="bar-compare__item" data-editable data-kind="card-child" data-node-label="比较项">
+                  <div class="bar-compare__row">
+                    <span class="bar-compare__label" data-editable data-kind="text-child" data-node-label="比较标签">方案 A</span>
+                    <div class="bar-compare__track"><div class="bar-compare__fill" style="width:43%" data-editable data-kind="bar-fill" data-node-label="条形填充"></div></div>
+                    <strong class="bar-compare__value" data-editable data-kind="text-child" data-node-label="比较数值">¥950</strong>
+                  </div>
+                  <p class="bar-compare__note" data-editable data-kind="text-child" data-node-label="比较说明">基础费用 + 平台服务费</p>
+                </div>
+                <div class="bar-compare__item">
+                  <div class="bar-compare__row">
+                    <span class="bar-compare__label">方案 B</span>
+                    <div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="width:58%"></div></div>
+                    <strong class="bar-compare__value">约 ¥1,268</strong>
+                  </div>
+                  <p class="bar-compare__note">人票 + 服务费 + 平台服务费</p>
+                </div>
+                <div class="bar-compare__item">
+                  <div class="bar-compare__row">
+                    <span class="bar-compare__label">方案 C</span>
+                    <div class="bar-compare__track"><div class="bar-compare__fill" data-tone="danger" style="width:100%"></div></div>
+                    <strong class="bar-compare__value">¥2,200</strong>
+                  </div>
+                  <p class="bar-compare__note">人票 + 增值服务 + 平台服务费</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="component-frame">
+              <div class="component-name"><span>Evidence Figure</span><span>媒体 / 图片组 · 比例可改 · 默认 Fit</span></div>
+              <div class="image-grid evidence-gallery" data-image-ratio="3:4" data-image-fit="fit" data-editable data-kind="evidence-component" data-node-label="证据图片组" data-component-root data-component-id="evidenceGallery">
+                <figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fit"><div class="evidence-window" data-editable data-kind="image-child" data-node-label="照片窗口">PHOTO 01</div><figcaption><b>现场照片</b><span>窗口按所选比例，默认 Fit 不裁切。</span></figcaption></figure>
+                <figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fit"><div class="evidence-window">PHOTO 02</div><figcaption><b>现场照片</b><span>切换 1:1 / 4:3 / 3:4 / 9:16 时窗口跟着变。</span></figcaption></figure>
+                <figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fit"><div class="evidence-window">PHOTO 03</div><figcaption><b>现场照片</b><span>Fill 会铺满裁切。每张有独立图注时用网格。</span></figcaption></figure>
+              </div>
+            </div>
+
+            <div class="component-frame">
+              <div class="component-name"><span>Evidence Figure</span><span>媒体 / 界面截图 · 9:16 容器</span></div>
+              <div class="image-grid evidence-gallery" data-image-kind="shot" data-image-ratio="9:16" style="--component-columns: 3" data-editable data-kind="evidence-component" data-node-label="界面截图组" data-component-root data-component-id="evidenceShot">
+                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="9:16"><div class="evidence-window" data-editable data-kind="image-child" data-node-label="截图窗口"></div><figcaption><b>订单截图</b><span>窗口 9:16，顶部对齐；长截图在窗内上下滚动。</span></figcaption></figure>
+                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="9:16"><div class="evidence-window"></div><figcaption><b>聊天记录</b><span>卡片宽度跟图走，图注不比图宽。</span></figcaption></figure>
+                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="9:16"><div class="evidence-window"></div><figcaption><b>App 页面</b><span>contain 完整露出，禁止 cover 裁切。</span></figcaption></figure>
+              </div>
+            </div>
+
+            <div class="component-frame">
+              <div class="component-name"><span>Media Switch</span><span>媒体 / 封面展开 · 底部铺满</span></div>
+              <figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="3:4" data-editable data-kind="media-switch-component" data-node-label="媒体切换容器" data-component-root data-component-id="mediaSwitch">
+                <div class="evidence-window" data-editable data-kind="image-child" data-node-label="主图窗口">
+                  <span data-media-main>PHOTO 01</span>
+                  <div class="media-switch__thumbs" aria-label="切换图片">
+                    <button class="media-switch__thumb is-active" type="button" data-alt="PHOTO 01">01</button>
+                    <button class="media-switch__thumb" type="button" data-alt="PHOTO 02">02</button>
+                    <button class="media-switch__thumb" type="button" data-alt="PHOTO 03">03</button>
+                    <button class="media-switch__thumb" type="button" data-alt="PHOTO 04">04</button>
+                    <button class="media-switch__thumb" type="button" data-alt="PHOTO 05">05</button>
+                  </div>
+                  <button class="media-switch__label" type="button">同一场景多图</button>
+                  <div class="media-switch__panel">
+                    <h3>同一场景多图</h3>
+              <p>主图作封面。Hover 图片时知识从底部铺满图窗；hover 底部缩略图不展开。面板与图齐平，内容超出则在面板内滚动。</p>
+                    <div class="list-block">
+                      <div class="list-row"><span class="list-row__label">缩略图</span><p class="list-row__text">叠在主图底部，只换当前画面</p></div>
+                      <div class="list-row"><span class="list-row__label">点主图</span><p class="list-row__text">进入灯箱放大</p></div>
+                    </div>
+                  </div>
+                </div>
+              </figure>
+            </div>
+
+            <div class="component-frame">
+              <div class="component-name"><span>Evidence Figure</span><span>媒体 / 超长横图 · 左右滑动</span></div>
+              <div class="image-grid evidence-gallery" data-image-kind="strip" style="--component-columns: 1" data-editable data-kind="evidence-component" data-node-label="超长横图" data-component-root data-component-id="evidenceStrip">
+                <figure class="evidence-figure" data-image-kind="strip">
+                  <div class="evidence-window" data-editable data-kind="image-child" data-node-label="横图窗口">STRIP · 宽/高 ≥ 2</div>
+                  <figcaption><b>流程合成条</b><span>设定最小/最大高度，完整显示，过宽在容器内横滑。</span></figcaption>
+                </figure>
+              </div>
+            </div>
+
+            <div class="component-frame">
+              <div class="component-name"><span>Decision Callout</span><span>强调 / 结论收束</span></div>
+              <aside class="callout" data-editable data-kind="callout-component" data-node-label="结论提示框" data-component-root data-component-id="decisionCallout">
+                <strong data-editable data-kind="text-child" data-node-label="提示标题">结论：</strong>
+                <p data-editable data-kind="text-child" data-node-label="提示正文">先统一内容结构和证据口径，再增加视觉变化；否则丰富的样式只会放大信息混乱。</p>
+              </aside>
+            </div>
+
+            <div class="component-frame">
+              <div class="component-name"><span>Highlight Band</span><span>强调 / 关键观点组</span></div>
+              <div class="highlight-band" data-editable data-kind="grid-component" data-node-label="重点观点带" data-component-root data-component-id="highlightBand">
+                <article class="highlight-item" data-editable data-kind="card-child" data-node-label="重点项"><b data-editable data-kind="text-child" data-node-label="重点标题">完整</b><p data-editable data-kind="text-child" data-node-label="重点说明">允许连续阅读与信息追溯。</p></article>
+                <article class="highlight-item"><b>清晰</b><p>通过层级与节奏突出主要判断。</p></article>
+                <article class="highlight-item"><b>可验证</b><p>让结论、证据和数据口径彼此相邻。</p></article>
+                <article class="highlight-item"><b>可行动</b><p>明确优先级、负责人和下一步。</p></article>
+                <article class="highlight-item"><b>可追溯</b><p>保留来源、时间和判断边界。</p></article>
+                <article class="highlight-item"><b>可复用</b><p>同一套模块能套进不同材料，不必另造布局。</p></article>
+              </div>
+            </div>
+
+            <div class="component-frame">
+              <div class="component-name"><span>Document Navigation</span><span>结构 / 快速定位</span></div>
+              <nav class="document-nav nav-underline" data-editable data-kind="navigation-component" data-node-label="文档导航" data-component-root data-component-id="navigation" aria-label="文档章节">
+                <a href="#colors" class="is-active">基础</a>
+                <a href="#typography">排版</a>
+                <a href="#atoms">原子</a>
+                <a href="#components">组件</a>
+                <a href="#pages">页面</a>
+              </nav>
+            </div>
+          </div>
+        </section>
+
+        <section class="spec-section" id="pages">
+          <header class="spec-heading">
+            <span class="spec-index">06 / PAGES</span>
+            <div>
+              <h2>页面</h2>
+              <p>页面 = 壳 → 分区 → 往格子里套已有父组件。配图页一边固定是图，另一边是默认文案或可替换的父组件。</p>
+              <p>每个页面模块高度固定，必须一屏放得下；调整组件时不得把页面撑高。</p>
+            </div>
+          </header>
+
+          <h3 class="subheading">壳</h3>
+          <div class="component-stack">
+            <div class="component-frame">
+              <div class="component-name"><span>报告封面</span><span>壳 / 第 0 屏</span></div>
+              <header class="report-cover" data-editable data-kind="report-cover" data-node-label="报告封面" data-component-root>
+                <div class="report-cover__meta"><span class="report-cover__kicker" data-editable data-kind="text-child" data-node-label="封面标签">Kicker · 日期</span></div>
+                <h1 data-editable data-kind="text-child" data-node-label="封面主标题">报告主标题</h1>
+                <p class="report-cover__lead" data-editable data-kind="text-child" data-node-label="封面导语">一句话交代范围。kicker、标题、导语用作者原文，不要改写成判断句。</p>
+                <div class="report-cover__actions"><a class="button primary" href="#pages">开始阅读</a></div>
+                <div class="report-cover__aside" data-editable data-kind="text-child" data-node-label="封面侧注"><span>TYPE</span><span>YYYY.MM</span></div>
+              </header>
+            </div>
+
+            <div class="component-frame">
+              <div class="component-name"><span>章节封面</span><span>壳 / 每章第一屏</span></div>
+              <header class="chapter-cover" data-editable data-kind="chapter-cover" data-node-label="章节封面" data-component-root>
+                <span class="chapter-cover__no" data-editable data-kind="text-child" data-node-label="章节编号">01</span>
+                <span class="chapter-cover__kicker" data-editable data-kind="text-child" data-node-label="章名">章名</span>
+                <h2 class="chapter-cover__title" data-editable data-kind="text-child" data-node-label="章节标题">作者原章节标题</h2>
+                <p class="chapter-cover__lead" data-editable data-kind="text-child" data-node-label="章节导语">作者原导语，交代这一章要看什么。</p>
+              </header>
+            </div>
+
+            <div class="component-frame">
+              <div class="component-name"><span>口径说明</span><span>壳 / 最后一屏</span></div>
+              <footer class="report-notes" data-editable data-kind="report-notes" data-node-label="口径说明" data-component-root>
+                <h2 data-editable data-kind="text-child" data-node-label="口径标题">数据口径说明</h2>
+                <ol>
+                  <li data-editable data-kind="text-child" data-node-label="口径条目">口径一：时间、范围、统计方式。</li>
+                  <li data-editable data-kind="text-child" data-node-label="口径条目">口径二：估算与样本边界。</li>
+                  <li data-editable data-kind="text-child" data-node-label="口径条目">缺口：仅记录本次未找到的文件。</li>
+                </ol>
+              </footer>
+            </div>
+          </div>
+
+          <h3 class="subheading">分区</h3>
+          <div class="component-stack">
+            <div class="component-frame">
+              <div class="component-name"><span>1 分区</span><span>分区 / center</span></div>
+              <div class="page-regions" data-regions="1" data-align="center" data-editable data-kind="page-regions" data-node-label="1 分区" data-component-root>
+                <div class="page-region" data-size="fill" data-align="center" data-editable data-kind="page-region" data-node-label="分区">
+                  <aside class="callout" data-decoration="none" data-page-parent="decisionCallout" data-editable data-kind="callout-component" data-node-label="结论提示框" data-component-root>
+                    <strong data-editable data-kind="text-child" data-node-label="提示标题">结论：</strong>
+                    <p data-editable data-kind="text-child" data-node-label="提示正文">短内容放在 1 分区并居中。判断、风险边界或一条收束，不要叠在对照表上。</p>
+                  </aside>
+                </div>
+              </div>
+            </div>
+
+            <div class="component-frame">
+              <div class="component-name"><span>配图 · 左右</span><span>分区 / 左图右文</span></div>
+              <div class="page-regions media-page" data-media-page="split" data-regions="2" data-split="columns" data-track="fill-fit" data-editable data-kind="page-regions" data-node-label="配图左右" data-component-root>
+                <div class="page-region" data-slot="media" data-size="fill" data-align="start" data-editable data-kind="page-region" data-node-label="配图">
+                  <figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fill" data-caption="off" data-page-parent="evidence" data-editable data-kind="evidence-component" data-node-label="配图" data-component-root>
+                    <div class="evidence-window" data-editable data-kind="image-child" data-node-label="图片窗口"></div>
+                  </figure>
+                </div>
+                <div class="page-region" data-slot="copy" data-size="fill" data-align="start" data-editable data-kind="page-region" data-node-label="内容区">
+                  <div class="media-page__copy" data-page-parent="mediaCopy" data-editable data-kind="media-copy-component" data-node-label="默认文案" data-component-root>
+                    <span class="eyebrow" data-editable data-kind="text-child" data-node-label="媒体标签">EVIDENCE 01</span>
+                    <h3 data-editable data-kind="text-child" data-node-label="媒体标题">图片不是装饰，而是证据</h3>
+                    <p data-editable data-kind="text-child" data-node-label="媒体正文">说明图像展示了什么，以及它支持哪一个判断。重要信息不能只存在于图片内部。</p>
+                    <div class="media-meta" data-editable data-kind="text-child" data-node-label="图片来源">来源：示例资料 · 2026</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="component-frame">
+              <div class="component-name"><span>配图 · 上下</span><span>分区 / 上图下文</span></div>
+              <div class="page-regions media-page" data-media-page="stack" data-regions="2" data-split="rows" data-track="fill-fit" data-editable data-kind="page-regions" data-node-label="配图上下" data-component-root>
+                <div class="page-region" data-slot="media" data-size="fill" data-align="start" data-editable data-kind="page-region" data-node-label="配图">
+                  <figure class="evidence-figure" data-image-ratio="4:3" data-image-fit="fill" data-caption="off" data-page-parent="evidence" data-editable data-kind="evidence-component" data-node-label="配图" data-component-root>
+                    <div class="evidence-window" data-editable data-kind="image-child" data-node-label="图片窗口"></div>
+                  </figure>
+                </div>
+                <div class="page-region" data-slot="copy" data-size="fill" data-align="start" data-editable data-kind="page-region" data-node-label="内容区">
+                  <div class="media-page__copy" data-page-parent="mediaCopy" data-editable data-kind="media-copy-component" data-node-label="默认文案" data-component-root>
+                    <span class="eyebrow" data-editable data-kind="text-child" data-node-label="媒体标签">EVIDENCE 01</span>
+                    <h3 data-editable data-kind="text-child" data-node-label="媒体标题">图片不是装饰，而是证据</h3>
+                    <p data-editable data-kind="text-child" data-node-label="媒体正文">说明图像展示了什么，以及它支持哪一个判断。重要信息不能只存在于图片内部。</p>
+                    <div class="media-meta" data-editable data-kind="text-child" data-node-label="图片来源">来源：示例资料 · 2026</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+
+  <aside class="inspector" id="inspector" aria-hidden="true" aria-label="属性检查器">
+    <header class="inspector-head">
+      <div><span>INSPECTOR</span><h2 id="inspectorTitle">未选择</h2></div>
+      <button class="icon-button" id="closeInspector" type="button" aria-label="关闭属性检查器">×</button>
+    </header>
+    <nav class="breadcrumbs" id="breadcrumbs" aria-label="元素层级"></nav>
+    <div class="inspector-body" id="inspectorBody"></div>
+    <footer class="inspector-actions">
+      <button type="button" id="resetSelection">重置组件</button>
+      <button class="copy" type="button" id="copyConfig">复制配置</button>
+    </footer>
+  </aside>
+  <div class="toast" id="toast" role="status" aria-live="polite">已复制</div>
+  <dialog class="token-dialog" id="tokenDialog">
+    <form id="tokenForm">
+      <header><div><span>TOKEN</span><h2 id="tokenDialogTitle">新增 Token</h2></div><button type="button" id="closeTokenDialog" aria-label="关闭">×</button></header>
+      <label>名称<input id="tokenName" required maxlength="30"></label>
+      <label id="tokenColorGroupRow">使用场景
+        <select id="tokenColorGroup">
+          <option value="surface">表面与背景</option>
+          <option value="text">文字</option>
+          <option value="accent">强调与品牌</option>
+          <option value="action">交互与功能</option>
+          <option value="status">状态反馈</option>
+          <option value="border">边框与分割</option>
+        </select>
+      </label>
+      <label>数值<input id="tokenValue" required></label>
+      <input id="tokenCategory" type="hidden">
+      <input id="tokenEditingId" type="hidden">
+      <footer><button type="button" id="cancelTokenDialog">取消</button><button class="primary" type="submit" id="confirmToken">保存</button></footer>
+    </form>
+  </dialog>
+  <script src="assets/design-data.js"></script>
+  <script src="assets/playground.js"></script>
+</body>
+</html>
