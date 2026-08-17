@@ -60,7 +60,7 @@
             <span class="chapter-cover__no">01</span>
             <span class="chapter-cover__kicker">一分区</span>
             <h2 class="chapter-cover__title">整屏一块，父组件逐一替换</h2>
-            <p class="chapter-cover__lead">1 分区只居中。可替换的父组件是 Callout、Card Grid、Card Grid 强调色、Stat Grid、Labeled List、Process Steps、Data Table、Bar Compare 和 Evidence。Evidence 把图片、截图、条带和 Media Switch 封面全部走一遍。</p>
+            <p class="chapter-cover__lead">1 分区只居中。可替换的父组件是 Callout、Card Grid、Card Grid 强调色、Stat Grid、Labeled List、Process Steps、Data Table、Bar Compare 和 Evidence。Evidence 把图片、截图、条带、单张 Media Switch 封面和同一问的多张封面并排全部走一遍。</p>
           </header>
         </section>
 
@@ -268,6 +268,7 @@
                   <thead>
                     <tr>
                       <th>方案</th>
+                      <th>状态</th>
                       <th>覆盖能力</th>
                       <th>实施成本</th>
                       <th>结论</th>
@@ -276,18 +277,21 @@
                   <tbody>
                     <tr>
                       <td><strong>方案 A · 高铁衔接</strong></td>
+                      <td class="cell-tag"><span class="badge success">优先</span></td>
                       <td>完整</td>
                       <td>中等</td>
                       <td class="cell-best">优先验证</td>
                     </tr>
                     <tr>
                       <td><strong>方案 B · 陆运拼载</strong></td>
+                      <td class="cell-tag"><span class="badge">补充</span></td>
                       <td>局部</td>
                       <td>较低</td>
                       <td>作为补充</td>
                     </tr>
                     <tr>
                       <td><strong>方案 C · 客舱代办</strong></td>
+                      <td class="cell-tag"><span class="badge warning">暂缓</span></td>
                       <td>有限</td>
                       <td>较高</td>
                       <td class="cell-weak">暂不采用</td>
@@ -494,7 +498,7 @@
           </header>
           <div class="page-regions" data-regions="1" data-align="center">
             <div class="page-region" data-size="fill" data-align="center">
-              <figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="3:4" data-image-fit="fill">
+              <figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill">
                 <div class="evidence-window">
                   <img data-media-main src="assets/cabin-01.jpg" alt="宠物装入软包进入飞机客舱">
                   <div class="media-switch__thumbs" aria-label="切换客舱图片">
@@ -513,6 +517,95 @@
                   </div>
                 </div>
               </figure>
+            </div>
+          </div>
+        </section>
+
+        <section class="report-section report-slide" data-chapter="single" data-slide="01.o" id="single-covers">
+          <header class="section-header">
+            <span class="section-header__no">01.o · 一分区</span>
+            <div>
+              <h2 class="section-header__title">整屏一块，父组件逐一替换</h2>
+              <p class="section-header__part">Evidence · Media Switch 封面并排</p>
+            </div>
+          </header>
+          <div class="page-regions" data-regions="1" data-align="center">
+            <div class="page-region" data-size="fill" data-align="center">
+              <div class="image-grid evidence-gallery" data-image-ratio="9:16" data-image-fit="fill" data-item-count="4">
+                <figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill">
+                  <div class="evidence-window">
+                    <img data-media-main src="assets/cabin-01.jpg" alt="宠物装入软包进入飞机客舱">
+                    <div class="media-switch__thumbs" aria-label="切换客舱图片">
+                      <button class="media-switch__thumb is-active" type="button" data-src="assets/cabin-01.jpg" data-alt="宠物装入软包进入飞机客舱"><img src="assets/cabin-01.jpg" alt="软包内的客舱宠物"></button>
+                      <button class="media-switch__thumb" type="button" data-src="assets/cabin-02.jpg" data-alt="宠物在飞机客舱内"><img src="assets/cabin-02.jpg" alt="客舱内的宠物"></button>
+                    </div>
+                    <button class="media-switch__label" type="button">飞机进客舱</button>
+                    <div class="media-switch__panel">
+                      <h3>飞机进客舱</h3>
+                      <p>同一问下的多张封面排一屏，不要拆成四页。</p>
+                      <div class="list-block">
+                        <div class="list-row"><span class="list-row__label">宠物位置</span><p class="list-row__text">客舱座椅下方软包</p></div>
+                        <div class="list-row"><span class="list-row__label">主人</span><p class="list-row__text">必须同行</p></div>
+                      </div>
+                    </div>
+                  </div>
+                </figure>
+                <figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill">
+                  <div class="evidence-window">
+                    <img data-media-main src="assets/air-cargo-01.jpg" alt="航空箱在机场完成固定与交运">
+                    <div class="media-switch__thumbs" aria-label="切换托运图片">
+                      <button class="media-switch__thumb is-active" type="button" data-src="assets/air-cargo-01.jpg" data-alt="航空箱在机场完成固定与交运"><img src="assets/air-cargo-01.jpg" alt="航空箱固定"></button>
+                      <button class="media-switch__thumb" type="button" data-src="assets/air-cargo-02.jpg" data-alt="工作人员装卸宠物航空箱"><img src="assets/air-cargo-02.jpg" alt="机场装卸"></button>
+                      <button class="media-switch__thumb" type="button" data-src="assets/air-cargo-03.jpg" data-alt="飞机货舱内部环境"><img src="assets/air-cargo-03.jpg" alt="货舱内部"></button>
+                    </div>
+                    <button class="media-switch__label" type="button">飞机托运</button>
+                    <div class="media-switch__panel">
+                      <h3>飞机托运</h3>
+                      <p>点开各自看图和字段。Hover 只作用于当前这一张。</p>
+                      <div class="list-block">
+                        <div class="list-row"><span class="list-row__label">宠物位置</span><p class="list-row__text">有氧货舱航空箱</p></div>
+                        <div class="list-row"><span class="list-row__label">主人</span><p class="list-row__text">可同行或不同行</p></div>
+                      </div>
+                    </div>
+                  </div>
+                </figure>
+                <figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill">
+                  <div class="evidence-window">
+                    <img data-media-main src="assets/rail-05.jpg" alt="高铁宠物运输箱的温湿度与氧气监控">
+                    <div class="media-switch__thumbs" aria-label="切换高铁图片">
+                      <button class="media-switch__thumb is-active" type="button" data-src="assets/rail-05.jpg" data-alt="高铁宠物运输箱的温湿度与氧气监控"><img src="assets/rail-05.jpg" alt="环境监控屏"></button>
+                      <button class="media-switch__thumb" type="button" data-src="assets/rail-01.jpg" data-alt="高铁行李车厢内的宠物专用运输箱"><img src="assets/rail-01.jpg" alt="高铁宠物运输箱"></button>
+                    </div>
+                    <button class="media-switch__label" type="button">高铁托运</button>
+                    <div class="media-switch__panel">
+                      <h3>高铁托运</h3>
+                      <p>四张封面均分一屏宽度，高度铺满，不再按单张 3:4 收成横滑。</p>
+                      <div class="list-block">
+                        <div class="list-row"><span class="list-row__label">宠物位置</span><p class="list-row__text">行李车厢专用运输箱</p></div>
+                        <div class="list-row"><span class="list-row__label">主人</span><p class="list-row__text">通常乘坐同一车次</p></div>
+                      </div>
+                    </div>
+                  </div>
+                </figure>
+                <figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill">
+                  <div class="evidence-window">
+                    <img data-media-main src="assets/road-01.jpg" alt="宠物跨城运输车辆内部">
+                    <div class="media-switch__thumbs" aria-label="切换陆运图片">
+                      <button class="media-switch__thumb is-active" type="button" data-src="assets/road-01.jpg" data-alt="宠物跨城运输车辆内部"><img src="assets/road-01.jpg" alt="运输车辆内部"></button>
+                      <button class="media-switch__thumb" type="button" data-src="assets/road-03.jpg" data-alt="带固定笼位的专业宠物运输车"><img src="assets/road-03.jpg" alt="专业运输车"></button>
+                    </div>
+                    <button class="media-switch__label" type="button">陆运</button>
+                    <div class="media-switch__panel">
+                      <h3>陆运</h3>
+                      <p>这是一次比较，不是四个主张。</p>
+                      <div class="list-block">
+                        <div class="list-row"><span class="list-row__label">宠物位置</span><p class="list-row__text">运输车笼位或同行座舱</p></div>
+                        <div class="list-row"><span class="list-row__label">主人</span><p class="list-row__text">可同行或不同行</p></div>
+                      </div>
+                    </div>
+                  </div>
+                </figure>
+              </div>
             </div>
           </div>
         </section>
@@ -852,7 +945,7 @@
             <ol>
               <li>本演示用设计系统画布里的替换清单穷举页面状态：壳只有报告封面、章节封面、口径说明；分片只有 1 分区、配图左右、配图上下。</li>
               <li>1 分区可替换父组件：Decision Callout、Card Grid、Card Grid 强调色、Stat Grid、Labeled List、Process Steps、Data Table、Bar Compare（横向 / 纵向）、Evidence。</li>
-              <li>Evidence 变体：图片 3:4 Fill、图片 4:3 Fill、截图 0.46:1、条带、Media Switch 封面展开。</li>
+              <li>Evidence 变体：图片 3:4 Fill、图片 4:3 Fill、截图 0.46:1、条带、单张 Media Switch 封面、同一问的多张封面并排。</li>
               <li>左右配图右侧只演示默认文案、Labeled List、Process Steps、Card Grid 强调色、Bar Compare。上下配图底部只演示默认文案、Decision Callout、Card Grid 强调色、Card Grid、Stat Grid。</li>
               <li>价格、车次和站点数字取自既有市场调研样本，仅用于把组件串成可读报告，不构成新的统计结论。</li>
               <li>视觉由设计 Token 驱动。主题与翻页栏默认隐藏，鼠标移到屏幕左下角才显示。</li>

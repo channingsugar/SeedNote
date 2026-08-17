@@ -381,22 +381,21 @@
   flex-direction: column;
 }
 .page-regions[data-media-page="split"] > [data-slot="copy"] > .list-block > .list-row {
-  flex: 1 1 0;
-  align-items: center;
+  flex: 0 0 auto;
+  align-content: start;
+  align-items: start;
   min-height: 0;
 }
 .page-regions[data-media-page="split"] > [data-slot="copy"] > .steps {
-  align-content: stretch;
-  grid-auto-rows: minmax(0, 1fr);
+  align-content: start;
+  grid-auto-rows: auto;
 }
 .page-regions[data-media-page="split"] > [data-slot="copy"] > .steps > .step {
-  align-items: center;
+  align-items: start;
   min-height: 0;
 }
 .page-regions[data-media-page="split"] > [data-slot="copy"] > .table-wrap {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  display: block;
   overflow: auto;
 }
 .page-regions[data-media-page="split"] > [data-slot="copy"] > .bar-compare {
@@ -555,16 +554,10 @@
   justify-content: flex-start;
   align-items: stretch;
 }
-.page-region > .list-block,
-.page-region > .steps,
 .page-region > .table-wrap,
 .page-region > .bar-compare,
-.page-regions[data-align="center"] > .page-region:not([data-align]) > .list-block,
-.page-regions[data-align="center"] > .page-region:not([data-align]) > .steps,
 .page-regions[data-align="center"] > .page-region:not([data-align]) > .table-wrap,
 .page-regions[data-align="center"] > .page-region:not([data-align]) > .bar-compare,
-.page-region[data-align="center"] > .list-block,
-.page-region[data-align="center"] > .steps,
 .page-region[data-align="center"] > .table-wrap,
 .page-region[data-align="center"] > .bar-compare {
   width: 100%;
@@ -572,6 +565,12 @@
   margin-inline: auto;
   align-self: stretch;
 }
+.page-region > .list-block,
+.page-region > .steps,
+.page-regions[data-align="center"] > .page-region:not([data-align]) > .list-block,
+.page-regions[data-align="center"] > .page-region:not([data-align]) > .steps,
+.page-region[data-align="center"] > .list-block,
+.page-region[data-align="center"] > .steps,
 .page-regions[data-regions="1"][data-align="center"] > .page-region > .list-block,
 .page-regions[data-regions="1"][data-align="center"] > .page-region > .steps,
 .page-regions[data-regions="1"] > .page-region[data-align="center"] > .list-block,
@@ -584,22 +583,27 @@
   margin-inline: auto;
 }
 .page-regions[data-regions="1"] > .page-region > .list-block > .list-row {
-  width: max-content;
-  max-width: 100%;
-  grid-template-columns: max-content max-content;
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr);
 }
 .page-regions[data-regions="1"] > .page-region > .list-block > .list-row > .list-row__text {
-  width: max-content;
+  width: auto;
   max-width: min(46rem, 68vw);
 }
 .page-regions[data-regions="1"] > .page-region > .steps > .step {
-  width: max-content;
-  max-width: 100%;
-  grid-template-columns: max-content max-content;
+  width: auto;
+  max-width: none;
+  grid-template-columns: auto minmax(0, 1fr);
 }
 .page-region:has(> .list-block),
 .page-region:has(> .steps) {
   overflow: visible;
+}
+.page-region[data-size="fill"]:has(> .list-block),
+.page-region[data-size="fill"]:has(> .steps),
+.page-region[data-size="fill"]:has(> .table-wrap),
+.page-region[data-size="fill"]:has(> .bar-compare) {
+  overflow: hidden;
 }
 .page-regions[data-regions="1"] > .page-region > .list-block,
 .page-regions[data-regions="1"] > .page-region > .steps {
@@ -647,48 +651,64 @@
 .page-region[data-size="fill"] > .table-wrap,
 .page-region[data-size="fill"] > .bar-compare {
   flex: 1 1 auto;
+  align-self: center;
+  width: max-content;
+  max-width: 100%;
   min-height: 0;
   height: 100%;
-}
-.page-region[data-size="fill"] > .steps {
-  align-content: stretch;
-  grid-auto-rows: minmax(0, 1fr);
-}
-.page-region[data-size="fill"] > .steps > .step {
-  align-items: center;
-  min-height: 0;
+  max-height: 100%;
+  margin-inline: auto;
+  overflow: auto;
+  overscroll-behavior: contain;
+  justify-content: center;
+  justify-content: safe center;
+  align-content: center;
+  align-content: safe center;
+  align-items: stretch;
+  justify-items: stretch;
 }
 .page-region[data-size="fill"] > .list-block {
   display: flex;
   flex-direction: column;
 }
-.page-region[data-size="fill"] > .list-block > .list-row {
-  flex: 1 1 0;
-  align-items: center;
-  min-height: 0;
+.page-region[data-size="fill"] > .steps {
+  grid-auto-rows: auto;
+}
+.page-region[data-size="fill"] > .table-wrap,
+.page-region[data-size="fill"] > .bar-compare {
+  width: 100%;
+  align-self: stretch;
 }
 .page-region[data-size="fill"] > .table-wrap {
   display: flex;
   flex-direction: column;
-  justify-content: stretch;
-  height: 100%;
+}
+.page-region[data-size="fill"] > .bar-compare:not(.is-vertical) {
+  grid-auto-rows: auto;
+}
+.page-region[data-size="fill"] > .list-block:has(> .list-row:nth-child(6)),
+.page-region[data-size="fill"] > .steps:has(> .step:nth-child(6)),
+.page-region[data-size="fill"] > .table-wrap:has(tbody tr:nth-child(6)),
+.page-region[data-size="fill"] > .bar-compare:has(> .bar-compare__item:nth-child(6)) {
+  justify-content: flex-start;
+  align-content: start;
+}
+.page-region[data-size="fill"] > .list-block > .list-row,
+.page-region[data-size="fill"] > .steps > .step,
+.page-region[data-size="fill"] > .bar-compare > .bar-compare__item {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: none;
+  min-height: 0;
 }
 .page-region[data-size="fill"] > .table-wrap > table {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   width: 100%;
-  height: 100%;
+  height: auto;
 }
 .page-region[data-size="fill"] > .table-wrap th,
 .page-region[data-size="fill"] > .table-wrap td {
-  vertical-align: middle;
-}
-.page-region[data-size="fill"] > .bar-compare:not(.is-vertical) {
-  align-content: stretch;
-  grid-auto-rows: minmax(0, 1fr);
-}
-.page-region[data-size="fill"] > .bar-compare > .bar-compare__item {
-  align-content: center;
-  align-self: stretch;
+  vertical-align: top;
 }
 .page-region > * {
   min-width: 0;
@@ -1226,8 +1246,32 @@ html:has(.report-slide.is-active [data-media-page="stack"]) .report-deck-head .s
   width: 100%;
   overflow: auto;
   overscroll-behavior: contain;
-  justify-content: flex-start;
+  justify-content: center;
+  justify-content: safe center;
   align-items: stretch;
+}
+.report-shell.is-deck .report-section__stack > .list-block,
+.report-shell.is-deck .report-section__stack > .steps,
+.report-shell.is-deck .report-section__stack > .card-grid,
+.report-shell.is-deck .report-section__stack > .table-wrap,
+.report-shell.is-deck .report-section__stack > .bar-compare,
+.report-shell.is-deck .report-section__stack > .callout,
+.report-shell.is-deck .report-section__stack > .report-split,
+.report-shell.is-deck .report-section__stack > .media-card,
+.report-shell.is-deck .report-section__stack > .image-grid {
+  flex: 0 1 auto;
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+}
+.report-shell.is-deck .report-split {
+  align-items: start;
+}
+.report-shell.is-deck .report-split > .list-block,
+.report-shell.is-deck .report-split > .steps {
+  width: 100%;
+  max-width: 100%;
+  justify-self: stretch;
 }
 .report-shell.is-deck .report-section[data-layout="center"] .report-section__stack {
   justify-content: center;
@@ -1500,7 +1544,7 @@ html:has(.report-slide.is-active [data-media-page="stack"]) .report-deck-head .s
   min-height: 0;
   overflow: auto;
   box-sizing: border-box;
-  padding: var(--space-6) clamp(24px, 4vw, 64px);
+  padding: calc(var(--chrome-height, 52px) + var(--space-6)) clamp(24px, 4vw, 64px) var(--space-6);
 }
 .report-pager {
   display: flex;

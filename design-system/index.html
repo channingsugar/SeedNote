@@ -177,11 +177,11 @@
               <div class="component-name"><span>Data Table</span><span>数据 / 结构化比较</span></div>
               <div class="table-wrap" data-editable data-kind="table-component" data-node-label="数据表格" data-component-root data-component-id="dataTable">
                 <table class="data-table">
-                  <thead><tr data-editable data-kind="table-row" data-node-label="表头"><th data-editable data-kind="table-cell" data-node-label="表头单元格">方案</th><th>覆盖能力</th><th>实施成本</th><th>结论</th></tr></thead>
+                  <thead><tr data-editable data-kind="table-row" data-node-label="表头"><th data-editable data-kind="table-cell" data-node-label="表头单元格">方案</th><th>状态</th><th>覆盖能力</th><th>实施成本</th><th>结论</th></tr></thead>
                   <tbody>
-                    <tr data-editable data-kind="table-row" data-node-label="数据行"><td data-editable data-kind="table-cell" data-node-label="数据单元格"><strong>方案 A</strong></td><td>完整</td><td>中等</td><td class="cell-best">优先验证</td></tr>
-                    <tr><td><strong>方案 B</strong></td><td>局部</td><td>较低</td><td>作为补充</td></tr>
-                    <tr><td><strong>方案 C</strong></td><td>有限</td><td>较高</td><td class="cell-weak">暂不采用</td></tr>
+                    <tr data-editable data-kind="table-row" data-node-label="数据行"><td data-editable data-kind="table-cell" data-node-label="数据单元格"><strong>方案 A</strong></td><td class="cell-tag"><span class="badge success">优先</span></td><td>完整</td><td>中等</td><td class="cell-best">优先验证</td></tr>
+                    <tr><td><strong>方案 B</strong></td><td class="cell-tag"><span class="badge">补充</span></td><td>局部</td><td>较低</td><td>作为补充</td></tr>
+                    <tr><td><strong>方案 C</strong></td><td class="cell-tag"><span class="badge warning">暂缓</span></td><td>有限</td><td>较高</td><td class="cell-weak">暂不采用</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -237,7 +237,7 @@
 
             <div class="component-frame">
               <div class="component-name"><span>Media Switch</span><span>媒体 / 封面展开 · 底部铺满</span></div>
-              <figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="3:4" data-editable data-kind="media-switch-component" data-node-label="媒体切换容器" data-component-root data-component-id="mediaSwitch">
+              <figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill" data-editable data-kind="media-switch-component" data-node-label="媒体切换容器" data-component-root data-component-id="mediaSwitch">
                 <div class="evidence-window" data-editable data-kind="image-child" data-node-label="主图窗口">
                   <span data-media-main>PHOTO 01</span>
                   <div class="media-switch__thumbs" aria-label="切换图片">
