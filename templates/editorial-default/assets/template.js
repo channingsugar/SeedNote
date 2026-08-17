@@ -49,6 +49,20 @@
     });
   };
 
+  const formatStatValues = (root = document) => {
+    root.querySelectorAll('.stat-value').forEach((node) => {
+      if (node.dataset.statSymbols) return;
+      if (node.querySelector('small')) {
+        node.dataset.statSymbols = '1';
+        return;
+      }
+      const text = node.textContent;
+      if (!text) return;
+      node.innerHTML = text.replace(/\s*([¥$€£≤≥%×/–—+])\s*/g, '<small>$1</small>');
+      node.dataset.statSymbols = '1';
+    });
+  };
+
   const formatCalloutText = (root = document) => {
     root.querySelectorAll('.callout p, .callout strong').forEach((node) => {
       const text = node.textContent.replace(/\s*\n\s*/g, '').trim();
@@ -60,7 +74,7 @@
   const parseEvidenceRatio = (node) => {
     if (!node) return { w: 3, h: 4 };
     if (node.getAttribute('data-image-kind') === 'shot' || node.querySelector('[data-image-kind="shot"]')) {
-      return { w: 9, h: 16 };
+      return { w: 0.46, h: 1 };
     }
     const raw = node.getAttribute('data-image-ratio')
       || node.querySelector('[data-image-ratio]')?.getAttribute('data-image-ratio')
@@ -77,6 +91,22 @@
     || 16
   );
 
+  const evidenceInnerBox = (node) => {
+    const styles = getComputedStyle(node);
+    const padX = (parseFloat(styles.paddingLeft) || 0) + (parseFloat(styles.paddingRight) || 0);
+    const padY = (parseFloat(styles.paddingTop) || 0) + (parseFloat(styles.paddingBottom) || 0);
+    return {
+      w: Math.max(0, (node.clientWidth || 0) - padX),
+      h: Math.max(0, (node.clientHeight || 0) - padY),
+    };
+  };
+
+  const syncEvidenceScrollFade = (gallery) => {
+    if (!gallery) return;
+    const max = gallery.scrollWidth - gallery.clientWidth;
+    gallery.classList.toggle('is-scroll-end', max <= 1 || gallery.scrollLeft >= max - 1);
+  };
+
   const evidenceCaptionPx = (node, items) => {
     const hasCaption = (items || [node]).some((item) => item?.querySelector?.('figcaption'));
     if (!hasCaption) return 0;
@@ -84,11 +114,19 @@
     if (raw.endsWith('rem')) {
       return parseFloat(raw) * parseFloat(getComputedStyle(document.documentElement).fontSize);
     }
-    return parseFloat(raw) || items?.[0]?.querySelector('figcaption')?.offsetHeight || 68;
+    const value = parseFloat(raw);
+    if (Number.isFinite(value)) return value;
+    return items?.[0]?.querySelector('figcaption')?.offsetHeight || 0;
   };
 
   const layoutEvidenceStandalone = (node) => {
     if (!node || node.getAttribute('data-image-kind') === 'strip' || node.closest('.evidence-gallery')) return;
+    if (node.closest('[data-media-page] [data-slot="media"]')) {
+      node.style.removeProperty('width');
+      node.style.removeProperty('--evidence-item-width');
+      node.style.height = '100%';
+      return;
+    }
     const ratio = parseEvidenceRatio(node);
     const ratioCssValue = `${ratio.w} / ${ratio.h}`;
     node.style.setProperty('--image-ratio', ratioCssValue);
@@ -101,10 +139,11 @@
     node.dataset.evidenceLayout = 'center';
     const region = node.closest('.page-region');
     if (region) {
-      const boxH = region.clientHeight || node.clientHeight || 0;
-      const boxW = region.clientWidth || 0;
+      const box = evidenceInnerBox(node.clientHeight >= 8 ? node : region);
+      const boxH = box.h || evidenceInnerBox(region).h;
+      const boxW = box.w || evidenceInnerBox(region).w;
       if (boxH >= 8) {
-        const itemW = Math.min(boxW || boxH, boxH * (ratio.w / ratio.h));
+        const itemW = Math.min(boxW || boxH, Math.max(1, boxH - evidenceCaptionPx(node, [node])) * (ratio.w / ratio.h));
         node.style.setProperty('--evidence-item-width', `${itemW}px`);
         node.style.width = `${itemW}px`;
         node.style.height = '100%';
@@ -129,25 +168,26 @@
       && !item.classList.contains('is-component-item-hidden')
     ));
     if (!items.length) return;
-    const galleryH = gallery.clientHeight || gallery.parentElement?.clientHeight || 0;
-    const galleryW = gallery.clientWidth || gallery.parentElement?.clientWidth || 0;
+    const box = evidenceInnerBox(gallery);
+    const galleryH = box.h || evidenceInnerBox(gallery.parentElement || gallery).h;
+    const galleryW = box.w || evidenceInnerBox(gallery.parentElement || gallery).w;
     if (galleryH < 8 || galleryW < 8) return;
     const ratio = parseEvidenceRatio(gallery);
+    const ratioCssValue = `${ratio.w} / ${ratio.h}`;
+    gallery.style.setProperty('--image-ratio', ratioCssValue);
     const ratioW = Math.max(1, galleryH - evidenceCaptionPx(gallery, items)) * (ratio.w / ratio.h);
     const gap = evidenceGapPx(gallery);
     const nFull = Math.max(1, Math.floor((galleryW + gap) / (ratioW + gap)));
     const count = items.length;
     let layout = 'center';
-    let itemW = ratioW;
     if (count === 1) layout = 'center';
     else if (count <= nFull) layout = 'even';
-    else {
-      layout = 'scroll';
-      itemW = (galleryW - gap * nFull) / (nFull + 0.5);
-    }
+    else layout = 'scroll';
     gallery.dataset.evidenceLayout = layout;
-    gallery.style.setProperty('--evidence-item-width', `${itemW}px`);
+    gallery.style.setProperty('--evidence-item-width', `${ratioW}px`);
     gallery.classList.toggle('is-scrollable', layout === 'scroll');
+    if (layout !== 'scroll') gallery.classList.remove('is-scroll-end');
+    else syncEvidenceScrollFade(gallery);
   };
 
   const layoutAllEvidence = () => {
@@ -155,8 +195,42 @@
     document.querySelectorAll('.page-region > .media-switch, .page-region > .evidence-figure').forEach(layoutEvidenceStandalone);
   };
 
+  const bindStripWheel = (root = document) => {
+    root.querySelectorAll('[data-image-kind="strip"] .evidence-window').forEach((windowNode) => {
+      if (windowNode.dataset.stripWheel) return;
+      windowNode.dataset.stripWheel = '1';
+      windowNode.addEventListener('wheel', (event) => {
+        const max = windowNode.scrollWidth - windowNode.clientWidth;
+        if (max <= 1) return;
+        const delta = event.deltaY + event.deltaX;
+        if (!delta) return;
+        event.preventDefault();
+        windowNode.scrollLeft += delta;
+      }, { passive: false });
+    });
+  };
+
+  const bindEvidenceGalleryScroll = (root = document) => {
+    root.querySelectorAll('.evidence-gallery').forEach((gallery) => {
+      if (gallery.dataset.galleryScroll) return;
+      gallery.dataset.galleryScroll = '1';
+      gallery.addEventListener('scroll', () => syncEvidenceScrollFade(gallery), { passive: true });
+      gallery.addEventListener('wheel', (event) => {
+        if (!gallery.classList.contains('is-scrollable')) return;
+        const max = gallery.scrollWidth - gallery.clientWidth;
+        if (max <= 1) return;
+        const delta = event.deltaY + event.deltaX;
+        if (!delta) return;
+        event.preventDefault();
+        gallery.scrollLeft += delta;
+      }, { passive: false });
+    });
+  };
+
   const bindEvidenceLayout = () => {
     layoutAllEvidence();
+    bindStripWheel();
+    bindEvidenceGalleryScroll();
     const observer = new ResizeObserver(() => layoutAllEvidence());
     document.querySelectorAll('.evidence-gallery, .page-region, [data-report-stage]').forEach((node) => observer.observe(node));
     window.addEventListener('resize', layoutAllEvidence);
@@ -164,11 +238,40 @@
 
   mountMediaSwitch();
   formatCalloutText();
+  formatStatValues();
+
+  const assembleChrome = () => {
+    const theme = document.querySelector('.theme-control');
+    const pager = document.querySelector('[data-report-pager]');
+    if (!pager) return;
+    let chrome = document.querySelector('[data-report-chrome]');
+    if (!chrome) {
+      chrome = document.createElement('div');
+      chrome.className = 'report-chrome';
+      chrome.dataset.reportChrome = '';
+      pager.parentNode.insertBefore(chrome, pager);
+      if (theme) {
+        const toast = theme.querySelector('[data-theme-toast], .theme-control__toast');
+        if (toast) document.body.appendChild(toast);
+        chrome.appendChild(theme);
+      }
+      chrome.appendChild(pager);
+    }
+    if (!document.querySelector('.report-chrome-hotspot')) {
+      const spot = document.createElement('button');
+      spot.type = 'button';
+      spot.className = 'report-chrome-hotspot';
+      spot.setAttribute('aria-label', '显示主题与翻页');
+      document.body.appendChild(spot);
+    }
+  };
 
   const mountDeck = () => {
     const shell = document.querySelector('.report-shell.is-deck');
     const stage = document.querySelector('[data-report-stage]');
     if (!shell || !stage) return false;
+
+    assembleChrome();
 
     const slidesRoot = stage.querySelector('[data-report-slides]') || stage;
     const slides = [...slidesRoot.querySelectorAll(':scope > .report-slide')];
@@ -190,10 +293,8 @@
     let animTimer = 0;
 
     const setChromeHeight = () => {
-      const theme = document.querySelector('.theme-control');
       const navEl = document.querySelector('.document-nav');
-      const h = (theme?.offsetHeight || 0) + (navEl?.offsetHeight || 0) + (pager?.offsetHeight || 0);
-      document.documentElement.style.setProperty('--chrome-height', `${h}px`);
+      document.documentElement.style.setProperty('--chrome-height', `${navEl?.offsetHeight || 0}px`);
     };
 
     const lightboxOpen = () => Boolean(lightbox && (lightbox.open || lightbox.hasAttribute('open')));
@@ -330,7 +431,7 @@
     const isBlankClick = (event) => {
       const target = event.target;
       if (!(target instanceof Element)) return false;
-      if (target.closest('.theme-control, .document-nav, .report-pager, a, button, input, select, textarea, label')) {
+      if (target.closest('.theme-control, .document-nav, .report-pager, .report-chrome, .report-chrome-hotspot, a, button, input, select, textarea, label')) {
         return false;
       }
       if (target.closest('.is-chapter-cover, #cover')) {
@@ -382,7 +483,7 @@
       if (lightboxOpen()) return;
       const tag = event.target?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || event.target?.isContentEditable) return;
-      if (event.key === 'ArrowDown' || event.key === 'PageDown') {
+      if (event.key === 'ArrowDown' || event.key === 'ArrowRight' || event.key === 'PageDown') {
         event.preventDefault();
         go(1);
         return;
@@ -399,7 +500,7 @@
         go(1);
         return;
       }
-      if (event.key === 'ArrowUp' || event.key === 'PageUp') {
+      if (event.key === 'ArrowUp' || event.key === 'ArrowLeft' || event.key === 'PageUp') {
         event.preventDefault();
         go(-1);
         return;

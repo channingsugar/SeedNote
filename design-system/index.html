@@ -113,7 +113,7 @@
             <div>
               <h2>知识汇报父组件</h2>
               <p>每个虚线框只包含一个父组件定义。点击组件，再点击其内部元素，可逐层检查和调整。</p>
-              <p>配图页在「页面」里：一边固定是图，另一边放默认文案或可替换的父组件。图片默认 Fit 完整露出、不裁切，可选 Fill 铺满。窗口比例可改（1:1 / 4:3 / 3:4 / 9:16）。界面截图锁定 9:16。超长横图左对齐横滑。同一窗口要切换多张图时，用 Media Switch。</p>
+              <p>配图页在「页面」里：一边固定是图，另一边放默认文案或可替换的父组件。图片默认 Fill 铺满。窗口比例可改（1:1 / 4:3 / 3:4 / 9:16 / 0.46:1）。界面截图锁定 0.46:1。超长横图左对齐横滑。同一窗口要切换多张图时，用 Media Switch 封面。</p>
             </div>
           </header>
 
@@ -146,12 +146,12 @@
             </div>
 
             <div class="component-frame">
-              <div class="component-name"><span>Stat Grid</span><span>数据 / 摘要指标 · 数字标题说明左对齐</span></div>
+              <div class="component-name"><span>Stat Grid</span><span>数据 / 摘要指标 · DIN 数字居中</span></div>
               <div class="card-grid" style="--component-columns: 4" data-editable data-kind="grid-component" data-node-label="指标卡片组" data-component-root data-component-id="statGrid">
                 <article class="report-card" data-editable data-kind="card-child" data-node-label="指标卡片"><b class="stat-value" data-editable data-kind="text-child" data-node-label="指标数值">72%</b><h3 class="report-card__title" data-editable data-kind="text-child" data-node-label="指标标题">核心覆盖率</h3><p class="report-card__body">大数字用于建立尺度，说明文字交代口径。</p></article>
                 <article class="report-card"><b class="stat-value">3.4×</b><h3 class="report-card__title">效率提升</h3><p class="report-card__body">与现有基线相比的相对变化。</p></article>
-                <article class="report-card"><b class="stat-value">18 项</b><h3 class="report-card__title">有效样本</h3><p class="report-card__body">避免让数字脱离样本范围。</p></article>
-                <article class="report-card"><b class="stat-value">6 周</b><h3 class="report-card__title">观察周期</h3><p class="report-card__body">说明变化发生在哪一段时间内。</p></article>
+                <article class="report-card"><b class="stat-value">18</b><h3 class="report-card__title">有效样本</h3><p class="report-card__body">避免让数字脱离样本范围。</p></article>
+                <article class="report-card"><b class="stat-value">6</b><h3 class="report-card__title">观察周期</h3><p class="report-card__body">说明变化发生在哪一段时间内。</p></article>
               </div>
             </div>
 
@@ -227,11 +227,11 @@
             </div>
 
             <div class="component-frame">
-              <div class="component-name"><span>Evidence Figure</span><span>媒体 / 界面截图 · 9:16 容器</span></div>
-              <div class="image-grid evidence-gallery" data-image-kind="shot" data-image-ratio="9:16" style="--component-columns: 3" data-editable data-kind="evidence-component" data-node-label="界面截图组" data-component-root data-component-id="evidenceShot">
-                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="9:16"><div class="evidence-window" data-editable data-kind="image-child" data-node-label="截图窗口"></div><figcaption><b>订单截图</b><span>窗口 9:16，顶部对齐；长截图在窗内上下滚动。</span></figcaption></figure>
-                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="9:16"><div class="evidence-window"></div><figcaption><b>聊天记录</b><span>卡片宽度跟图走，图注不比图宽。</span></figcaption></figure>
-                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="9:16"><div class="evidence-window"></div><figcaption><b>App 页面</b><span>contain 完整露出，禁止 cover 裁切。</span></figcaption></figure>
+              <div class="component-name"><span>Evidence Figure</span><span>媒体 / 界面截图 · 0.46:1 容器</span></div>
+              <div class="image-grid evidence-gallery" data-image-kind="shot" data-image-ratio="0.46:1" style="--component-columns: 3" data-editable data-kind="evidence-component" data-node-label="界面截图组" data-component-root data-component-id="evidenceShot">
+                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1"><div class="evidence-window" data-editable data-kind="image-child" data-node-label="截图窗口"></div><figcaption><b>订单截图</b><span>窗口 0.46:1，顶部对齐；长截图在窗内上下滚动。</span></figcaption></figure>
+                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1"><div class="evidence-window"></div><figcaption><b>聊天记录</b><span>卡片宽度跟图走，图注不比图宽。</span></figcaption></figure>
+                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1"><div class="evidence-window"></div><figcaption><b>App 页面</b><span>contain 完整露出，禁止 cover 裁切。</span></figcaption></figure>
               </div>
             </div>
 
@@ -279,14 +279,14 @@
             </div>
 
             <div class="component-frame">
-              <div class="component-name"><span>Highlight Band</span><span>强调 / 关键观点组</span></div>
-              <div class="highlight-band" data-editable data-kind="grid-component" data-node-label="重点观点带" data-component-root data-component-id="highlightBand">
-                <article class="highlight-item" data-editable data-kind="card-child" data-node-label="重点项"><b data-editable data-kind="text-child" data-node-label="重点标题">完整</b><p data-editable data-kind="text-child" data-node-label="重点说明">允许连续阅读与信息追溯。</p></article>
-                <article class="highlight-item"><b>清晰</b><p>通过层级与节奏突出主要判断。</p></article>
-                <article class="highlight-item"><b>可验证</b><p>让结论、证据和数据口径彼此相邻。</p></article>
-                <article class="highlight-item"><b>可行动</b><p>明确优先级、负责人和下一步。</p></article>
-                <article class="highlight-item"><b>可追溯</b><p>保留来源、时间和判断边界。</p></article>
-                <article class="highlight-item"><b>可复用</b><p>同一套模块能套进不同材料，不必另造布局。</p></article>
+              <div class="component-name"><span>Card Grid</span><span>强调 / 关键观点组</span></div>
+              <div class="card-grid is-highlight" data-editable data-kind="grid-component" data-node-label="强调卡片组" data-component-root data-component-id="cardGridHighlight">
+                <article class="report-card" data-editable data-kind="card-child" data-node-label="强调卡片"><h3 class="report-card__title" data-editable data-kind="text-child" data-node-label="卡片标题">完整</h3><p class="report-card__body" data-editable data-kind="text-child" data-node-label="卡片正文">允许连续阅读与信息追溯。</p></article>
+                <article class="report-card"><h3 class="report-card__title">清晰</h3><p class="report-card__body">通过层级与节奏突出主要判断。</p></article>
+                <article class="report-card"><h3 class="report-card__title">可验证</h3><p class="report-card__body">让结论、证据和数据口径彼此相邻。</p></article>
+                <article class="report-card"><h3 class="report-card__title">可行动</h3><p class="report-card__body">明确优先级、负责人和下一步。</p></article>
+                <article class="report-card"><h3 class="report-card__title">可追溯</h3><p class="report-card__body">保留来源、时间和判断边界。</p></article>
+                <article class="report-card"><h3 class="report-card__title">可复用</h3><p class="report-card__body">同一套模块能套进不同材料，不必另造布局。</p></article>
               </div>
             </div>
 

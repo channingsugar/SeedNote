@@ -61,11 +61,11 @@
     barCompare: { orientation: 'horizontal', itemCount: 3 },
     mediaCard: { mediaLayout: 'stack', imagePosition: 'top', imageStyle: 'abstract' },
     evidenceGallery: { columns: 3, mode: 'grid', imageStyle: 'document', imageKind: 'photo', imageRatio: '3:4', imageFit: 'fit', itemCount: 3, slideWidth: 0 },
-    evidenceShot: { columns: 3, mode: 'grid', imageKind: 'shot', imageRatio: '9:16', imageFit: 'fit', itemCount: 3, slideWidth: 0 },
+    evidenceShot: { columns: 3, mode: 'grid', imageKind: 'shot', imageRatio: '0.46:1', imageFit: 'fit', itemCount: 3, slideWidth: 0 },
     evidenceStrip: { columns: 1, mode: 'grid', imageKind: 'strip', itemCount: 1, slideWidth: 0 },
     mediaSwitch: { imageRatio: '3:4', imageFit: 'fit' },
     decisionCallout: { decoration: 'none' },
-    highlightBand: { columns: 3, mode: 'grid', decoration: 'dividers', itemCount: 6, slideWidth: 0 },
+    cardGridHighlight: { columns: 3, mode: 'grid', decoration: 'none', itemCount: 6, slideWidth: 0, tone: 'highlight' },
     navigation: { position: 'top', variant: 'underline', sticky: true }
   };
 

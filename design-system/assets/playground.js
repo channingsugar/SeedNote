@@ -132,7 +132,7 @@ function renderBreadcrumbs() {
 
 const PAGE_PARENTS = [
   ['Decision Callout', 'decisionCallout'],
-  ['Highlight Band', 'highlightBand'],
+  ['Card Grid · 强调', 'cardGridHighlight'],
   ['Card Grid', 'cardGrid'],
   ['Stat Grid', 'statGrid'],
   ['Labeled List', 'labeledList'],
@@ -146,14 +146,14 @@ const MEDIA_SPLIT_PARENTS = [
   ['默认文案', 'mediaCopy'],
   ['Labeled List', 'labeledList'],
   ['Process Steps', 'processSteps'],
-  ['Highlight Band', 'highlightBand'],
+  ['Card Grid · 强调', 'cardGridHighlight'],
   ['Bar Compare', 'barCompare']
 ];
 
 const MEDIA_STACK_PARENTS = [
   ['默认文案', 'mediaCopy'],
   ['Decision Callout', 'decisionCallout'],
-  ['Highlight Band', 'highlightBand'],
+  ['Card Grid · 强调', 'cardGridHighlight'],
   ['Card Grid', 'cardGrid'],
   ['Stat Grid', 'statGrid']
 ];
@@ -166,7 +166,7 @@ const EVIDENCE_KINDS = [
   ['Evidence 图片', 'photo'],
   ['Evidence 截图', 'shot'],
   ['Evidence 条带', 'strip'],
-  ['Media Switch', 'switch']
+  ['Media Switch 封面', 'switch']
 ];
 
 function renderControls() {
@@ -238,7 +238,7 @@ function renderControls() {
   if (kind === 'grid-component') {
     const component = selected;
     const componentId = ensureComponentId(component, component.dataset.pageParent || 'grid');
-    const splitBand = component.classList.contains('highlight-band') && component.closest('[data-media-page="split"]');
+    const splitBand = component.classList.contains('is-highlight') && component.closest('[data-media-page="split"]');
     const availableItems = splitBand ? 6 : Math.max(12, gridChildren(component).length);
     const itemCount = Math.min(availableItems, currentItemCount(component, componentId));
     if (splitBand && currentItemCount(component, componentId) > 6) setGridItemCount(component, 6);
@@ -270,21 +270,18 @@ function renderControls() {
       toggleHorizontalControls(component, componentState[componentId]?.mode === 'horizontal');
     });
     setHorizontalEligibility(component, componentId, componentState[componentId]?.columns || 3);
-    if (component.classList.contains('card-grid') && !component.querySelector('.stat-value')) addDecorationControl(componentId, component);
-    if (component.querySelector('.stat-value')) {
-      addInfo('Stat Grid：数字、标题、口径说明必须同一条左缘，一行内对齐。不要把带主图卡片的内边距套到统计卡上。');
+    if (component.classList.contains('card-grid') && !component.querySelector('.stat-value')) {
+      addSelect('卡片样式', [['默认', 'plain'], ['强调色', 'highlight']], (value) => {
+        component.classList.toggle('is-highlight', value === 'highlight');
+        if (component.dataset.pageParent) {
+          component.dataset.pageParent = value === 'highlight' ? 'cardGridHighlight' : 'cardGrid';
+        }
+        updateComponentConfig(componentId, 'tone', value);
+      }, component.classList.contains('is-highlight') ? 'highlight' : 'plain');
+      addDecorationControl(componentId, component);
     }
-    if (component.classList.contains('highlight-band')) {
-      addSelect('分隔样式', [['深色分割', 'dividers'], ['无分隔', 'none'], ['独立卡片', 'cards'], ['顶部线', 'top'], ['浅色要点', 'facts']], (value) => {
-        component.dataset.decoration = value;
-        updateComponentConfig(componentId, 'decoration', value);
-        applyBalancedColumns(component, componentState[componentId]?.itemCount || availableItems);
-        renderControls();
-      }, componentState[componentId]?.decoration || 'dividers');
-      if ((componentState[componentId]?.decoration || 'dividers') !== 'facts') {
-        addTokenChoices('背景颜色', colorTokens, (token) => component.style.background = `var(${token})`, getReferencedToken(component.style.background));
-        addTokenChoices('文字颜色', colorTokens, (token) => component.style.color = `var(${token})`, getReferencedToken(component.style.color));
-      }
+    if (component.querySelector('.stat-value')) {
+      addInfo('Stat Grid：数字用 DIN Alternate、不加粗。数字行只放数字或符号，单位写进标题或口径。文字固定居中。');
     }
     addTokenChoices('网格间距', spaceTokens, (token) => {
       component.style.setProperty('--card-gap', `var(${token})`);
@@ -305,7 +302,9 @@ function renderControls() {
     addRange('最小高度', 80, 360, 4, Math.round(selected.getBoundingClientRect().height), (value) => {
       selected.style.minHeight = `${value}px`;
     });
-    if (kind === 'callout-component') addDecorationControl('decisionCallout', selected);
+    if (kind === 'callout-component') {
+      addInfo('结论 / 判断只保留一种样式：无装饰条、无色块。');
+    }
     return;
   }
 
@@ -329,28 +328,20 @@ function renderControls() {
 
   if (kind === 'steps-component') {
     const componentId = selected.dataset.componentId || 'processSteps';
-    addSelect('列表样式', [['编号步骤', 'steps'], ['侧轨列表', 'rail']], (value) => {
-      selected.classList.toggle('is-rail', value === 'rail');
-      updateComponentConfig(componentId, 'variant', value);
-    }, componentState[componentId]?.variant || (selected.classList.contains('is-rail') ? 'rail' : 'steps'));
+    selected.classList.remove('is-rail');
+    if (componentState[componentId]?.variant === 'rail') updateComponentConfig(componentId, 'variant', 'steps');
     addLinearCountControl(selected, componentId);
-    if ((componentState[componentId]?.variant || 'steps') === 'rail') {
-      addTokenChoices('侧轨颜色', colorTokens, (token) => {
-        selected.style.borderLeftColor = `var(${token})`;
-      }, getReferencedToken(selected.style.borderLeftColor) || '--accent');
-    } else {
-      addInfo('步骤之间用分隔线，不再加顶部装饰线。');
-    }
+    addInfo('步骤之间用分隔线，不再加顶部装饰线。');
     return;
   }
 
   if (['list-component', 'table-component'].includes(kind)) {
     if (kind === 'table-component') {
       const componentId = selected.dataset.componentId || 'dataTable';
-      addSelect('表格样式', [['标准表', 'plain'], ['对比矩阵', 'matrix']], (value) => {
-        updateComponentConfig(componentId, 'variant', value);
+      if (componentState[componentId]?.variant === 'matrix') {
+        updateComponentConfig(componentId, 'variant', 'plain');
         renderDataTable(selected, componentState[componentId]);
-      }, componentState[componentId]?.variant || 'plain');
+      }
       addRange('比较列数', 2, 4, 1, Number(componentState[componentId]?.columns || 3), (value) => {
         updateComponentConfig(componentId, 'columns', value);
         renderDataTable(selected, componentState[componentId]);
@@ -497,7 +488,7 @@ function renderControls() {
       addRatioControl(switchNode);
       addFitControl(switchNode);
       addHoverControl(switchNode);
-      addInfo('Media Switch 是 Evidence 的一种。窗口按比例定宽，默认 Fit 不裁切。缩略图数量单独设。');
+      addInfo('Media Switch 只保留封面展开。窗口按比例定宽，默认 Fit 不裁切。缩略图数量单独设。');
     } else {
       addHoverControl(selected.closest('.evidence-figure'));
       const currentKind = component.getAttribute('data-image-kind') || state.imageKind || 'photo';
@@ -505,7 +496,7 @@ function renderControls() {
         addInfo('条带只放 1 张。高度铺满，按图宽横滑，不再限制最大宽高。');
       } else if (currentKind === 'shot' || currentKind === 'long') {
         addFitControl(component);
-        addInfo('截图锁定 9:16。默认 Fit 完整露出，可选 Fill 铺满。');
+        addInfo('截图锁定 0.46:1。默认 Fit 完整露出，可选 Fill 铺满。');
       } else {
         addRatioControl(component);
         addFitControl(component);
@@ -637,7 +628,7 @@ function renderControls() {
         ? '配图区不是 Evidence，只放纯图，不显示图注。'
         : (regions.dataset.mediaPage === 'split'
           ? '右侧定宽。可换成 List / Steps / Band / Bar Compare。不得用 Table。Band 最多 6 张且贴边，Bar 默认横向条，其余留间距后铺满。'
-          : '底部定高、只排 1 行。可换成 Callout / Highlight Band / Card Grid / Stat Grid。Grid 留间隔后铺满内容区。'));
+          : '底部定高、只排 1 行。可换成 Callout / Card Grid 强调色 / Card Grid / Stat Grid。Grid 留间隔后铺满内容区。'));
       return;
     }
     addInfo('1 分区固定为 fill 并居中。');
@@ -772,7 +763,7 @@ const evidenceLayoutObservers = new WeakMap();
 function parseEvidenceRatio(node) {
   if (!node) return { w: 3, h: 4 };
   if (node.getAttribute('data-image-kind') === 'shot' || node.querySelector('[data-image-kind="shot"]')) {
-    return { w: 9, h: 16 };
+    return { w: 0.46, h: 1 };
   }
   const raw = node.getAttribute('data-image-ratio')
     || node.querySelector('[data-image-ratio]')?.getAttribute('data-image-ratio')
@@ -790,6 +781,23 @@ function evidenceGapPx(node) {
     || 16;
 }
 
+function evidenceInnerBox(node) {
+  if (!node) return { w: 0, h: 0 };
+  const styles = getComputedStyle(node);
+  const padX = (parseFloat(styles.paddingLeft) || 0) + (parseFloat(styles.paddingRight) || 0);
+  const padY = (parseFloat(styles.paddingTop) || 0) + (parseFloat(styles.paddingBottom) || 0);
+  return {
+    w: Math.max(0, (node.clientWidth || 0) - padX),
+    h: Math.max(0, (node.clientHeight || 0) - padY),
+  };
+}
+
+function syncEvidenceScrollFade(gallery) {
+  if (!gallery) return;
+  const max = gallery.scrollWidth - gallery.clientWidth;
+  gallery.classList.toggle('is-scroll-end', max <= 1 || gallery.scrollLeft >= max - 1);
+}
+
 function evidenceCaptionPx(node, items) {
   if (node?.closest?.('[data-media-page] [data-slot="media"]') || node?.closest?.('[data-media-page]')) return 0;
   if (node?.getAttribute('data-caption') === 'off' || node?.closest?.('[data-caption="off"]')) return 0;
@@ -799,7 +807,9 @@ function evidenceCaptionPx(node, items) {
   if (raw.endsWith('rem')) {
     return parseFloat(raw) * parseFloat(getComputedStyle(document.documentElement).fontSize);
   }
-  return parseFloat(raw) || items?.[0]?.querySelector('figcaption')?.offsetHeight || 68;
+  const value = parseFloat(raw);
+  if (Number.isFinite(value)) return value;
+  return items?.[0]?.querySelector('figcaption')?.offsetHeight || 0;
 }
 
 function evidenceItems(gallery) {
@@ -860,27 +870,29 @@ function layoutEvidenceGallery(gallery) {
   }
   const items = evidenceItems(gallery);
   if (!items.length) return;
-  const galleryH = gallery.clientHeight || gallery.parentElement?.clientHeight || 0;
-  const galleryW = gallery.clientWidth || gallery.parentElement?.clientWidth || 0;
+  const box = evidenceInnerBox(gallery);
+  const galleryH = box.h || evidenceInnerBox(gallery.parentElement).h;
+  const galleryW = box.w || evidenceInnerBox(gallery.parentElement).w;
   if (galleryH < 8 || galleryW < 8) return;
   const ratio = parseEvidenceRatio(gallery);
+  gallery.style.setProperty('--image-ratio', `${ratio.w} / ${ratio.h}`);
   const ratioW = Math.max(1, galleryH - evidenceCaptionPx(gallery, items)) * (ratio.w / ratio.h);
   const gap = evidenceGapPx(gallery);
   const nFull = Math.max(1, Math.floor((galleryW + gap) / (ratioW + gap)));
   const count = items.length;
   let layout = 'center';
-  let itemW = ratioW;
   if (count === 1) {
     layout = 'center';
   } else if (count <= nFull) {
     layout = 'even';
   } else {
     layout = 'scroll';
-    itemW = (galleryW - gap * nFull) / (nFull + 0.5);
   }
   gallery.dataset.evidenceLayout = layout;
-  gallery.style.setProperty('--evidence-item-width', `${itemW}px`);
+  gallery.style.setProperty('--evidence-item-width', `${ratioW}px`);
   gallery.classList.toggle('is-scrollable', layout === 'scroll');
+  if (layout !== 'scroll') gallery.classList.remove('is-scroll-end');
+  else syncEvidenceScrollFade(gallery);
 }
 
 function layoutEvidenceNode(node) {
@@ -917,9 +929,10 @@ function addHoverControl(figure) {
   const current = figure.getAttribute('data-hover') === 'off'
     ? 'off'
     : (figure.getAttribute('data-hover') === 'on' || figure.classList.contains('is-cover') ? 'on' : 'off');
+  if (figure.classList.contains('media-switch')) figure.classList.add('is-cover');
   addSelect('Hover 展开', [['关闭', 'off'], ['开启', 'on']], (value) => {
     figure.setAttribute('data-hover', value);
-    if (value === 'on') figure.classList.add('is-cover');
+    if (figure.classList.contains('media-switch') || value === 'on') figure.classList.add('is-cover');
   }, current);
 }
 
@@ -959,7 +972,7 @@ function setGridColumns(component, columns) {
 }
 
 function setGridItemCount(component, count) {
-  const splitBand = component.classList.contains('highlight-band') && component.closest('[data-media-page="split"]');
+  const splitBand = component.classList.contains('is-highlight') && component.closest('[data-media-page="split"]');
   const cap = splitBand ? 6 : (isEvidenceRow(component) || component.classList.contains('media-switch__thumbs') ? 8 : 12);
   const target = (isEvidenceRow(component) && (inColumnSplit(component) || inferEvidenceKind(component) === 'strip'))
     ? 1
@@ -1087,7 +1100,7 @@ function applyEvidenceKind(component, kind) {
   )) {
     if (kind !== 'switch') {
       const imageKind = kind === 'photo' ? 'photo' : kind;
-      const ratio = kind === 'shot' ? '9:16' : kind === 'strip' ? '' : (component.getAttribute('data-image-ratio') || '3:4');
+      const ratio = kind === 'shot' ? '0.46:1' : kind === 'strip' ? '' : (component.getAttribute('data-image-ratio') || '3:4');
       applyImageWindow(component, { kind: imageKind, fit: component.getAttribute('data-image-fit') || 'fit', ratio });
     }
     applyEvidenceRow(component.classList.contains('evidence-gallery') ? component : component.closest('.evidence-gallery'));
@@ -1100,7 +1113,8 @@ function applyEvidenceKind(component, kind) {
     card.removeAttribute('data-component-root');
     delete card.dataset.componentId;
     card.dataset.kind = 'media-switch-component';
-    if (!card.getAttribute('data-hover')) card.setAttribute('data-hover', card.classList.contains('is-cover') ? 'on' : 'off');
+    card.classList.add('is-cover');
+    if (!card.getAttribute('data-hover')) card.setAttribute('data-hover', 'on');
     wrap.appendChild(card);
     component.replaceWith(wrap);
     return afterPageClone(wrap);
@@ -1111,11 +1125,28 @@ function applyEvidenceKind(component, kind) {
   component.replaceWith(next);
   const ready = afterPageClone(next);
   const imageKind = kind === 'photo' ? 'photo' : kind;
-  const ratio = kind === 'shot' ? '9:16' : kind === 'strip' ? '' : '3:4';
+  const ratio = kind === 'shot' ? '0.46:1' : kind === 'strip' ? '' : '3:4';
   applyImageWindow(ready, { kind: imageKind, fit: 'fit', ratio });
   applyEvidenceRow(ready);
   if (kind === 'strip') setGridItemCount(ready, 1);
   return ready;
+}
+
+function formatStatValues(scope = document) {
+  const nodes = [];
+  if (scope.matches?.('.stat-value')) nodes.push(scope);
+  if (scope.querySelectorAll) nodes.push(...scope.querySelectorAll('.stat-value'));
+  nodes.forEach((node) => {
+    if (node.dataset.statSymbols) return;
+    if (node.querySelector('small')) {
+      node.dataset.statSymbols = '1';
+      return;
+    }
+    const text = node.textContent;
+    if (!text) return;
+    node.innerHTML = text.replace(/\s*([¥$€£≤≥%×/–—+])\s*/g, '<small>$1</small>');
+    node.dataset.statSymbols = '1';
+  });
 }
 
 function formatCalloutText(scope = document) {
@@ -1133,7 +1164,7 @@ function inferPageParent(node) {
   if (!node) return '';
   if (node.dataset.pageParent) return node.dataset.pageParent;
   if (node.classList.contains('media-page__copy')) return 'mediaCopy';
-  if (node.classList.contains('highlight-band')) return 'highlightBand';
+  if (node.classList.contains('highlight-band') || (node.classList.contains('card-grid') && node.classList.contains('is-highlight'))) return 'cardGridHighlight';
   if (node.classList.contains('callout')) return 'decisionCallout';
   if (node.classList.contains('card-grid') && node.querySelector('.stat-value')) return 'statGrid';
   if (node.classList.contains('card-grid')) return 'cardGrid';
@@ -1185,6 +1216,14 @@ function createMediaCopy() {
 }
 
 function makePageClone(sourceId) {
+  if (sourceId === 'cardGridHighlight') {
+    const clone = makePageClone('cardGrid');
+    if (!clone) return null;
+    clone.classList.add('is-highlight');
+    clone.dataset.pageParent = 'cardGridHighlight';
+    clone.dataset.componentId = `page-cardGridHighlight-${Math.random().toString(36).slice(2, 7)}`;
+    return clone;
+  }
   if (sourceId === 'mediaCopy') {
     const source = document.querySelector('#pages [data-page-parent="mediaCopy"]');
     const clone = source ? source.cloneNode(true) : createMediaCopy();
@@ -1254,6 +1293,7 @@ function afterPageClone(clone) {
     applyImageWindow(clone, { fit: 'fill' });
   }
   formatCalloutText(clone);
+  formatStatValues(clone);
   bindMediaSwitches(clone);
   const regions = clone.closest('.page-regions');
   if (regions) enforceSplitLayoutRules(regions);
@@ -1320,7 +1360,7 @@ function applySplitCopyRules(node) {
   const page = node?.closest?.('[data-media-page="split"]')
     || (node?.matches?.('[data-media-page="split"]') ? node : null);
   if (!page) return;
-  page.querySelectorAll('[data-slot="copy"] .highlight-band').forEach((band) => {
+  page.querySelectorAll('[data-slot="copy"] .card-grid.is-highlight, [data-slot="copy"] .highlight-band').forEach((band) => {
     if (currentItemCount(band) > 6) setGridItemCount(band, 6);
   });
   page.querySelectorAll('[data-slot="copy"] .bar-compare').forEach((bar) => {
@@ -1577,7 +1617,7 @@ function ratioCss(ratio) {
 
 function applyImageWindow(component, { kind, fit, ratio } = {}) {
   const nodes = [component, ...component.querySelectorAll('.evidence-figure, .media-card, .evidence-window, .media-card__image')];
-  const nextRatio = kind === 'shot' ? '9:16' : ratio;
+  const nextRatio = kind === 'shot' ? '0.46:1' : ratio;
   const nextFit = fit === 'fill' ? 'fill' : (fit === undefined ? undefined : 'fit');
   [...new Set(nodes)].forEach((node) => {
     if (kind !== undefined) {
@@ -1616,7 +1656,8 @@ function addRatioControl(target) {
     ['1:1', '1:1'],
     ['4:3', '4:3'],
     ['3:4', '3:4'],
-    ['9:16', '9:16']
+    ['9:16', '9:16'],
+    ['0.46:1', '0.46:1']
   ], (value) => {
     applyImageWindow(target, { ratio: value });
     const id = target.dataset.componentId || target.closest('[data-component-id]')?.dataset.componentId;
@@ -2315,7 +2356,11 @@ function applyComponentConfig(componentId, config) {
     component.style.gridTemplateColumns = `repeat(${Math.max(1, Number(config.columns) || 3)}, minmax(0, 1fr))`;
   }
   if ('slideWidth' in config) component.style.setProperty('--slide-width', `${Math.max(0, Number(config.slideWidth) || 0)}px`);
+  if ('tone' in config && component.classList.contains('card-grid') && !component.querySelector('.stat-value')) {
+    component.classList.toggle('is-highlight', config.tone === 'highlight');
+  }
   if ('decoration' in config) {
+    if (component.classList.contains('callout')) config.decoration = 'none';
     if (config.decoration && config.decoration !== 'none') component.dataset.decoration = config.decoration;
     else component.setAttribute('data-decoration', 'none');
   }
@@ -2323,12 +2368,23 @@ function applyComponentConfig(componentId, config) {
   const imagePatch = {};
   if ('imageKind' in config) imagePatch.kind = config.imageKind || 'photo';
   if ('imageFit' in config) imagePatch.fit = config.imageFit || '';
-  if (imagePatch.kind === 'shot' || config.imageKind === 'shot') imagePatch.ratio = '9:16';
+  if (imagePatch.kind === 'shot' || config.imageKind === 'shot') imagePatch.ratio = '0.46:1';
   else if ('imageRatio' in config) imagePatch.ratio = config.imageRatio || '';
   if (config.imageFit === 'natural') imagePatch.fit = 'fit';
   if (Object.keys(imagePatch).length) applyImageWindow(component, imagePatch);
-  if (componentId === 'dataTable') renderDataTable(component, config);
-  if (componentId === 'processSteps') component.classList.toggle('is-rail', config.variant === 'rail');
+  if (componentId === 'dataTable') {
+    config.variant = 'plain';
+    renderDataTable(component, config);
+  }
+  if (componentId === 'processSteps') {
+    config.variant = 'steps';
+    component.classList.remove('is-rail');
+  }
+  if (component.classList.contains('callout')) {
+    component.removeAttribute('data-decoration');
+    component.style.removeProperty('--decoration-color');
+    component.style.removeProperty('--decoration-width');
+  }
   if (componentId === 'barCompare') {
     const orientation = config.orientation || 'horizontal';
     component.classList.toggle('is-vertical', orientation === 'vertical');
@@ -2545,7 +2601,7 @@ function validateImportedTheme(theme) {
       variables.add(token.variable);
     }
   }
-  const requiredIds = ['sectionHeader', 'cardGrid', 'statGrid', 'labeledList', 'processSteps', 'dataTable', 'barCompare', 'evidenceGallery', 'decisionCallout', 'highlightBand', 'navigation'];
+  const requiredIds = ['sectionHeader', 'cardGrid', 'statGrid', 'labeledList', 'processSteps', 'dataTable', 'barCompare', 'evidenceGallery', 'decisionCallout', 'cardGridHighlight', 'navigation'];
   return requiredIds.every((id) => theme.components[id]);
 }
 
@@ -2847,6 +2903,33 @@ function bindMediaSwitches(scope = document) {
 
 bindMediaSwitches();
 formatCalloutText();
+formatStatValues();
+document.querySelectorAll('[data-image-kind="strip"] .evidence-window').forEach((windowNode) => {
+  if (windowNode.dataset.stripWheel) return;
+  windowNode.dataset.stripWheel = '1';
+  windowNode.addEventListener('wheel', (event) => {
+    const max = windowNode.scrollWidth - windowNode.clientWidth;
+    if (max <= 1) return;
+    const delta = event.deltaY + event.deltaX;
+    if (!delta) return;
+    event.preventDefault();
+    windowNode.scrollLeft += delta;
+  }, { passive: false });
+});
+document.querySelectorAll('.evidence-gallery').forEach((gallery) => {
+  if (gallery.dataset.galleryScroll) return;
+  gallery.dataset.galleryScroll = '1';
+  gallery.addEventListener('scroll', () => syncEvidenceScrollFade(gallery), { passive: true });
+  gallery.addEventListener('wheel', (event) => {
+    if (!gallery.classList.contains('is-scrollable')) return;
+    const max = gallery.scrollWidth - gallery.clientWidth;
+    if (max <= 1) return;
+    const delta = event.deltaY + event.deltaX;
+    if (!delta) return;
+    event.preventDefault();
+    gallery.scrollLeft += delta;
+  }, { passive: false });
+});
 document.querySelectorAll('.card-grid, .image-grid, .highlight-band').forEach((grid) => {
   if (isEvidenceRow(grid)) {
     applyEvidenceRow(grid);
