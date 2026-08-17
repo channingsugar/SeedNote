@@ -403,6 +403,7 @@
       });
       syncChrome(to);
       if (hash && to.id) history.replaceState(null, '', `#${to.id}`);
+      document.dispatchEvent(new CustomEvent('seed:slidechange'));
     };
 
     const go = (delta) => {
@@ -431,6 +432,7 @@
     const isBlankClick = (event) => {
       const target = event.target;
       if (!(target instanceof Element)) return false;
+      if (document.documentElement.classList.contains('is-editing')) return false;
       if (target.closest('.theme-control, .document-nav, .report-pager, .report-chrome, .report-chrome-hotspot, a, button, input, select, textarea, label')) {
         return false;
       }
@@ -529,11 +531,918 @@
     return true;
   };
 
+  const TEXT_SELECTORS = [
+    '.section-header__title',
+    '.section-header__part',
+    '.report-cover h1',
+    '.report-cover__lead',
+    '.report-cover__kicker',
+    '.chapter-cover__title',
+    '.chapter-cover__lead',
+    '.chapter-cover__kicker',
+    '.callout strong',
+    '.callout p',
+    '.report-card__kicker',
+    '.report-card__title',
+    '.report-card__body',
+    '.stat-value',
+    '.list-row__label',
+    '.list-row__text',
+    '.step__title',
+    '.step__body',
+    '.data-table th',
+    '.data-table td',
+    '.bar-compare__label',
+    '.bar-compare__value',
+    '.bar-compare__note',
+    'figcaption b',
+    'figcaption span',
+    '.media-page__copy .eyebrow',
+    '.media-page__copy h3',
+    '.media-page__copy p',
+    '.media-page__copy .media-meta',
+    '.media-switch__panel h3',
+    '.media-switch__panel p',
+    '.report-notes h2',
+    '.report-notes li',
+    '.media-meta',
+    '[data-deck-title]',
+    '[data-deck-part]',
+  ].join(', ');
+
+  const reportSlug = () => {
+    const parts = location.pathname.replace(/\/index\.html?$/, '').split('/').filter(Boolean);
+    return parts[parts.length - 1] || 'report';
+  };
+
+  const openEditDb = () => new Promise((resolve, reject) => {
+    const req = indexedDB.open('seed-report-edit', 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains('state')) db.createObjectStore('state');
+      if (!db.objectStoreNames.contains('blobs')) db.createObjectStore('blobs');
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+
+  const idbGet = (store, key) => openEditDb().then((db) => new Promise((resolve, reject) => {
+    const req = db.transaction(store, 'readonly').objectStore(store).get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  }));
+
+  const idbSet = (store, key, value) => openEditDb().then((db) => new Promise((resolve, reject) => {
+    const req = db.transaction(store, 'readwrite').objectStore(store).put(value, key);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  }));
+
+  const emptyState = () => ({
+    texts: {},
+    images: {},
+    blocks: {},
+    history: [],
+    cursor: -1,
+    exportedSig: '',
+    nextVersion: 2,
+  });
+
+  const fieldSig = (state) => JSON.stringify({ texts: state.texts, images: state.images, blocks: state.blocks });
+
+  const ADDABLE_PARENTS = '.card-grid, .list-block, .steps, .bar-compare, .table-wrap, .evidence-gallery';
+  const ADDABLE_ITEMS = '.report-card, .list-row, .step, .bar-compare__item, tbody tr, .evidence-figure';
+
+  const COPY_REGION = '[data-media-page] > [data-slot="copy"]';
+
+  const canAddTo = (parent) => {
+    if (!parent) return false;
+    if (parent.closest('.callout, .media-page__copy')) return false;
+    if (parent.getAttribute('data-image-kind') === 'strip') return false;
+    return parent.matches(ADDABLE_PARENTS);
+  };
+
+  const parentFromEvent = (event) => {
+    const node = event.target instanceof Element ? event.target : event.target?.parentElement;
+    if (!node) return { parent: null, item: null };
+    const item = node.closest(ADDABLE_ITEMS);
+    let parent = item?.closest(ADDABLE_PARENTS) || node.closest(ADDABLE_PARENTS);
+    if (!parent) {
+      const region = node.closest(`${COPY_REGION}, .page-region`);
+      const found = [...(region?.querySelectorAll(ADDABLE_PARENTS) || [])].filter(canAddTo);
+      if (found.length === 1) parent = found[0];
+    }
+    if (!parent || !canAddTo(parent)) return { parent: null, item: null };
+    return { parent, item: item && parent.contains(item) ? item : null };
+  };
+
+  const itemSelector = (parent) => {
+    if (parent.matches('.card-grid')) return ':scope > .report-card';
+    if (parent.matches('.list-block')) return ':scope > .list-row';
+    if (parent.matches('.steps')) return ':scope > .step';
+    if (parent.matches('.bar-compare')) return ':scope > .bar-compare__item';
+    if (parent.matches('.table-wrap')) return ':scope tbody tr';
+    if (parent.matches('.evidence-gallery')) return ':scope > .evidence-figure';
+    return ADDABLE_ITEMS;
+  };
+
+  const blockKeyOf = (parent) => {
+    const slide = parent.closest('.report-slide');
+    const id = slide?.dataset.slide || slide?.id || 'page';
+    const type = [...parent.classList].find((name) => (
+      ['card-grid', 'list-block', 'steps', 'bar-compare', 'table-wrap', 'evidence-gallery'].includes(name)
+    )) || 'block';
+    return `${id}::${type}`;
+  };
+
+  const clearClone = (clone) => {
+    clone.querySelectorAll(TEXT_SELECTORS).forEach((node) => {
+      if (node.classList.contains('stat-value')) node.textContent = '0';
+      else if (node.classList.contains('step__index')) return;
+      else node.textContent = '新条目';
+    });
+    clone.querySelectorAll('img').forEach((img) => {
+      img.removeAttribute('src');
+      img.alt = '';
+    });
+    clone.querySelectorAll('.evidence-window').forEach((win) => {
+      if (!win.querySelector('img')) win.textContent = 'IMAGE';
+    });
+    return clone;
+  };
+
+  const renumberSteps = (parent) => {
+    [...parent.querySelectorAll(':scope > .step .step__index')].forEach((node, i) => {
+      node.textContent = String(i + 1).padStart(2, '0');
+    });
+  };
+
+  const collectTextNodes = (root) => [...root.querySelectorAll(TEXT_SELECTORS)].filter((node) => {
+    if (node.closest('.theme-control, .report-chrome, .document-nav, .report-pager')) return false;
+    if (node.matches('[data-deck-title], [data-deck-part], .section-header__part')) return true;
+    if (node.hidden || node.getAttribute('hidden') !== null) return false;
+    return true;
+  });
+
+  const collectImages = (root) => [...root.querySelectorAll('img')].filter((node) => (
+    !node.closest('.theme-control, .report-chrome, .document-nav, .report-pager')
+  ));
+
+  const slideOf = (node) => node.closest('.report-slide') || document.querySelector('.report-slide.is-active');
+
+  const fieldKey = (node, kind, index) => {
+    const slide = slideOf(node);
+    const id = slide?.dataset.slide || slide?.id || 'page';
+    if (node.matches?.('[data-deck-title]')) return `${id}::title`;
+    if (node.matches?.('[data-deck-part]')) return `${id}::part`;
+    if (node.classList?.contains('section-header__title')) return `${id}::title`;
+    if (node.classList?.contains('section-header__part')) return `${id}::part`;
+    return `${id}::${kind}:${index}`;
+  };
+
+  const applyText = (node, value) => {
+    if (node.classList.contains('stat-value')) {
+      node.dataset.statSymbols = '';
+      node.textContent = value;
+      return;
+    }
+    node.textContent = value;
+  };
+
+  const syncPairedTitle = (node, value) => {
+    const slide = slideOf(node) || document.querySelector('.report-slide.is-active');
+    if (!slide) return;
+    if (node.matches('[data-deck-title]') || node.classList.contains('section-header__title')) {
+      slide.querySelectorAll('.section-header__title, [data-deck-title]').forEach((el) => {
+        if (el !== node) el.textContent = value;
+      });
+      const head = document.querySelector('[data-deck-title]');
+      if (head && head !== node) head.textContent = value;
+    }
+    if (node.matches('[data-deck-part]') || node.classList.contains('section-header__part')) {
+      slide.querySelectorAll('.section-header__part, [data-deck-part]').forEach((el) => {
+        if (el !== node) {
+          el.textContent = value;
+          el.hidden = !value;
+        }
+      });
+      const head = document.querySelector('[data-deck-part]');
+      if (head && head !== node) {
+        head.textContent = value;
+        head.hidden = !value;
+      }
+    }
+  };
+
+  const mountReportEditor = () => {
+    const chrome = document.querySelector('[data-report-chrome]');
+    const spot = document.querySelector('.report-chrome-hotspot');
+    const stage = document.querySelector('[data-report-stage]');
+    if (!chrome || !stage) return;
+
+    const slug = reportSlug();
+    const hasReportFile = !/editorial-default|states-demo/.test(location.pathname);
+    const objectUrls = new Map();
+    const originals = { texts: {}, images: {} };
+    const originalBlocks = {};
+    let state = emptyState();
+    let reportSource = '';
+    let justExited = false;
+    let typingTimer = 0;
+    let typingKey = '';
+    let fileInput = null;
+
+    const actions = document.createElement('div');
+    actions.className = 'report-chrome__edit';
+    actions.innerHTML = [
+      '<button class="button subtle" type="button" data-edit-export hidden>更新文档</button>',
+      '<button class="button primary" type="button" data-edit-enter hidden>编辑</button>',
+      '<button class="button primary" type="button" data-edit-done hidden>完成</button>',
+      '<div class="report-edit-ask" data-edit-ask><span>是否更新文档？</span><button class="button primary" type="button" data-edit-yes>是</button><button class="button subtle" type="button" data-edit-no>否</button></div>',
+    ].join('');
+    chrome.appendChild(actions);
+    const enterBtn = actions.querySelector('[data-edit-enter]');
+    const doneBtn = actions.querySelector('[data-edit-done]');
+    const exportBtn = actions.querySelector('[data-edit-export]');
+
+    const menu = document.createElement('div');
+    menu.className = 'report-edit-menu';
+    menu.hidden = true;
+    menu.innerHTML = [
+      '<button class="button subtle" type="button" data-edit-add-item>添加</button>',
+      '<button class="button subtle" type="button" data-edit-remove-item>删除</button>',
+    ].join('');
+    document.body.appendChild(menu);
+    let menuTarget = null;
+
+    const hideMenu = () => {
+      menu.hidden = true;
+      menuTarget = null;
+    };
+
+    const showMenu = (event, target) => {
+      menuTarget = target;
+      const items = [...target.parent.querySelectorAll(itemSelector(target.parent))];
+      menu.querySelector('[data-edit-remove-item]').hidden = !target.item || items.length <= 1;
+      menu.hidden = false;
+      const box = menu.getBoundingClientRect();
+      const pad = 8;
+      menu.style.left = `${Math.max(pad, Math.min(event.clientX, window.innerWidth - box.width - pad))}px`;
+      menu.style.top = `${Math.max(pad, Math.min(event.clientY, window.innerHeight - box.height - pad))}px`;
+    };
+
+    const isEditing = () => document.documentElement.classList.contains('is-editing');
+    const isDirty = () => fieldSig(state) !== state.exportedSig;
+
+    const refreshButtons = () => {
+      const editing = isEditing();
+      const asking = document.documentElement.classList.contains('is-asking');
+      enterBtn.hidden = editing || asking;
+      doneBtn.hidden = !editing || asking;
+      exportBtn.hidden = editing || asking || !hasReportFile || !isDirty();
+    };
+
+    const persist = async () => {
+      const payload = {
+        texts: state.texts,
+        images: state.images,
+        blocks: state.blocks,
+        history: state.history,
+        cursor: state.cursor,
+        exportedSig: state.exportedSig,
+        nextVersion: state.nextVersion,
+      };
+      await idbSet('state', slug, payload);
+    };
+
+    const snapshot = () => ({
+      texts: { ...state.texts },
+      images: { ...state.images },
+      blocks: { ...state.blocks },
+    });
+
+    const pushHistory = () => {
+      const next = snapshot();
+      const current = state.history[state.cursor];
+      if (current && JSON.stringify(current) === JSON.stringify(next)) return;
+      state.history = state.history.slice(0, state.cursor + 1);
+      state.history.push(next);
+      if (state.history.length > 100) state.history.shift();
+      state.cursor = state.history.length - 1;
+    };
+
+    const textNodes = () => collectTextNodes(document);
+    const imageNodes = () => collectImages(document);
+
+    const indexNodes = (nodes, kind) => {
+      const seen = new Map();
+      return nodes.map((node) => {
+        const slide = slideOf(node);
+        const base = slide?.dataset.slide || slide?.id || 'page';
+        const n = (seen.get(base) || 0);
+        seen.set(base, n + 1);
+        const key = kind === 'text' && (node.classList.contains('section-header__title') || node.matches('[data-deck-title]'))
+          ? `${base}::title`
+          : kind === 'text' && (node.classList.contains('section-header__part') || node.matches('[data-deck-part]'))
+            ? `${base}::part`
+            : `${base}::${kind}:${n}`;
+        return { node, key };
+      });
+    };
+
+    const bindKeys = () => {
+      indexNodes(textNodes(), 'text').forEach(({ node, key }) => {
+        node.dataset.editKey = key;
+        if (!(key in originals.texts)) originals.texts[key] = node.textContent;
+      });
+      indexNodes(imageNodes(), 'img').forEach(({ node, key }) => {
+        node.dataset.editKey = key;
+        if (!(key in originals.images)) {
+          originals.images[key] = { src: node.getAttribute('src') || '', name: (node.getAttribute('src') || '').split('/').pop() };
+        }
+      });
+    };
+
+    const currentValue = (key) => {
+      if (key in state.texts) return state.texts[key];
+      return originals.texts[key] ?? '';
+    };
+
+    const readBlock = (parent) => ({
+      html: parent.innerHTML,
+      itemCount: parent.getAttribute('data-item-count') || '',
+    });
+
+    const writeBlock = (parent, rec) => {
+      if (!parent || rec == null) return;
+      const html = typeof rec === 'string' ? rec : rec.html;
+      const itemCount = typeof rec === 'string' ? null : rec.itemCount;
+      if (html != null) parent.innerHTML = html;
+      if (itemCount) parent.setAttribute('data-item-count', itemCount);
+      else if (itemCount === '') parent.removeAttribute('data-item-count');
+    };
+
+    const captureOriginalBlocks = () => {
+      document.querySelectorAll(ADDABLE_PARENTS).forEach((parent) => {
+        if (!canAddTo(parent)) return;
+        const key = blockKeyOf(parent);
+        if (!(key in originalBlocks)) originalBlocks[key] = readBlock(parent);
+      });
+    };
+
+    const applyBlocks = () => {
+      const keys = new Set([
+        ...Object.keys(originalBlocks),
+        ...Object.keys(state.blocks || {}),
+      ]);
+      keys.forEach((key) => {
+        const [slideId, type] = key.split('::');
+        const slide = document.querySelector(`.report-slide[data-slide="${slideId}"]`);
+        const parent = slide?.querySelector(`.${type}`);
+        if (!parent) return;
+        const rec = Object.prototype.hasOwnProperty.call(state.blocks || {}, key)
+          ? state.blocks[key]
+          : originalBlocks[key];
+        writeBlock(parent, rec);
+      });
+      mountMediaSwitch();
+    };
+
+    const persistBlock = (parent) => {
+      if (!parent || !canAddTo(parent)) return;
+      state.blocks[blockKeyOf(parent)] = readBlock(parent);
+    };
+
+    const inAddable = (node) => {
+      const parent = node.closest(ADDABLE_PARENTS);
+      return Boolean(parent && canAddTo(parent));
+    };
+
+    const applyStateToDom = async () => {
+      applyBlocks();
+      bindKeys();
+      indexNodes(textNodes(), 'text').forEach(({ node, key }) => {
+        if (inAddable(node)) return;
+        const value = currentValue(key);
+        if (value !== undefined && node.textContent !== value) {
+          applyText(node, value);
+          syncPairedTitle(node, value);
+        }
+      });
+      const imgs = indexNodes(imageNodes(), 'img');
+      for (const { node, key } of imgs) {
+        if (inAddable(node)) continue;
+        const rec = state.images[key];
+        if (!rec) {
+          const orig = originals.images[key];
+          if (orig?.src && node.getAttribute('src') !== orig.src) node.src = orig.src;
+          continue;
+        }
+        const blob = await idbGet('blobs', `${slug}::${key}`);
+        if (blob instanceof Blob) {
+          const prev = objectUrls.get(key);
+          if (prev) URL.revokeObjectURL(prev);
+          const url = URL.createObjectURL(blob);
+          objectUrls.set(key, url);
+          node.src = url;
+          if (node.hasAttribute('data-src')) node.setAttribute('data-src', url);
+          const main = node.closest('.media-switch')?.querySelector('[data-media-main]');
+          if (node.classList.contains('media-switch__thumb') && main?.tagName === 'IMG' && node.classList.contains('is-active')) {
+            main.src = url;
+          }
+        }
+      }
+    };
+
+    const commitText = (key, value, { history = true } = {}) => {
+      if (originals.texts[key] === value) {
+        if (key in state.texts) delete state.texts[key];
+      } else {
+        state.texts[key] = value;
+      }
+      const node = document.querySelector(`[data-edit-key="${CSS.escape(key)}"]`);
+      const parent = node?.closest(ADDABLE_PARENTS);
+      if (parent && canAddTo(parent)) persistBlock(parent);
+      if (history) pushHistory();
+      persist();
+      refreshButtons();
+    };
+
+    const enableEditing = () => {
+      bindKeys();
+      const part = document.querySelector('[data-deck-part]');
+      if (part) part.hidden = false;
+      document.querySelectorAll('.report-slide.is-active .section-header__part').forEach((node) => {
+        node.hidden = false;
+      });
+      indexNodes(textNodes(), 'text').forEach(({ node }) => {
+        node.setAttribute('data-edit-text', '');
+        node.contentEditable = 'true';
+        node.spellcheck = false;
+      });
+      document.querySelectorAll('.evidence-figure:not(.media-switch)').forEach((node) => {
+        if (node.closest('[data-image-kind="strip"]')) return;
+        node.setAttribute('data-edit-frame', '');
+      });
+      document.querySelectorAll(ADDABLE_PARENTS).forEach((parent) => {
+        if (!canAddTo(parent)) return;
+        parent.setAttribute('data-edit-add', '');
+        parent.querySelectorAll(itemSelector(parent)).forEach((item) => {
+          item.setAttribute('data-edit-item', '');
+          item.draggable = true;
+        });
+      });
+      document.querySelectorAll(COPY_REGION).forEach((region) => {
+        const found = [...region.querySelectorAll(ADDABLE_PARENTS)].filter(canAddTo);
+        if (found.length === 1) region.setAttribute('data-edit-add', '');
+      });
+    };
+
+    const disableEditing = () => {
+      document.querySelectorAll('[data-edit-text]').forEach((node) => {
+        node.removeAttribute('contenteditable');
+        node.removeAttribute('data-edit-text');
+      });
+      document.querySelectorAll('[data-edit-frame]').forEach((node) => {
+        node.removeAttribute('data-edit-frame');
+        node.classList.remove('is-picked');
+      });
+      document.querySelectorAll('[data-edit-item]').forEach((node) => {
+        node.removeAttribute('data-edit-item');
+        node.removeAttribute('draggable');
+      });
+      document.querySelectorAll('[data-edit-add]').forEach((node) => {
+        node.removeAttribute('data-edit-add');
+      });
+      const part = document.querySelector('[data-deck-part]');
+      if (part && !part.textContent.trim()) part.hidden = true;
+    };
+
+    const enterEdit = () => {
+      if (isEditing()) return;
+      document.documentElement.classList.add('is-editing');
+      document.documentElement.classList.remove('is-asking');
+      enableEditing();
+      refreshButtons();
+    };
+
+    const exitEdit = () => {
+      document.documentElement.classList.remove('is-editing', 'is-asking');
+      disableEditing();
+      hideMenu();
+      justExited = true;
+      refreshButtons();
+    };
+
+    const loadReportSource = async () => {
+      if (reportSource) return reportSource;
+      try {
+        const res = await fetch('report.md', { cache: 'no-store' });
+        if (res.ok) {
+          reportSource = await res.text();
+          return reportSource;
+        }
+      } catch (_) { /* file:// */ }
+      return new Promise((resolve) => {
+        const picker = document.createElement('input');
+        picker.type = 'file';
+        picker.accept = '.md,text/markdown';
+        picker.addEventListener('change', async () => {
+          const file = picker.files?.[0];
+          reportSource = file ? await file.text() : '';
+          resolve(reportSource);
+        });
+        picker.click();
+      });
+    };
+
+    const patchMarkdown = (md) => {
+      const groups = {};
+      Object.entries(state.texts).forEach(([key, value]) => {
+        const [slide, slot] = key.split('::');
+        groups[slide] ||= { title: null, part: null, texts: [] };
+        if (slot === 'title') groups[slide].title = value;
+        else if (slot === 'part') groups[slide].part = value;
+        else groups[slide].texts.push(value);
+      });
+      Object.entries(state.images).forEach(([key, rec]) => {
+        const slide = key.split('::')[0];
+        groups[slide] ||= { title: null, part: null, texts: [], images: [] };
+        groups[slide].images ||= [];
+        groups[slide].images.push(rec.name);
+      });
+      return md.replace(/(^#{2,3}[^\n]*\n)([\s\S]*?)(?=^#{2,3} |\s*$)/gm, (full, heading, body) => {
+        const token = heading.replace(/^#{2,3}\s+/, '').trim().split(/[\s·]/)[0];
+        const group = groups[token];
+        if (!group) return full;
+        let next = body;
+        if (group.title != null) {
+          next = next.replace(/(`__title`：).*/, `$1${group.title}`);
+        }
+        if (group.part != null) {
+          if (/`__part`：/.test(next)) next = next.replace(/(`__part`：).*/, `$1${group.part}`);
+          else next = next.replace(/(正文：)/, `\`__part\`：${group.part}\n$1`);
+        }
+        if (group.texts?.length && /正文：/.test(next)) {
+          const lines = next.split('\n');
+          let i = 0;
+          const out = lines.map((line) => {
+            if (!/^\s*-\s+/.test(line) || i >= group.texts.length) return line;
+            const indent = line.match(/^\s*/)[0];
+            const value = group.texts[i];
+            i += 1;
+            return `${indent}- ${value}`;
+          });
+          next = out.join('\n');
+        }
+        if (group.images?.length && /图：/.test(next)) {
+          let i = 0;
+          next = next.replace(/(^\s*-\s+`)([^`]+)(`)/gm, (m, a, path, c) => {
+            if (i >= group.images.length) return m;
+            const name = group.images[i];
+            i += 1;
+            const dir = path.includes('/') ? path.slice(0, path.lastIndexOf('/') + 1) : 'assets/';
+            return `${a}${dir}${name}${c}`;
+          });
+        }
+        return heading + next;
+      });
+    };
+
+    const exportReport = async () => {
+      if (!hasReportFile) return;
+      const source = await loadReportSource();
+      if (!source) return;
+      const md = patchMarkdown(source);
+      const version = state.nextVersion || 2;
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `report-v${version}.md`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      state.nextVersion = version + 1;
+      state.exportedSig = fieldSig(state);
+      await persist();
+      refreshButtons();
+    };
+
+    const undo = async () => {
+      if (state.cursor <= 0) return;
+      state.cursor -= 1;
+      const snap = state.history[state.cursor];
+      state.texts = { ...snap.texts };
+      state.images = { ...snap.images };
+      state.blocks = { ...(snap.blocks || {}) };
+      await applyStateToDom();
+      if (isEditing()) enableEditing();
+      persist();
+      refreshButtons();
+    };
+
+    const redo = async () => {
+      if (state.cursor >= state.history.length - 1) return;
+      state.cursor += 1;
+      const snap = state.history[state.cursor];
+      state.texts = { ...snap.texts };
+      state.images = { ...snap.images };
+      state.blocks = { ...(snap.blocks || {}) };
+      await applyStateToDom();
+      if (isEditing()) enableEditing();
+      persist();
+      refreshButtons();
+    };
+
+    const addItem = (parent) => {
+      const sel = itemSelector(parent);
+      const items = [...parent.querySelectorAll(sel)];
+      const last = items[items.length - 1];
+      if (!last) return;
+      const clone = clearClone(last.cloneNode(true));
+      last.after(clone);
+      if (parent.matches('.steps')) renumberSteps(parent);
+      parent.setAttribute('data-item-count', String(items.length + 1));
+      persistBlock(parent);
+      bindKeys();
+      enableEditing();
+      pushHistory();
+      persist();
+      refreshButtons();
+    };
+
+    const removeItem = (parent, item) => {
+      const items = [...parent.querySelectorAll(itemSelector(parent))];
+      if (!item || items.length <= 1 || !parent.contains(item)) return;
+      item.remove();
+      if (parent.matches('.steps')) renumberSteps(parent);
+      parent.setAttribute('data-item-count', String(items.length - 1));
+      persistBlock(parent);
+      bindKeys();
+      enableEditing();
+      pushHistory();
+      persist();
+      refreshButtons();
+    };
+
+    const pickImage = (img) => {
+      if (!fileInput) {
+        fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.hidden = true;
+        document.body.appendChild(fileInput);
+      }
+      fileInput.onchange = async () => {
+        const file = fileInput.files?.[0];
+        fileInput.value = '';
+        if (!file) return;
+        const key = img.dataset.editKey;
+        if (!key) return;
+        await idbSet('blobs', `${slug}::${key}`, file);
+        state.images[key] = { name: file.name, type: file.type };
+        const prev = objectUrls.get(key);
+        if (prev) URL.revokeObjectURL(prev);
+        const url = URL.createObjectURL(file);
+        objectUrls.set(key, url);
+        img.src = url;
+        if (img.hasAttribute('data-src')) img.setAttribute('data-src', url);
+        const thumb = img.closest('.media-switch__thumb');
+        const main = img.closest('.media-switch')?.querySelector('[data-media-main]');
+        if (thumb) {
+          thumb.setAttribute('data-src', url);
+          if (file.name) thumb.setAttribute('data-alt', file.name);
+          if (thumb.classList.contains('is-active') && main?.tagName === 'IMG') {
+            main.src = url;
+            if (main.dataset.editKey) {
+              state.images[main.dataset.editKey] = { name: file.name, type: file.type };
+              await idbSet('blobs', `${slug}::${main.dataset.editKey}`, file);
+            }
+          }
+        } else if (img.classList.contains('media-switch__thumb') && main?.tagName === 'IMG') {
+          main.src = url;
+        }
+        const parent = img.closest(ADDABLE_PARENTS);
+        if (parent && canAddTo(parent)) persistBlock(parent);
+        pushHistory();
+        persist();
+        refreshButtons();
+      };
+      fileInput.click();
+    };
+
+    chrome.addEventListener('click', (event) => {
+      if (event.target.closest('[data-edit-enter]')) {
+        event.preventDefault();
+        enterEdit();
+        return;
+      }
+      if (event.target.closest('[data-edit-done]')) {
+        event.preventDefault();
+        if (hasReportFile && isDirty()) {
+          document.documentElement.classList.add('is-asking');
+          refreshButtons();
+        } else {
+          exitEdit();
+        }
+        return;
+      }
+      if (event.target.closest('[data-edit-yes]')) {
+        event.preventDefault();
+        exportReport().finally(exitEdit);
+        return;
+      }
+      if (event.target.closest('[data-edit-no]')) {
+        event.preventDefault();
+        exitEdit();
+        return;
+      }
+      if (event.target.closest('[data-edit-export]')) {
+        event.preventDefault();
+        exportReport();
+      }
+    });
+
+    chrome.addEventListener('mouseleave', () => {
+      justExited = false;
+    });
+    spot?.addEventListener('mouseleave', () => {
+      if (!chrome.matches(':hover')) justExited = false;
+    });
+
+    document.addEventListener('input', (event) => {
+      if (!isEditing()) return;
+      const node = event.target.closest?.('[data-edit-text]');
+      if (!node) return;
+      const key = node.dataset.editKey;
+      if (!key) return;
+      syncPairedTitle(node, node.textContent);
+      window.clearTimeout(typingTimer);
+      typingKey = key;
+      typingTimer = window.setTimeout(() => {
+        commitText(key, node.textContent);
+        typingKey = '';
+      }, 400);
+    });
+
+    document.addEventListener('focusout', (event) => {
+      const node = event.target.closest?.('[data-edit-text]');
+      if (!node || !isEditing()) return;
+      const key = node.dataset.editKey;
+      if (!key) return;
+      window.clearTimeout(typingTimer);
+      commitText(key, node.textContent, { history: typingKey === key || !typingKey });
+      typingKey = '';
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!isEditing()) return;
+      if (event.target.closest('.report-chrome, .document-nav, .theme-control, .report-pager, .report-edit-menu')) return;
+      const thumb = event.target.closest('.media-switch__thumb');
+      if (thumb) {
+        event.preventDefault();
+        event.stopPropagation();
+        const img = thumb.querySelector('img');
+        if (img) pickImage(img);
+        return;
+      }
+      if (event.target.closest('.media-switch, .media-switch__panel, .media-switch__label, img, figcaption, [data-edit-text]')) return;
+      const frame = event.target.closest('[data-edit-frame]');
+      if (!frame) return;
+      event.preventDefault();
+      event.stopPropagation();
+      document.querySelectorAll('[data-edit-frame].is-picked').forEach((node) => node.classList.remove('is-picked'));
+      frame.classList.add('is-picked');
+      const img = frame.querySelector('img[data-media-main], .evidence-window img, img');
+      if (img) pickImage(img);
+    }, true);
+
+    document.addEventListener('contextmenu', (event) => {
+      if (!isEditing()) return;
+      const node = event.target instanceof Element ? event.target : event.target?.parentElement;
+      if (!node || node.closest('.report-chrome, .document-nav, .theme-control, .report-pager, .report-edit-menu')) return;
+      const target = parentFromEvent(event);
+      if (!target.parent) return;
+      event.preventDefault();
+      showMenu(event, target);
+    });
+
+    menu.addEventListener('click', (event) => {
+      if (!menuTarget) return;
+      if (event.target.closest('[data-edit-add-item]')) addItem(menuTarget.parent);
+      if (event.target.closest('[data-edit-remove-item]') && menuTarget.item) {
+        removeItem(menuTarget.parent, menuTarget.item);
+      }
+      hideMenu();
+    });
+
+    document.addEventListener('pointerdown', (event) => {
+      if (menu.hidden || event.target.closest('.report-edit-menu')) return;
+      hideMenu();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') hideMenu();
+    });
+
+    let dragItem = null;
+    document.addEventListener('dragstart', (event) => {
+      if (!isEditing()) return;
+      if (event.target.closest('[data-edit-text]')) {
+        event.preventDefault();
+        return;
+      }
+      const item = event.target.closest('[data-edit-item]');
+      if (!item) return;
+      dragItem = item;
+      event.dataTransfer.effectAllowed = 'move';
+    });
+    document.addEventListener('dragover', (event) => {
+      if (!dragItem) return;
+      event.preventDefault();
+    });
+    document.addEventListener('drop', (event) => {
+      if (!dragItem) return;
+      event.preventDefault();
+      const over = event.target.closest('[data-edit-item]');
+      const parent = dragItem.closest(ADDABLE_PARENTS);
+      if (over && parent && parent.contains(over) && over !== dragItem) {
+        const items = [...parent.querySelectorAll(itemSelector(parent))];
+        if (items.indexOf(dragItem) < items.indexOf(over)) over.after(dragItem);
+        else over.before(dragItem);
+        if (parent.matches('.steps')) renumberSteps(parent);
+        persistBlock(parent);
+        bindKeys();
+        pushHistory();
+        persist();
+      }
+      dragItem = null;
+    });
+    document.addEventListener('dragend', () => { dragItem = null; });
+
+    document.addEventListener('keydown', (event) => {
+      const key = event.key.toLowerCase();
+      const undoKey = (event.metaKey || event.ctrlKey) && key === 'z' && !event.shiftKey && !event.altKey;
+      const redoKey = (event.metaKey || event.ctrlKey) && ((key === 'z' && event.shiftKey) || key === 'y');
+      if (!undoKey && !redoKey) return;
+      event.preventDefault();
+      if (typingKey) {
+        const node = document.activeElement?.closest?.('[data-edit-text]');
+        if (node) commitText(node.dataset.editKey, node.textContent);
+        typingKey = '';
+      }
+      if (undoKey) undo();
+      else redo();
+    }, true);
+
+    const refreshEditSurface = () => {
+      hideMenu();
+      bindKeys();
+      if (isEditing()) enableEditing();
+    };
+    window.addEventListener('hashchange', refreshEditSurface);
+    document.addEventListener('seed:slidechange', refreshEditSurface);
+
+    idbGet('state', slug).then(async (saved) => {
+      bindKeys();
+      captureOriginalBlocks();
+      if (saved && (saved.texts || saved.images || saved.blocks)) {
+        state = {
+          texts: saved.texts || {},
+          images: saved.images || {},
+          blocks: saved.blocks || {},
+          history: Array.isArray(saved.history) && saved.history.length
+            ? saved.history
+            : [{ texts: {}, images: {}, blocks: {} }, { texts: { ...(saved.texts || {}) }, images: { ...(saved.images || {}) }, blocks: { ...(saved.blocks || {}) } }],
+          cursor: Number.isInteger(saved.cursor) ? saved.cursor : 0,
+          exportedSig: saved.exportedSig || fieldSig({ texts: {}, images: {}, blocks: {} }),
+          nextVersion: saved.nextVersion || 2,
+        };
+        if (state.cursor < 0 || state.cursor >= state.history.length) {
+          state.cursor = state.history.length - 1;
+        }
+        await applyStateToDom();
+      } else {
+        state.history = [{ texts: {}, images: {}, blocks: {} }];
+        state.cursor = 0;
+        state.exportedSig = fieldSig(state);
+        await persist();
+      }
+      refreshButtons();
+    }).catch(() => {
+      bindKeys();
+      captureOriginalBlocks();
+      state.history = [{ texts: {}, images: {}, blocks: {} }];
+      state.cursor = 0;
+      refreshButtons();
+    });
+  };
+
   if (mountDeck()) {
     bindEvidenceLayout();
+    mountReportEditor();
     return;
   }
   bindEvidenceLayout();
+  mountReportEditor();
 
   const nav = document.querySelector('[data-component-id="navigation"]');
   const links = [...(nav?.querySelectorAll('a') || [])];

@@ -926,10 +926,84 @@ html:has(.report-shell.is-deck) .theme-control__hint { display: none; }
 html:has(.report-chrome-hotspot:hover) .report-chrome,
 html:has(.report-chrome-hotspot:focus-visible) .report-chrome,
 .report-chrome:hover,
-.report-chrome:focus-within {
+.report-chrome:focus-within,
+html.is-editing .report-chrome {
   opacity: 1;
   pointer-events: auto;
   transform: none;
+}
+html.is-editing .report-chrome-hotspot {
+  pointer-events: none;
+}
+.report-chrome__edit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.report-chrome__edit[hidden] { display: none; }
+.report-edit-ask {
+  display: none;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--ink);
+  font-size: 12px;
+}
+html.is-asking .report-edit-ask { display: flex; }
+html.is-asking [data-edit-done],
+html.is-asking [data-edit-enter] { display: none; }
+[data-edit-text] {
+  outline: none;
+  cursor: text;
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--accent) 40%, transparent);
+}
+[data-edit-text]:focus {
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+html.is-editing [data-edit-frame] {
+  outline: 2px solid transparent;
+  outline-offset: 3px;
+}
+html.is-editing [data-edit-frame]:hover,
+html.is-editing [data-edit-frame].is-picked {
+  outline-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+html.is-editing [data-edit-item] { cursor: grab; }
+html.is-editing [data-edit-item]:active { cursor: grabbing; }
+html.is-editing .media-switch__thumb {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+html.is-editing .media-switch__thumb:hover {
+  outline-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.report-edit-menu {
+  position: fixed;
+  z-index: 80;
+  display: grid;
+  min-width: 7.5rem;
+  padding: 4px;
+  border: var(--line-thin) solid var(--line);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--paper) 96%, transparent);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--ink) 12%, transparent);
+}
+.report-edit-menu[hidden] { display: none; }
+.report-edit-menu .button {
+  justify-content: flex-start;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+}
+.report-edit-menu .button:hover {
+  background: var(--surface-soft);
+}
+html.is-editing .report-deck-head .section-header__part,
+html.is-editing .report-deck-head .section-header__part:empty,
+html.is-editing .report-deck-head .section-header__part[hidden] {
+  display: block;
+  min-height: 1.2em;
 }
 
 .report-shell.is-deck {
