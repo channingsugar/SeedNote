@@ -1359,12 +1359,21 @@ button.media-switch__label {
   color: var(--muted);
   border: 0;
   border-radius: var(--radius-pill);
+  outline: none;
+  box-shadow: none;
+  -webkit-tap-highlight-color: transparent;
   text-decoration: none;
   font-size: 11px;
   font-weight: var(--weight-medium);
   letter-spacing: .12em;
   text-transform: uppercase;
   transition: color var(--motion-fast) ease, background var(--motion-fast) ease;
+}
+.document-nav a:focus,
+.document-nav a:focus-visible,
+.document-nav a:active {
+  outline: none;
+  box-shadow: none;
 }
 .document-nav a:hover {
   color: var(--accent);

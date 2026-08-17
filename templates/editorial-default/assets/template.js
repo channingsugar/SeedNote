@@ -449,6 +449,7 @@
         if (!href.startsWith('#')) return;
         event.preventDefault();
         show(slideIndexForHash(href), { motion: 'chapter' });
+        link.blur();
       });
     });
 

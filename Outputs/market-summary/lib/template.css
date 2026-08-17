@@ -1542,9 +1542,20 @@ html:has(.report-slide.is-active [data-media-page="stack"]) .report-deck-head .s
 .report-shell.is-deck .report-notes {
   flex: 1;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  justify-content: safe center;
+  align-items: center;
   overflow: auto;
+  overscroll-behavior: contain;
   box-sizing: border-box;
   padding: calc(var(--chrome-height, 52px) + var(--space-6)) clamp(24px, 4vw, 64px) var(--space-6);
+}
+.report-shell.is-deck .report-notes h2,
+.report-shell.is-deck .report-notes ol {
+  width: min(40rem, 100%);
+  max-width: 100%;
 }
 .report-pager {
   display: flex;
