@@ -76,12 +76,6 @@
     if (node.getAttribute('data-image-kind') === 'shot' || node.querySelector('[data-image-kind="shot"]')) {
       return { w: 0.46, h: 1 };
     }
-    const isCover = node.classList.contains('media-switch')
-      || node.classList.contains('is-cover')
-      || Boolean(node.querySelector?.(':scope > .media-switch.is-cover, :scope > .media-switch'));
-    if (isCover && !node.getAttribute('data-image-ratio') && !node.querySelector('[data-image-ratio]')) {
-      return { w: 9, h: 16 };
-    }
     const raw = node.getAttribute('data-image-ratio')
       || node.querySelector('[data-image-ratio]')?.getAttribute('data-image-ratio')
       || getComputedStyle(node).getPropertyValue('--image-ratio')
@@ -403,7 +397,7 @@
       }
 
       index = clamped;
-      to.querySelectorAll('.report-section__stack, .table-wrap, .evidence-window').forEach((box) => {
+      to.querySelectorAll('.page-region, .table-wrap, .evidence-window').forEach((box) => {
         box.scrollTop = 0;
         box.scrollLeft = 0;
       });

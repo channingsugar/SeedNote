@@ -146,36 +146,101 @@ description: >-
 
 只组织：把这份稿交给用户，停。要页：按稿套模板，不按源 HTML 的外形切。不要在稿末另写一套「这些屏用强调、那些屏改标题」的清单，判断写在每一节点上。
 
-## 3. 形式
+## 3. 页面与父组件
 
-形式跟着问句走，不跟着组件走。markup 从 `templates/editorial-default/` 抄结构，看状态时打开 `templates/states-demo/`。样式拷到 `Outputs/<slug>/lib/`。不要输出去读 `../../design-system/`。
+形式跟着问句走。markup 从 `templates/editorial-default/` 抄壳。模板按分页穷举父组件：标题是组件名，副题是使用场景。报告抄 class 和结构，不要按它一组件一屏切。Evidence 多一种比例时打开 `templates/states-demo/`。样式拷到 `Outputs/<slug>/lib/`。不要输出去读 `../../design-system/`。
 
-分片只有三种：1 分区、配图 · 左右、配图 · 上下。一个格子只放一个父组件。
+先选分页，再往格子里放**一个**父组件。不要发明第七种分页，也不要在一个格子里叠两个父组件。`report-section__stack` 和 `report-split` 不是分页，不要抄。不要给 Card / Callout 加装饰线。
 
-| 这一屏要完成什么 | 分区 | 往格子里放 |
+### 分页（只有这些）
+
+| 分页 | markup | 这一屏是什么 |
 |---|---|---|
-| 整场开场 | 壳 | `.report-cover` |
-| 换气 | 壳 | `.chapter-cover` |
-| 边界 | 壳 | `.report-notes`（最后一章，导航里有这一档） |
-| 判断，只要字 | 1 分区 | Decision Callout |
-| 判断，图是场景 | 配图 · 上下 | Callout |
-| 图 + 图注 | 1 分区 | Evidence |
-| 同一问的 N 张一卡一眼 | 1 分区 | N 个 Media Switch 封面并排 |
-| 单独一张一卡一眼 | 1 分区 | 一个 Media Switch 封面 |
-| 截图 / 条带 | 1 分区 | Evidence（`shot` / `strip`） |
-| 左图右文 | 配图 · 左右 | 右侧：默认文案 / List / Steps / 强调 / Bar |
-| 并列要点 | 1 分区 | 普通 Card Grid 或 Labeled List |
-| 必须并排钉住的几句判断 | 1 分区 | Card Grid `.is-highlight` |
-| 步骤 | 1 分区 | Process Steps |
-| 比较表 / 明细表 | 1 分区 | Data Table |
-| 同类量比较 | 1 分区 | Bar Compare |
-| 尺度 | 1 分区 | Stat Grid |
+| 封面 | `.report-cover` | 整场开场。壳，没有格子 |
+| 章封面 | `.chapter-cover` | 换气。壳，没有格子 |
+| 口径 | `.report-notes` | 边界。最后一章，导航里有这一档。壳，没有格子 |
+| 1 分区 | `.page-regions[data-regions="1"]` | 一个格子，铺满标题下的内容区 |
+| 配图 · 左右 | `[data-media-page="split"]` | 左图右文，各占 1/2。图槽不是 Evidence，不显示图注 |
+| 配图 · 上下 | `[data-media-page="stack"]` | 图铺满当底，标题叠在图上；底部定高只排 1 行。图槽不是 Evidence，不显示图注 |
 
-表：一种字段一列。标记和说明不是同一字段，不要写进同一格。列名写在表头，表头就是第一行，打开就能看见。从上往下看，不要把表头做成叠在正文上的吸附条。首列标签不折行。正文在格子里换行，不许盖过表头。列宽按字段收，剩余宽度给最后一列。表头保持横排。行高由单元格自身决定，不要把表拉满再均分行距。最后一行下面不画线。
+当前这版 OUTPUT 的内容屏全部是 **1 分区**。左右 / 上下系统有，这版没用。选分页仍按问句，不要为了用上配图页硬切。
 
-List / Steps / Table / Bar Compare 同一套适配：整块按最长一条定宽，在格子里水平居中；条目左对齐共一条边，不要每条单独居中。条数少时整块垂直居中，超过 5 条顶对齐、格子里上下滚。字和分割线同宽。行按内容高度，不拉满。最后一条下面不画线。
+### 父组件（只有这些）
 
-图：通用图默认 Fill；Media Switch 封面锁定 `9:16` Fill，文字浮层铺满图窗、不留边距；截图 `shot` + `0.46:1` Fit；宽/高 ≥ 2 用 `strip`。
+| 父组件 | class | 什么时候用 |
+|---|---|---|
+| Decision Callout | `.callout` | 改一个判断，只要一句 |
+| Card Grid | `.card-grid` | 并列要点，一卡一眼 |
+| Card Grid · 强调 | `.card-grid.is-highlight` | 必须并排钉住的几句判断 |
+| Stat Grid | `.card-grid` + `.stat-value` | 尺度。数字行只放数字或符号 |
+| Labeled List | `.list-block` | 属性、规则、条目 |
+| Process Steps | `.steps` | 有先后的步骤 |
+| Data Table | `.table-wrap` > `.data-table` | 比较表 / 明细表 |
+| Bar Compare | `.bar-compare` | 同类量比较。默认横条，竖条加 `.is-vertical` |
+| Evidence | `.image-grid.evidence-gallery` > `.evidence-figure` | 图 + 图注 |
+| Media Switch 封面 | `.media-switch.is-cover` | 一卡一眼，底部缩略图换主图 |
+| 默认文案 | `.media-page__copy` | 只出现在配图页的字槽 |
+
+Evidence 三种素材：通用图默认 Fill；截图 `shot` + `0.46:1` Fit；宽/高 ≥ 2 用 `strip`。Media Switch 封面锁定 `9:16` Fill，文字浮层铺满图窗、不留边距。
+
+### 分页 × 父组件
+
+`可` = 能进这个格子。`禁` = 不许放。壳没有格子。
+
+| 父组件 | 1 分区 | 左右 · 右 | 上下 · 底 |
+|---|---|---|---|
+| Callout | 可 | 禁 | 可 |
+| Card Grid | 可 | 禁 | 可 |
+| Card Grid · 强调 | 可 | 可 | 可 |
+| Stat Grid | 可 | 禁 | 可 |
+| List | 可 | 可 | 禁 |
+| Steps | 可 | 可 | 禁 |
+| Table | 可 | 禁 | 禁 |
+| Bar Compare | 可 | 可 | 禁 |
+| Evidence | 可 | 禁（图槽用光图） | 禁（图槽用光图） |
+| Media Switch 封面 | 可 | 禁 | 禁 |
+| 默认文案 | 禁 | 可 | 可 |
+
+左右的图槽、上下的图槽：只放一张光图，`data-caption="off"`，不是 Evidence，没有图注。只有图注、离开图字就不成立 → 用 1 分区 Evidence，不要做成左右。
+
+### 各分页里怎么展示
+
+**封面 / 章封面 / 口径**  
+壳自己排。不要往里面塞父组件。
+
+**1 分区**
+
+| 父组件 | 展示 |
+|---|---|
+| Callout | 整块在格子里居中，不拉满。字号随格子变 |
+| Card / Stat | 铺满格子宽度。一行时高度有上限，在格子里居中。多行按内容高度 |
+| Card · 强调 | 铺满宽度，反色。不要再套一层白底 |
+| List / Steps | 整块按最长一条定宽，在格子里水平、垂直居中。条目左对齐共一条边，不要每条单独居中。超过 5 条顶对齐，格子里上下滚。字和分割线同宽。行按内容高度，不拉满。最后一条下面不画线 |
+| Table / Bar | 铺满格子宽度。条数少时整块垂直居中；超过 5 条顶对齐，格子里上下滚。行按内容高度，不把表拉满再均分。最后一行下面不画线 |
+| Evidence | 图在上、图注在下、图注居中。多张并排；放不下横滑，首尾留白，右侧渐隐。通用图 Fill；`shot` 锁定 `0.46:1` Fit；`strip` 横滑 |
+| Media Switch 封面 | 一张或 N 张并排。封面 `9:16` Fill。展开后浮层铺满图窗。缩略图贴底边 |
+
+**配图 · 左右**  
+左图 Fill 满格。右侧一个父组件，留间距后铺满右格。
+
+| 右侧 | 展示 |
+|---|---|
+| 默认文案 | 标题 / 正文 / 来源，铺满右格 |
+| List / Steps | 铺满右格，条目左齐，超过 5 条顶齐可滚 |
+| Card · 强调 | 贴边铺满右格，最多 6 张 |
+| Bar Compare | 铺满右格，默认横条 |
+
+**配图 · 上下**  
+图铺满整页当底。底栏定高、只排 1 行。
+
+| 底栏 | 展示 |
+|---|---|
+| 默认文案 | 深色毛玻，水平居中 |
+| Callout | 浅色毛玻，水平居中 |
+| Card / Stat | 浅色毛玻，铺满底栏 |
+| Card · 强调 | 贴边 |
+
+表：一种字段一列。标记和说明不是同一字段，不要写进同一格。列名写在表头，表头就是第一行，打开就能看见。不要 sticky 表头。首列标签不折行。正文在格子里换行。列宽按字段收，剩余宽度给最后一列。表头保持横排。
 
 硬禁：
 
@@ -193,6 +258,7 @@ List / Steps / Table / Bar Compare 同一套适配：整块按最长一条定宽
 - 一个格子里叠两种父组件
 - 两种字段挤进同一格
 - 把 List / Steps / Table / Bar Compare 有的顶齐、有的居中，或把行拉满制造空线
+- 发明第七种分页，或把 `report-section__stack` / `report-split` 双块叠法带进报告
 
 ## 4. 工作流程
 
