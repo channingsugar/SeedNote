@@ -1,3 +1,4 @@
+/* Single source of token defaults. Design System and templates both load this file. */
 (() => {
   const tokens = {
     aliases: {},
@@ -22,18 +23,19 @@
       { id: 'line', name: '默认分割线', variable: '--line', value: '#c9c9c3', group: 'border' }
     ],
     typeScale: [
-      { id: 'display', name: 'Display', variable: '--text-display', value: 56, lineHeight: 1.06 },
-      { id: 'h1', name: 'Heading 1', variable: '--text-h1', value: 40, lineHeight: 1.14 },
-      { id: 'h2', name: 'Heading 2', variable: '--text-h2', value: 30, lineHeight: 1.2 },
-      { id: 'h3', name: 'Heading 3', variable: '--text-h3', value: 21, lineHeight: 1.3 },
-      { id: 'body', name: 'Body', variable: '--text-body', value: 16, lineHeight: 1.72 },
-      { id: 'small', name: 'Small', variable: '--text-small', value: 13, lineHeight: 1.6 }
+      { id: 'display', name: 'Display', variable: '--text-display', value: 60, lineHeight: 1.41 },
+      { id: 'h1', name: 'Heading 1', variable: '--text-h1', value: 42, lineHeight: 1.4 },
+      { id: 'h2', name: 'Heading 2', variable: '--text-h2', value: 30, lineHeight: 1.4 },
+      { id: 'h3', name: 'Heading 3', variable: '--text-h3', value: 20, lineHeight: 1.4 },
+      { id: 'body', name: 'Body', variable: '--text-body', value: 20, lineHeight: 1.4 },
+      { id: 'small', name: 'Small', variable: '--text-small', value: 14, lineHeight: 1.4 },
+      { id: 'caption', name: 'Caption', variable: '--text-caption', value: 12, lineHeight: 1.4 }
     ],
     radii: [
       { id: 'none', name: '直角', variable: '--radius-none', value: 0 },
-      { id: 'sm', name: '小圆角', variable: '--radius-sm', value: 0 },
-      { id: 'md', name: '中圆角', variable: '--radius-md', value: 0 },
-      { id: 'lg', name: '大圆角', variable: '--radius-lg', value: 0 },
+      { id: 'sm', name: '小圆角', variable: '--radius-sm', value: 2 },
+      { id: 'md', name: '中圆角', variable: '--radius-md', value: 6 },
+      { id: 'lg', name: '大圆角', variable: '--radius-lg', value: 24 },
       { id: 'pill', name: '胶囊', variable: '--radius-pill', value: 999 }
     ],
     lineWidths: [
@@ -45,6 +47,7 @@
       { id: '3', name: 'Space 3', variable: '--space-3', value: 12 },
       { id: '4', name: 'Space 4', variable: '--space-4', value: 14 },
       { id: '5', name: 'Space 5', variable: '--space-5', value: 20 },
+      { id: 'gap', name: 'Space Gap', variable: '--space-gap', value: 24 },
       { id: '6', name: 'Space 6', variable: '--space-6', value: 28 },
       { id: '7', name: 'Space 7', variable: '--space-7', value: 48 },
       { id: '8', name: 'Space 8', variable: '--space-8', value: 72 }
@@ -70,8 +73,8 @@
   };
 
   window.DesignSystemData = {
-    version: 3,
-    storageKey: 'knowledge-report-design-system-v3',
+    version: 7,
+    storageKey: 'knowledge-report-design-system-v7',
     clone(value) {
       return JSON.parse(JSON.stringify(value));
     },

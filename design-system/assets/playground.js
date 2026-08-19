@@ -31,7 +31,7 @@ const initialTokens = {};
   '--paper', '--surface', '--ink', '--accent', '--accent-soft', '--line',
   '--radius-sm', '--radius-md', '--border-thin', '--space-5',
   '--text-display', '--text-h1', '--text-h2', '--text-h3',
-  '--text-body', '--text-small', '--line-body'
+  '--text-body', '--text-small', '--text-caption', '--line-body'
 ].forEach((token) => {
   initialTokens[token] = getComputedStyle(root).getPropertyValue(token).trim();
 });
@@ -63,11 +63,11 @@ let radiusTokens = [];
 let lineWidthTokens = [];
 
 function refreshTokenOptions() {
-  typeTokens = tokenState.typeScale.map((item) => [item.name, item.variable]);
-  colorTokens = tokenState.colors.map((item) => [item.name, item.variable]);
-  spaceTokens = tokenState.spaces.map((item) => [String(item.value), item.variable]);
-  radiusTokens = tokenState.radii.map((item) => [item.name, item.variable]);
-  lineWidthTokens = tokenState.lineWidths.map((item) => [item.name, item.variable]);
+  typeTokens = (tokenState.typeScale || []).map((item) => [item.name, item.variable]);
+  colorTokens = (tokenState.colors || []).map((item) => [item.name, item.variable]);
+  spaceTokens = (tokenState.spaces || []).map((item) => [String(item.value), item.variable]);
+  radiusTokens = (tokenState.radii || []).map((item) => [item.name, item.variable]);
+  lineWidthTokens = (tokenState.lineWidths || []).map((item) => [item.name, item.variable]);
 }
 
 function openInspector(element) {
@@ -552,12 +552,24 @@ function renderControls() {
   }
 
   if (kind === 'button-atom') {
+    const variant = selected.classList.contains('inverse')
+      ? 'inverse'
+      : selected.classList.contains('primary')
+        ? 'primary'
+        : selected.classList.contains('subtle')
+          ? 'subtle'
+          : 'default';
+    addSelect('样式', [['主要', 'primary'], ['次要', 'default'], ['弱化', 'subtle'], ['反色', 'inverse']], (value) => {
+      selected.classList.remove('primary', 'subtle', 'inverse');
+      if (value !== 'default') selected.classList.add(value);
+    }, variant);
     addRange('高度', 32, 64, 2, Math.round(selected.getBoundingClientRect().height), (value) => {
       selected.style.minHeight = `${value}px`;
     });
     addTokenChoices('圆角', radiusTokens, (token) => {
       selected.style.borderRadius = `var(${token})`;
-    }, getReferencedToken(selected.style.borderRadius));
+    }, getReferencedToken(selected.style.borderRadius) || '--radius-pill');
+    addInfo('Hover 是原子行为：上移 1px 并加阴影。深色封面上的 CTA 用反色。');
     return;
   }
 
@@ -1590,7 +1602,7 @@ function addTokenChoices(label, options, onChange, activeToken = '') {
     button.type = 'button';
     button.className = `choice${token === activeToken ? ' is-active' : ''}`;
     button.textContent = name;
-    const colorToken = tokenState.colors.find((item) => item.variable === token);
+    const colorToken = tokenState.colors?.find((item) => item.variable === token);
     if (colorToken) {
       button.classList.add('choice--color');
       button.style.background = `var(${token})`;
@@ -1712,22 +1724,28 @@ function inferColorGroup(token) {
 }
 
 function normalizeDesignState() {
+  const defaults = DS.createDefaultTheme();
+  tokenState ||= {};
+  componentState ||= {};
   tokenState.aliases ||= {};
-  tokenState.colors?.forEach((token) => token.group ||= inferColorGroup(token));
-  const defaultColors = DS.createDefaultTheme().tokens.colors;
-  defaultColors.forEach((token) => {
-    if (!tokenState.colors.some((item) => item.id === token.id || item.variable === token.variable)) {
-      tokenState.colors.push(DS.clone(token));
+  ['colors', 'typeScale', 'radii', 'lineWidths', 'spaces'].forEach((category) => {
+    if (!Array.isArray(tokenState[category]) || !tokenState[category].length) {
+      tokenState[category] = DS.clone(defaults.tokens[category]);
     }
+    defaults.tokens[category].forEach((token) => {
+      if (!tokenState[category].some((item) => item.id === token.id || item.variable === token.variable)) {
+        tokenState[category].push(DS.clone(token));
+      }
+    });
   });
+  tokenState.colors.forEach((token) => token.group ||= inferColorGroup(token));
   const legacyLineIds = new Set(['regular', 'strong', 'heavy']);
-  tokenState.lineWidths = tokenState.lineWidths?.filter((token) => !legacyLineIds.has(token.id)) || [];
-  if (!tokenState.lineWidths.length) tokenState.lineWidths = DS.clone(DS.createDefaultTheme().tokens.lineWidths);
+  tokenState.lineWidths = tokenState.lineWidths.filter((token) => !legacyLineIds.has(token.id));
+  if (!tokenState.lineWidths.length) tokenState.lineWidths = DS.clone(defaults.tokens.lineWidths);
   tokenState.aliases['--line-regular'] = '--line-thin';
   tokenState.aliases['--line-strong'] = '--line-thin';
   tokenState.aliases['--line-heavy'] = '--line-thin';
-  const defaults = DS.createDefaultTheme().components;
-  Object.entries(defaults).forEach(([id, config]) => {
+  Object.entries(defaults.components).forEach(([id, config]) => {
     componentState[id] ||= {};
     Object.entries(config).forEach(([key, value]) => {
       if (componentState[id][key] === undefined) componentState[id][key] = value;
@@ -1844,11 +1862,12 @@ function persistThemeStore() {
 
 function applyTokenState() {
   ['colors', 'typeScale', 'radii', 'lineWidths', 'spaces'].forEach((category) => {
-    tokenState[category].forEach((token) => {
+    (tokenState[category] || []).forEach((token) => {
       const unit = category === 'colors' ? '' : 'px';
       root.style.setProperty(token.variable, `${token.value}${unit}`);
-      if (token.lineHeight && token.id === 'body') root.style.setProperty('--line-body', token.lineHeight);
-      if (token.lineHeight && token.id === 'small') root.style.setProperty('--line-small', token.lineHeight);
+      if (category === 'typeScale' && token.lineHeight) {
+        root.style.setProperty(`--line-${token.id}`, token.lineHeight);
+      }
     });
   });
   Object.entries(tokenState.aliases || {}).forEach(([retired, replacement]) => root.style.setProperty(retired, `var(${replacement})`));
@@ -1857,9 +1876,10 @@ function applyTokenState() {
 
 function renderTokenCollections() {
   const colorGrid = document.querySelector('#colorTokenGrid');
+  if (!colorGrid) return;
   colorGrid.innerHTML = '';
   Object.entries(colorGroupMeta).forEach(([groupId, groupName]) => {
-    const tokens = tokenState.colors.filter((token) => token.group === groupId);
+    const tokens = (tokenState.colors || []).filter((token) => token.group === groupId);
     if (!tokens.length) return;
     const section = document.createElement('section');
     section.className = 'color-group';
@@ -1877,15 +1897,17 @@ function renderTokenCollections() {
   });
 
   const typeList = document.querySelector('#typeScaleList');
-  typeList.innerHTML = '';
-  const samples = ['知识不是堆积，而是结构。', '从信息中建立清晰判断', '先给结论，再展开证据', '章节中的核心观点', '正文承担完整解释，并在连续阅读中保持舒适。', '用于图片说明、数据口径与补充信息。'];
-  tokenState.typeScale.forEach((token, index) => {
-    const row = document.createElement('div');
-    row.className = 'type-row';
-    setTokenDataset(row, 'typeScale', token);
-    row.innerHTML = `<div class="type-meta">${escapeHtml(token.name)}<br>${token.value} / ${token.lineHeight || 1.5}</div><div style="font-size:var(${token.variable});line-height:${token.lineHeight || 1.5};font-weight:${index < 4 ? 'var(--weight-bold)' : 'var(--weight-regular)'}">${escapeHtml(samples[index] || '自定义字号层级')}</div>`;
-    typeList.appendChild(row);
-  });
+  if (typeList) {
+    typeList.innerHTML = '';
+    const samples = ['知识不是堆积，而是结构。', '从信息中建立清晰判断', '先给结论，再展开证据', '章节中的核心观点', '正文承担完整解释，并在连续阅读中保持舒适。', '用于图片说明、数据口径与补充信息。', '数据来源'];
+    (tokenState.typeScale || []).forEach((token, index) => {
+      const row = document.createElement('div');
+      row.className = 'type-row';
+      setTokenDataset(row, 'typeScale', token);
+      row.innerHTML = `<div class="type-meta">${escapeHtml(token.name)}<br>${token.value} / ${token.lineHeight || 1.5}</div><div style="font-size:var(${token.variable});line-height:${token.lineHeight || 1.5};font-weight:${index < 4 ? 'var(--weight-bold)' : 'var(--weight-regular)'}">${escapeHtml(samples[index] || '自定义字号层级')}</div>`;
+      typeList.appendChild(row);
+    });
+  }
 
   renderMetricTokens('#radiusTokenGrid', 'radii', 'radius');
   renderMetricTokens('#lineTokenGrid', 'lineWidths', 'line');
@@ -1894,8 +1916,9 @@ function renderTokenCollections() {
 
 function renderMetricTokens(selector, category, demo) {
   const container = document.querySelector(selector);
+  if (!container) return;
   container.innerHTML = '';
-  tokenState[category].forEach((token) => {
+  (tokenState[category] || []).forEach((token) => {
     const item = document.createElement('article');
     item.className = 'foundation-item';
     setTokenDataset(item, category, token);
@@ -1955,7 +1978,7 @@ function renderDynamicTokenControls(category, tokenId) {
     if (category === 'typeScale') {
       addRange('行高', 1, 2.4, .02, token.lineHeight || 1.5, (value) => {
         token.lineHeight = value;
-        if (token.id === 'body') root.style.setProperty('--line-body', value);
+        root.style.setProperty(`--line-${token.id}`, value);
         updateTokenPreview(category, token);
         markThemeDirty();
       }, '');
@@ -2477,8 +2500,8 @@ function relayoutAfterTheme() {
 function applyTheme(theme) {
   closeInspector();
   activeTheme = theme;
-  tokenState = DS.clone(theme.tokens);
-  componentState = DS.clone(theme.components);
+  tokenState = DS.clone(theme.tokens || {});
+  componentState = DS.clone(theme.components || {});
   normalizeDesignState();
   applyTokenState();
   renderTokenCollections();
@@ -2851,15 +2874,17 @@ const observer = new IntersectionObserver((entries) => {
 sections.forEach((section) => observer.observe(section));
 
 const documentNav = document.querySelector('[data-component-id="navigation"]');
-const documentNavLinks = [...documentNav.querySelectorAll('a')];
-const documentSections = documentNavLinks.map((link) => document.querySelector(link.getAttribute('href'))).filter(Boolean);
-const documentObserver = new IntersectionObserver((entries) => {
-  entries.forEach((entry) => {
-    if (!entry.isIntersecting) return;
-    documentNavLinks.forEach((link) => link.classList.toggle('is-active', link.getAttribute('href') === `#${entry.target.id}`));
-  });
-}, { rootMargin: '-18% 0px -72%' });
-documentSections.forEach((section) => documentObserver.observe(section));
+if (documentNav) {
+  const documentNavLinks = [...documentNav.querySelectorAll('a')];
+  const documentSections = documentNavLinks.map((link) => document.querySelector(link.getAttribute('href'))).filter(Boolean);
+  const documentObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      documentNavLinks.forEach((link) => link.classList.toggle('is-active', link.getAttribute('href') === `#${entry.target.id}`));
+    });
+  }, { rootMargin: '-18% 0px -72%' });
+  documentSections.forEach((section) => documentObserver.observe(section));
+}
 
 document.querySelectorAll('[data-component-root]').forEach((component) => component.tabIndex = 0);
 applyTheme(activeTheme);
@@ -2897,7 +2922,7 @@ function bindMediaSwitches(scope = document) {
       if (
         figure.classList.contains('is-cover')
         && !(hoverOn && fineHover)
-        && !event.target.closest('.media-switch__thumbs, .media-switch__panel')
+        && !event.target.closest('.media-switch__thumbs, .media-switch__panel, .media-switch__label')
       ) {
         event.preventDefault();
         event.stopPropagation();

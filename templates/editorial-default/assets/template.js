@@ -1,40 +1,37 @@
 (() => {
   window.ThemeRuntime?.mountThemeControl(document.querySelector('#themeControl'));
 
+  const applyMediaThumb = (thumb) => {
+    const figure = thumb.closest('.media-switch');
+    if (!figure) return;
+    const main = figure.querySelector('[data-media-main]');
+    const thumbs = [...figure.querySelectorAll('.media-switch__thumb')];
+    thumbs.forEach((item) => item.classList.toggle('is-active', item === thumb));
+    const src = thumb.getAttribute('data-src') || '';
+    const alt = thumb.getAttribute('data-alt') || '';
+    if (main) {
+      if (main.tagName === 'IMG') {
+        if (src) main.src = src;
+        main.alt = alt;
+      } else if (alt) {
+        main.textContent = alt;
+      }
+    }
+    if (src) figure.setAttribute('data-lightbox-src', src);
+    if (alt) figure.setAttribute('data-lightbox-alt', alt);
+    figure.classList.remove('is-open');
+  };
+
   const mountMediaSwitch = (root = document) => {
     root.querySelectorAll('.media-switch').forEach((figure) => {
       if (figure.dataset.switchReady) return;
       figure.dataset.switchReady = '1';
-      const main = figure.querySelector('[data-media-main]');
-      const thumbs = [...figure.querySelectorAll('.media-switch__thumb')];
-      const apply = (thumb) => {
-        thumbs.forEach((item) => item.classList.toggle('is-active', item === thumb));
-        const src = thumb.getAttribute('data-src') || '';
-        const alt = thumb.getAttribute('data-alt') || '';
-        if (main) {
-          if (main.tagName === 'IMG') {
-            if (src) main.src = src;
-            main.alt = alt;
-          } else if (alt) {
-            main.textContent = alt;
-          }
-        }
-        if (src) figure.setAttribute('data-lightbox-src', src);
-        if (alt) figure.setAttribute('data-lightbox-alt', alt);
-      };
       figure.addEventListener('click', (event) => {
-        const thumb = event.target.closest('.media-switch__thumb');
-        if (thumb && figure.contains(thumb)) {
-          event.preventDefault();
-          event.stopPropagation();
-          figure.classList.remove('is-open');
-          apply(thumb);
-          return;
-        }
+        if (event.target.closest('.media-switch__thumb')) return;
         if (
           figure.classList.contains('is-cover')
           && !window.matchMedia('(hover: hover) and (pointer: fine)').matches
-          && !event.target.closest('.media-switch__thumbs, .media-switch__panel')
+          && !event.target.closest('.media-switch__thumbs, .media-switch__panel, .media-switch__label')
         ) {
           event.preventDefault();
           event.stopPropagation();
@@ -42,20 +39,33 @@
         }
       });
     });
+  };
+
+  if (!document.documentElement.dataset.mediaSwitchBound) {
+    document.documentElement.dataset.mediaSwitchBound = '1';
+    document.addEventListener('pointerdown', (event) => {
+      if (document.documentElement.classList.contains('is-editing')) return;
+      const thumb = event.target.closest?.('.media-switch__thumb');
+      if (!thumb) return;
+      event.preventDefault();
+      event.stopPropagation();
+      applyMediaThumb(thumb);
+    }, true);
     document.addEventListener('click', (event) => {
       document.querySelectorAll('.media-switch.is-cover.is-open').forEach((figure) => {
         if (!figure.contains(event.target)) figure.classList.remove('is-open');
       });
     });
-  };
+  }
 
   const formatStatValues = (root = document) => {
-    root.querySelectorAll('.stat-value').forEach((node) => {
+    root.querySelectorAll('.stat-value, .formula__factor > b, .formula__factor > span, .media-switch__panel p').forEach((node) => {
       if (node.dataset.statSymbols) return;
       if (node.querySelector('small')) {
         node.dataset.statSymbols = '1';
         return;
       }
+      if (node.children.length) return;
       const text = node.textContent;
       if (!text) return;
       node.innerHTML = text.replace(/\s*([¥$€£≤≥%×/–—+])\s*/g, '<small>$1</small>');
@@ -64,7 +74,7 @@
   };
 
   const formatCalloutText = (root = document) => {
-    root.querySelectorAll('.callout p, .callout strong').forEach((node) => {
+    root.querySelectorAll('.callout p, .callout strong, .content[data-content="point"] .content__body, .content[data-content="signal"] .content__body').forEach((node) => {
       const text = node.textContent.replace(/\s*\n\s*/g, '').trim();
       if (!text) return;
       node.textContent = text.replace(/([。．.;；])\s*/g, '$1\n').replace(/\n+$/, '');
@@ -324,15 +334,20 @@
     const syncHead = (slide) => {
       const isContent = slide.classList.contains('report-section');
       stage.classList.toggle('has-deck-head', isContent);
-      if (!head) return;
-      if (!isContent) return;
       const srcNo = slide.querySelector('.section-header__no')?.textContent.trim() || '';
       const srcTitle = slide.querySelector('.section-header__title')?.textContent.trim() || '';
       const srcPart = slide.querySelector('.section-header__part')?.textContent.trim() || '';
+      const foot = document.querySelector('[data-deck-source]');
+      stage.classList.remove('has-deck-foot');
+      shell.classList.remove('has-deck-foot');
+      if (foot) foot.hidden = true;
+      if (!head) return;
+      if (!isContent) return;
       const noEl = head.querySelector('[data-deck-no]');
       const titleEl = head.querySelector('[data-deck-title]');
       const partEl = head.querySelector('[data-deck-part]');
-      if (noEl) noEl.textContent = srcNo;
+      const slideId = (srcNo.split('·')[0] || slide.dataset.slide || '').trim();
+      if (noEl) noEl.textContent = slideId ? `简介 · ${slideId}` : '';
       if (titleEl && titleEl.textContent !== srcTitle) titleEl.textContent = srcTitle;
       if (partEl) {
         if (srcPart) {
@@ -404,6 +419,7 @@
       syncChrome(to);
       if (hash && to.id) history.replaceState(null, '', `#${to.id}`);
       document.dispatchEvent(new CustomEvent('seed:slidechange'));
+      requestAnimationFrame(() => drawLineCharts(to));
     };
 
     const go = (delta) => {
@@ -439,7 +455,7 @@
       if (target.closest('.is-chapter-cover, #cover')) {
         return true;
       }
-      if (target.closest('img, figcaption, table, .table-wrap, .report-card, .highlight-item, .step, .callout, .bar-compare, .list-block, .media-switch__thumbs, .media-switch__panel, .media-switch__label, [data-lightbox-src], p, h2, h3, li')) {
+      if (target.closest('img, figcaption, table, .table-wrap, .content[data-content="table"], .page-grid[data-slots="5"], .report-card, .highlight-item, .step, .callout, .bar-compare, .list-block, .media-switch__thumbs, .media-switch__panel, .media-switch__label, [data-lightbox-src], p, h2, h3, li')) {
         return false;
       }
       return Boolean(target.closest('.report-slide'));
@@ -482,10 +498,34 @@
       go(1);
     });
 
+    document.querySelectorAll('.page-grid[data-slots="5"]').forEach((grid) => {
+      grid.addEventListener('wheel', (event) => {
+        if (grid.scrollWidth <= grid.clientWidth + 1) return;
+        const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+        if (!delta) return;
+        const max = grid.scrollWidth - grid.clientWidth;
+        const next = grid.scrollLeft + delta;
+        if ((delta > 0 && grid.scrollLeft < max) || (delta < 0 && grid.scrollLeft > 0)) {
+          event.preventDefault();
+          grid.scrollLeft = Math.max(0, Math.min(max, next));
+        }
+      }, { passive: false });
+    });
+
     document.addEventListener('keydown', (event) => {
       if (lightboxOpen()) return;
       const tag = event.target?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || event.target?.isContentEditable) return;
+      const strip = document.querySelector('.report-slide.is-active .page-grid[data-slots="5"]');
+      if (strip && strip.scrollWidth > strip.clientWidth + 1 && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+        const max = strip.scrollWidth - strip.clientWidth;
+        const next = strip.scrollLeft + (event.key === 'ArrowRight' ? 320 : -320);
+        if ((event.key === 'ArrowRight' && strip.scrollLeft < max - 1) || (event.key === 'ArrowLeft' && strip.scrollLeft > 1)) {
+          event.preventDefault();
+          strip.scrollLeft = Math.max(0, Math.min(max, next));
+          return;
+        }
+      }
       if (event.key === 'ArrowDown' || event.key === 'ArrowRight' || event.key === 'PageDown') {
         event.preventDefault();
         go(1);
@@ -524,6 +564,7 @@
     window.addEventListener('resize', () => {
       setChromeHeight();
       layoutAllEvidence();
+      drawLineCharts();
     });
 
     setChromeHeight();
@@ -538,8 +579,13 @@
     '.report-cover__lead',
     '.report-cover__kicker',
     '.chapter-cover__title',
+    '.chapter-cover__subtitle',
     '.chapter-cover__lead',
     '.chapter-cover__kicker',
+    '.chapter-cover__kind',
+    '.chapter-cover__scope',
+    '.chapter-cover__date',
+    '.chapter-cover__author',
     '.callout strong',
     '.callout p',
     '.report-card__kicker',
@@ -552,9 +598,12 @@
     '.step__body',
     '.data-table th',
     '.data-table td',
+    '.bar-compare__title',
     '.bar-compare__label',
     '.bar-compare__value',
     '.bar-compare__note',
+    '.content-col > strong',
+    '.content-col > span',
     'figcaption b',
     'figcaption span',
     '.media-page__copy .eyebrow',
@@ -568,6 +617,19 @@
     '.media-meta',
     '[data-deck-title]',
     '[data-deck-part]',
+    '[data-deck-source]',
+    '.report-source a',
+    '.report-source [data-source-name]',
+    '.formula__factor > b',
+    '.formula__factor > span',
+    '.formula__op',
+    '.matrix__cell > strong',
+    '.matrix__cell > p',
+    '.matrix__axis',
+    '.line-chart__legend li',
+    '.line-chart__points span',
+    '.line-chart__points b',
+    '.venn__label',
   ].join(', ');
 
   const reportSlug = () => {
@@ -602,16 +664,141 @@
     texts: {},
     images: {},
     blocks: {},
+    sources: {},
     history: [],
     cursor: -1,
     exportedSig: '',
     nextVersion: 2,
   });
 
-  const fieldSig = (state) => JSON.stringify({ texts: state.texts, images: state.images, blocks: state.blocks });
+  const fieldSig = (state) => JSON.stringify({ texts: state.texts, images: state.images, blocks: state.blocks, sources: state.sources });
 
-  const ADDABLE_PARENTS = '.card-grid, .list-block, .steps, .bar-compare, .table-wrap, .evidence-gallery';
-  const ADDABLE_ITEMS = '.report-card, .list-row, .step, .bar-compare__item, tbody tr, .evidence-figure';
+  const GRID_MAX = 8;
+  const STACK_GRID_MAX = 4;
+
+  const columnsForGrid = (parent, count) => {
+    if (parent.closest('[data-media-page="stack"]')) return String(Math.min(count, STACK_GRID_MAX));
+    if (count <= 3) return String(count);
+    if (count === 4) return '2';
+    if (count <= 6) return '3';
+    return '4';
+  };
+
+  const maxItemsOf = (parent) => {
+    if (parent.matches('.card-grid')) {
+      if (parent.closest('[data-media-page="stack"]')) return STACK_GRID_MAX;
+      if (parent.matches('.is-highlight') && parent.closest('[data-media-page="split"]')) return 6;
+      return GRID_MAX;
+    }
+    if (parent.matches('.formula')) return 5;
+    if (parent.matches('.venn')) return 3;
+    if (parent.matches('.matrix')) return 4;
+    return 24;
+  };
+
+  const drawLineCharts = (root = document) => {
+    (root.matches?.('.line-chart') ? [root] : [...root.querySelectorAll('.line-chart')]).forEach((chart) => {
+      const svg = chart.querySelector('.line-chart__plot');
+      if (!svg) return;
+      const rows = [...chart.querySelectorAll('.line-chart__points li')];
+      const keys = [...new Set(rows.flatMap((row) => (
+        [...row.querySelectorAll('[data-chart-series]')].map((node) => node.dataset.chartSeries || 'a')
+      )))];
+      const valuesOf = (key) => rows.map((row) => {
+        const node = row.querySelector(`[data-chart-series="${key}"]`);
+        return Number(String(node?.textContent || '').replace(/[^\d.-]/g, '')) || 0;
+      });
+      const all = keys.flatMap(valuesOf);
+      const rawMax = Math.max(1, ...all);
+      const niceStep = (value) => {
+        const pow = 10 ** Math.floor(Math.log10(Math.max(value, 1)));
+        const n = value / pow;
+        return (n <= 1.5 ? 1 : n <= 3 ? 2 : n <= 7 ? 5 : 10) * pow;
+      };
+      const tickStep = niceStep(rawMax / 4);
+      const max = Math.ceil(rawMax / tickStep) * tickStep;
+      const ticks = [];
+      for (let value = 0; value <= max + tickStep / 2; value += tickStep) ticks.push(value);
+      const w = 640;
+      const h = 280;
+      const pad = { l: 52, r: 16, t: 18, b: 14 };
+      const xAt = (i, n) => pad.l + (n <= 1 ? (w - pad.l - pad.r) / 2 : i * (w - pad.l - pad.r) / (n - 1));
+      const yAt = (value) => h - pad.b - (value / max) * (h - pad.t - pad.b);
+      svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      svg.replaceChildren();
+      const ns = 'http://www.w3.org/2000/svg';
+      const add = (name, attrs, text) => {
+        const node = document.createElementNS(ns, name);
+        Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
+        if (text != null) node.textContent = text;
+        svg.appendChild(node);
+        return node;
+      };
+      ticks.forEach((value) => {
+        const y = yAt(value);
+        add('line', { class: 'line-chart__grid', x1: pad.l, y1: y, x2: w - pad.r, y2: y });
+        add('text', {
+          class: 'line-chart__axis',
+          x: String(pad.l - 8),
+          y: String(y + 4),
+          'text-anchor': 'end',
+        }, Number.isInteger(value) ? String(value) : String(value));
+      });
+      add('line', { class: 'line-chart__grid', x1: pad.l, y1: pad.t, x2: pad.l, y2: h - pad.b });
+      keys.forEach((key) => {
+        const vals = valuesOf(key);
+        const pts = vals.map((value, i) => `${xAt(i, vals.length).toFixed(2)},${yAt(value).toFixed(2)}`).join(' ');
+        add('polyline', { class: 'line-chart__series', 'data-series': key, points: pts });
+        vals.forEach((value, i) => {
+          add('circle', {
+            class: 'line-chart__dot',
+            'data-series': key,
+            cx: xAt(i, vals.length).toFixed(2),
+            cy: yAt(value).toFixed(2),
+            r: '5',
+          });
+        });
+      });
+      const list = chart.querySelector('.line-chart__points');
+      const placeLabels = () => {
+        if (!list) return;
+        const svgRect = svg.getBoundingClientRect();
+        const listRect = list.getBoundingClientRect();
+        const ctm = svg.getScreenCTM?.();
+        if (ctm && listRect.width > 1) {
+          rows.forEach((row, i) => {
+            const pt = svg.createSVGPoint();
+            pt.x = xAt(i, rows.length);
+            pt.y = 0;
+            row.style.left = `${pt.matrixTransform(ctm).x - listRect.left}px`;
+          });
+          return;
+        }
+        const scale = Math.min(svgRect.width / w, svgRect.height / h) || 1;
+        const originX = (svgRect.width - w * scale) / 2;
+        rows.forEach((row, i) => {
+          row.style.left = `${originX + xAt(i, rows.length) * scale}px`;
+        });
+      };
+      placeLabels();
+      requestAnimationFrame(placeLabels);
+    });
+  };
+
+  const syncItemLayout = (parent) => {
+    if (!parent) return;
+    const count = parent.querySelectorAll(itemSelector(parent)).length;
+    parent.setAttribute('data-item-count', String(count));
+    parent.classList.toggle('is-stacked', count > 5);
+    if (parent.matches('.card-grid')) {
+      parent.style.setProperty('--component-columns', columnsForGrid(parent, count));
+    }
+    if (parent.matches('.line-chart')) drawLineCharts(parent);
+  };
+
+  const ADDABLE_PARENTS = '.card-grid, .list-block, .steps, .bar-compare, .table-wrap, .evidence-gallery, .line-chart, .content-cols';
+  const ADDABLE_ITEMS = '.report-card, .list-row, .step, .bar-compare__item, tbody tr, .evidence-figure, .line-chart__points li, .content-col';
 
   const COPY_REGION = '[data-media-page] > [data-slot="copy"]';
 
@@ -643,6 +830,8 @@
     if (parent.matches('.bar-compare')) return ':scope > .bar-compare__item';
     if (parent.matches('.table-wrap')) return ':scope tbody tr';
     if (parent.matches('.evidence-gallery')) return ':scope > .evidence-figure';
+    if (parent.matches('.line-chart')) return ':scope .line-chart__points li';
+    if (parent.matches('.content-cols')) return ':scope > .content-col';
     return ADDABLE_ITEMS;
   };
 
@@ -650,7 +839,7 @@
     const slide = parent.closest('.report-slide');
     const id = slide?.dataset.slide || slide?.id || 'page';
     const type = [...parent.classList].find((name) => (
-      ['card-grid', 'list-block', 'steps', 'bar-compare', 'table-wrap', 'evidence-gallery'].includes(name)
+      ['card-grid', 'list-block', 'steps', 'bar-compare', 'table-wrap', 'evidence-gallery', 'line-chart', 'content-cols'].includes(name)
     )) || 'block';
     return `${id}::${type}`;
   };
@@ -679,7 +868,7 @@
 
   const collectTextNodes = (root) => [...root.querySelectorAll(TEXT_SELECTORS)].filter((node) => {
     if (node.closest('.theme-control, .report-chrome, .document-nav, .report-pager')) return false;
-    if (node.matches('[data-deck-title], [data-deck-part], .section-header__part')) return true;
+    if (node.matches('[data-deck-title], [data-deck-part], [data-deck-source], .section-header__part')) return true;
     if (node.hidden || node.getAttribute('hidden') !== null) return false;
     return true;
   });
@@ -695,6 +884,7 @@
     const id = slide?.dataset.slide || slide?.id || 'page';
     if (node.matches?.('[data-deck-title]')) return `${id}::title`;
     if (node.matches?.('[data-deck-part]')) return `${id}::part`;
+    if (node.matches?.('[data-deck-source]')) return `${id}::source`;
     if (node.classList?.contains('section-header__title')) return `${id}::title`;
     if (node.classList?.contains('section-header__part')) return `${id}::part`;
     return `${id}::${kind}:${index}`;
@@ -731,6 +921,10 @@
         head.textContent = value;
         head.hidden = !value;
       }
+    }
+    if (node.matches('[data-deck-source]')) {
+      const foot = document.querySelector('[data-deck-source]');
+      if (foot && foot !== node) foot.textContent = value;
     }
   };
 
@@ -771,6 +965,8 @@
     menu.innerHTML = [
       '<button class="button subtle" type="button" data-edit-add-item>添加</button>',
       '<button class="button subtle" type="button" data-edit-remove-item>删除</button>',
+      '<button class="button subtle" type="button" data-edit-add-source>添加来源</button>',
+      '<button class="button subtle" type="button" data-edit-remove-source>删除来源</button>',
     ].join('');
     document.body.appendChild(menu);
     let menuTarget = null;
@@ -780,10 +976,104 @@
       menuTarget = null;
     };
 
+    const sourceOf = (slide) => slide?.querySelector('[data-report-source], .report-source');
+    const sourceNameOf = (host) => host?.querySelector('a, [data-source-name]');
+    const SOURCE_LABEL = '数据来源';
+    const SOURCE_PLACEHOLDER = '填写出处';
+
+    const setSourceName = (host, value) => {
+      const clean = String(value || '').replace(/^(数据来源|来源：)\s*/, '').trim();
+      if (!clean) {
+        host.remove();
+        return;
+      }
+      let nameEl = sourceNameOf(host);
+      if (!nameEl) {
+        nameEl = document.createElement('a');
+        nameEl.href = '#';
+        nameEl.target = '_blank';
+        nameEl.rel = 'noopener noreferrer';
+        host.replaceChildren(document.createTextNode(`${SOURCE_LABEL} `), nameEl);
+      }
+      nameEl.textContent = clean;
+    };
+
+    const placeSource = (slide) => {
+      const node = document.createElement('p');
+      node.className = 'report-source';
+      node.dataset.reportSource = '';
+      const link = document.createElement('a');
+      link.href = '#';
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = SOURCE_PLACEHOLDER;
+      node.append(`${SOURCE_LABEL} `, link);
+      const stackCopy = slide.querySelector('[data-media-page="stack"] > [data-slot="copy"]');
+      if (stackCopy) stackCopy.appendChild(node);
+      else {
+        const cell = slide.querySelector('.grid-cell');
+        if (cell) cell.appendChild(node);
+        else {
+          const full = slide.querySelector('.full-page');
+          if (full) full.appendChild(node);
+          else slide.querySelector('.page-regions')?.after(node);
+        }
+      }
+      return node;
+    };
+
+    const addSource = (slide) => {
+      if (!slide?.classList.contains('report-section') || sourceOf(slide)) return;
+      const id = slide.dataset.slide || slide.id;
+      placeSource(slide);
+      state.sources[id] = SOURCE_PLACEHOLDER;
+      bindKeys();
+      enableEditing();
+      pushHistory();
+      persist();
+      refreshButtons();
+    };
+
+    const removeSource = (slide) => {
+      const node = sourceOf(slide);
+      if (!node) return;
+      const id = slide.dataset.slide || slide.id;
+      node.remove();
+      state.sources[id] = '';
+      if (id) delete state.texts[`${id}::source`];
+      bindKeys();
+      enableEditing();
+      pushHistory();
+      persist();
+      refreshButtons();
+    };
+
+    const applySources = () => {
+      document.querySelectorAll('.report-section.report-slide').forEach((slide) => {
+        const id = slide.dataset.slide || slide.id;
+        if (!id || !Object.prototype.hasOwnProperty.call(state.sources || {}, id)) return;
+        const value = state.sources[id];
+        let node = sourceOf(slide);
+        if (!value) {
+          node?.remove();
+          return;
+        }
+        if (!node) node = placeSource(slide);
+        setSourceName(node, value);
+      });
+    };
+
     const showMenu = (event, target) => {
       menuTarget = target;
-      const items = [...target.parent.querySelectorAll(itemSelector(target.parent))];
-      menu.querySelector('[data-edit-remove-item]').hidden = !target.item || items.length <= 1;
+      const slide = target.slide;
+      const canAdd = target.parent && canAddTo(target.parent);
+      const items = canAdd ? [...target.parent.querySelectorAll(itemSelector(target.parent))] : [];
+      const atMax = canAdd && items.length >= maxItemsOf(target.parent);
+      menu.querySelector('[data-edit-add-item]').hidden = !canAdd || atMax;
+      menu.querySelector('[data-edit-remove-item]').hidden = !canAdd || !target.item || items.length <= 1;
+      menu.querySelector('[data-edit-add-source]').hidden = !slide?.classList.contains('report-section') || Boolean(sourceOf(slide));
+      menu.querySelector('[data-edit-remove-source]').hidden = !sourceOf(slide);
+      if ([...menu.querySelectorAll('button')].every((btn) => btn.hidden)) return;
       menu.hidden = false;
       const box = menu.getBoundingClientRect();
       const pad = 8;
@@ -807,6 +1097,7 @@
         texts: state.texts,
         images: state.images,
         blocks: state.blocks,
+        sources: state.sources,
         history: state.history,
         cursor: state.cursor,
         exportedSig: state.exportedSig,
@@ -819,6 +1110,7 @@
       texts: { ...state.texts },
       images: { ...state.images },
       blocks: { ...state.blocks },
+      sources: { ...state.sources },
     });
 
     const pushHistory = () => {
@@ -845,7 +1137,9 @@
           ? `${base}::title`
           : kind === 'text' && (node.classList.contains('section-header__part') || node.matches('[data-deck-part]'))
             ? `${base}::part`
-            : `${base}::${kind}:${n}`;
+            : kind === 'text' && node.matches('[data-deck-source]')
+              ? `${base}::source`
+              : `${base}::${kind}:${n}`;
         return { node, key };
       });
     };
@@ -920,6 +1214,8 @@
 
     const applyStateToDom = async () => {
       applyBlocks();
+      applySources();
+      document.querySelectorAll(ADDABLE_PARENTS).forEach(syncItemLayout);
       bindKeys();
       indexNodes(textNodes(), 'text').forEach(({ node, key }) => {
         if (inAddable(node)) return;
@@ -963,6 +1259,10 @@
       const node = document.querySelector(`[data-edit-key="${CSS.escape(key)}"]`);
       const parent = node?.closest(ADDABLE_PARENTS);
       if (parent && canAddTo(parent)) persistBlock(parent);
+      if (key.endsWith('::source')) {
+        const slideId = key.split('::')[0];
+        state.sources[slideId] = value;
+      }
       if (history) pushHistory();
       persist();
       refreshButtons();
@@ -1134,6 +1434,7 @@
       state.texts = { ...snap.texts };
       state.images = { ...snap.images };
       state.blocks = { ...(snap.blocks || {}) };
+      state.sources = { ...(snap.sources || {}) };
       await applyStateToDom();
       if (isEditing()) enableEditing();
       persist();
@@ -1147,6 +1448,7 @@
       state.texts = { ...snap.texts };
       state.images = { ...snap.images };
       state.blocks = { ...(snap.blocks || {}) };
+      state.sources = { ...(snap.sources || {}) };
       await applyStateToDom();
       if (isEditing()) enableEditing();
       persist();
@@ -1157,11 +1459,11 @@
       const sel = itemSelector(parent);
       const items = [...parent.querySelectorAll(sel)];
       const last = items[items.length - 1];
-      if (!last) return;
+      if (!last || items.length >= maxItemsOf(parent)) return;
       const clone = clearClone(last.cloneNode(true));
       last.after(clone);
       if (parent.matches('.steps')) renumberSteps(parent);
-      parent.setAttribute('data-item-count', String(items.length + 1));
+      syncItemLayout(parent);
       persistBlock(parent);
       bindKeys();
       enableEditing();
@@ -1175,7 +1477,7 @@
       if (!item || items.length <= 1 || !parent.contains(item)) return;
       item.remove();
       if (parent.matches('.steps')) renumberSteps(parent);
-      parent.setAttribute('data-item-count', String(items.length - 1));
+      syncItemLayout(parent);
       persistBlock(parent);
       bindKeys();
       enableEditing();
@@ -1296,6 +1598,7 @@
 
     document.addEventListener('click', (event) => {
       if (!isEditing()) return;
+      if (event.target.closest('.report-source a')) event.preventDefault();
       if (event.target.closest('.report-chrome, .document-nav, .theme-control, .report-pager, .report-edit-menu')) return;
       const thumb = event.target.closest('.media-switch__thumb');
       if (thumb) {
@@ -1320,18 +1623,21 @@
       if (!isEditing()) return;
       const node = event.target instanceof Element ? event.target : event.target?.parentElement;
       if (!node || node.closest('.report-chrome, .document-nav, .theme-control, .report-pager, .report-edit-menu')) return;
+      const slide = node.closest('.report-section.report-slide');
+      if (!slide) return;
       const target = parentFromEvent(event);
-      if (!target.parent) return;
       event.preventDefault();
-      showMenu(event, target);
+      showMenu(event, { ...target, slide });
     });
 
     menu.addEventListener('click', (event) => {
       if (!menuTarget) return;
-      if (event.target.closest('[data-edit-add-item]')) addItem(menuTarget.parent);
-      if (event.target.closest('[data-edit-remove-item]') && menuTarget.item) {
+      if (event.target.closest('[data-edit-add-item]') && menuTarget.parent) addItem(menuTarget.parent);
+      if (event.target.closest('[data-edit-remove-item]') && menuTarget.item && menuTarget.parent) {
         removeItem(menuTarget.parent, menuTarget.item);
       }
+      if (event.target.closest('[data-edit-add-source]')) addSource(menuTarget.slide);
+      if (event.target.closest('[data-edit-remove-source]')) removeSource(menuTarget.slide);
       hideMenu();
     });
 
@@ -1369,6 +1675,7 @@
         if (items.indexOf(dragItem) < items.indexOf(over)) over.after(dragItem);
         else over.before(dragItem);
         if (parent.matches('.steps')) renumberSteps(parent);
+        syncItemLayout(parent);
         persistBlock(parent);
         bindKeys();
         pushHistory();
@@ -1404,16 +1711,18 @@
     idbGet('state', slug).then(async (saved) => {
       bindKeys();
       captureOriginalBlocks();
-      if (saved && (saved.texts || saved.images || saved.blocks)) {
+      document.querySelectorAll(ADDABLE_PARENTS).forEach(syncItemLayout);
+      if (saved && (saved.texts || saved.images || saved.blocks || saved.sources)) {
         state = {
           texts: saved.texts || {},
           images: saved.images || {},
           blocks: saved.blocks || {},
+          sources: saved.sources || {},
           history: Array.isArray(saved.history) && saved.history.length
             ? saved.history
-            : [{ texts: {}, images: {}, blocks: {} }, { texts: { ...(saved.texts || {}) }, images: { ...(saved.images || {}) }, blocks: { ...(saved.blocks || {}) } }],
+            : [{ texts: {}, images: {}, blocks: {}, sources: {} }, { texts: { ...(saved.texts || {}) }, images: { ...(saved.images || {}) }, blocks: { ...(saved.blocks || {}) }, sources: { ...(saved.sources || {}) } }],
           cursor: Number.isInteger(saved.cursor) ? saved.cursor : 0,
-          exportedSig: saved.exportedSig || fieldSig({ texts: {}, images: {}, blocks: {} }),
+          exportedSig: saved.exportedSig || fieldSig({ texts: {}, images: {}, blocks: {}, sources: {} }),
           nextVersion: saved.nextVersion || 2,
         };
         if (state.cursor < 0 || state.cursor >= state.history.length) {
@@ -1421,7 +1730,7 @@
         }
         await applyStateToDom();
       } else {
-        state.history = [{ texts: {}, images: {}, blocks: {} }];
+        state.history = [{ texts: {}, images: {}, blocks: {}, sources: {} }];
         state.cursor = 0;
         state.exportedSig = fieldSig(state);
         await persist();
@@ -1430,7 +1739,8 @@
     }).catch(() => {
       bindKeys();
       captureOriginalBlocks();
-      state.history = [{ texts: {}, images: {}, blocks: {} }];
+      document.querySelectorAll(ADDABLE_PARENTS).forEach(syncItemLayout);
+      state.history = [{ texts: {}, images: {}, blocks: {}, sources: {} }];
       state.cursor = 0;
       refreshButtons();
     });
@@ -1438,10 +1748,12 @@
 
   if (mountDeck()) {
     bindEvidenceLayout();
+    drawLineCharts();
     mountReportEditor();
     return;
   }
   bindEvidenceLayout();
+  drawLineCharts();
   mountReportEditor();
 
   const nav = document.querySelector('[data-component-id="navigation"]');

@@ -22,867 +22,599 @@
 
   <div class="report-shell is-deck">
     <nav class="document-nav nav-underline is-sticky" data-component-id="navigation" aria-label="文档章节">
-      <a href="#single" class="is-active">一分区</a>
-      <a href="#split">左右配图</a>
-      <a href="#stack">上下配图</a>
-      <a href="#notes">口径</a>
+      <div class="document-nav__brand"><span class="document-nav__mark" aria-hidden="true"></span><strong>SEED</strong></div>
+      <div class="document-nav__links">
+        <a href="#cover" class="is-active">封面</a>
+        <a href="#grid1">Grid 1</a>
+        <a href="#grid2">Grid 2</a>
+        <a href="#grid3">Grid 3</a>
+        <a href="#grid4">Grid 4</a>
+        <a href="#more">More Grids</a>
+        <a href="#evidence">Evidence</a>
+        <a href="#fullscreen">全屏</a>
+        <a href="#notes">口径</a>
+      </div>
     </nav>
 
     <div class="report-stage" data-report-stage>
       <header class="section-header report-deck-head" data-deck-head>
-        <span class="section-header__no" data-deck-no></span>
-        <div>
+        <div class="report-deck-head__copy">
           <h2 class="section-header__title" data-deck-title></h2>
           <p class="section-header__part" data-deck-part hidden></p>
         </div>
+        <span class="section-header__no" data-deck-no></span>
       </header>
 
       <div class="report-slides" data-report-slides>
-        <section class="report-slide is-active" data-chapter="cover" data-slide="00" id="cover">
-          <header class="report-cover">
-            <div class="report-cover__meta">
-              <span class="report-cover__kicker">Knowledge Report Template</span>
-              <span class="badge success">一屏一个父组件</span>
-              <span class="badge warning">替换占位内容</span>
-            </div>
-            <h1>一屏一种分页，格子里只换父组件</h1>
-            <p class="report-cover__lead">
-              壳是封面、章封面、口径。内容屏只有 1 分区、左图右文、上图下文。每种分页把能放的父组件走一遍，标题是组件名，副题是使用场景。
-            </p>
-            <div class="report-cover__actions">
-              <a class="button primary" href="#single">开始阅读</a>
-            </div>
-            <div class="report-cover__aside">
-              <span>TEMPLATE / EDITORIAL-DEFAULT</span>
-              <span>DESIGN TOKENS DRIVEN</span>
-            </div>
+        <section class="report-slide is-chapter-cover is-active" data-chapter="cover" data-slide="00" id="cover">
+          <header class="chapter-cover" data-cover="image">
+            <div class="chapter-cover__media" data-caption="off"><img src="../states-demo/assets/cabin-01.jpg" alt=""></div>
+            <span class="chapter-cover__kicker">一站式携宠旅行解决方案</span>
+            <h2 class="chapter-cover__title">携宠出行服务</h2>
+            <p class="chapter-cover__subtitle">Pet-friendly Travel Solution</p>
+            <p class="chapter-cover__lead">让“带宠出游”从一次次艰难的攻略拼凑，变成一条可被信赖的完整链路。</p>
+            <p class="chapter-cover__byline"><span class="chapter-cover__scope">9 章</span><span class="chapter-cover__kind">提案汇报稿</span><span class="chapter-cover__author">SEED</span><span class="chapter-cover__date">2026.08</span></p>
+            <div class="chapter-cover__actions"><a class="button inverse" href="#grid1">开始阅读</a></div>
           </header>
         </section>
-
-        <section class="report-slide is-chapter-cover" data-chapter="single" data-slide="01" id="single">
+        <section class="report-slide is-chapter-cover" data-chapter="grid1" data-slide="01" id="grid1">
           <header class="chapter-cover">
             <span class="chapter-cover__no">01</span>
-            <span class="chapter-cover__kicker">一分区</span>
-            <h2 class="chapter-cover__title">整屏一块，父组件逐一替换</h2>
-            <p class="chapter-cover__lead">1 分区只居中。可放 Callout、Card Grid、强调色、Stat Grid、List、Steps、Table、Bar Compare、Evidence、Media Switch 封面。</p>
+            <span class="chapter-cover__kicker">一格</span>
+            <h2 class="chapter-cover__title">Grid 1</h2>
+            
+            <p class="chapter-cover__lead">整块 Content 占一格。数据来源在白卡里。</p>
+            
+            
           </header>
         </section>
-
-        <section class="report-section report-slide" data-chapter="single" data-slide="01.a" id="single-callout">
+        <section class="report-section report-slide" data-chapter="grid1" data-slide="01.a" id="g1-copy">
           <header class="section-header">
-            <span class="section-header__no">01.a · 一分区</span>
+            <span class="section-header__no">01.a · Grid 1</span>
             <div>
-              <h2 class="section-header__title">Decision Callout</h2>
-              <p class="section-header__part">改一个判断，只要一句</p>
+              <h2 class="section-header__title">纯文字</h2>
+              <p class="section-header__part">一格 · 标题 + 正文</p>
             </div>
           </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <aside class="callout">
-                <strong>结论：</strong>
-                <p>先统一内容结构与证据口径，再增加视觉变化。否则丰富的样式只会放大信息混乱。</p>
-              </aside>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="content" data-content="copy"><h3 class="content__title">先收成一条可履约的路径</h3><p class="content__body">带宠出行的摩擦，大多发生在规则散落在航司公告、车站须知和司机口头约定里。同一只狗，客舱、货舱、高铁行李车和专车陆运用的不是同一套证件与箱包。咨询阶段把可选项铺开，下单阶段必须收敛成一条可履约路径：谁同行、走哪段、用什么笼子、证件看到哪一天。<br><br>做不到客舱的，不要用货舱话术硬上；中转超过一次的，不要承诺“门到门当天达”。材料撑不住的判断写进口径。离开时只记得大字，必须已经得到这一页该给的东西。</p></div></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="single" data-slide="01.b" id="single-highlight">
+        <section class="report-section report-slide" data-chapter="grid1" data-slide="01.b" id="g1-point">
           <header class="section-header">
-            <span class="section-header__no">01.b · 一分区</span>
+            <span class="section-header__no">01.b · Grid 1</span>
             <div>
-              <h2 class="section-header__title">Card Grid · 强调</h2>
-              <p class="section-header__part">必须并排钉住的几句判断</p>
+              <h2 class="section-header__title">观点</h2>
+              <p class="section-header__part">一格 · 结论 + 说明</p>
             </div>
           </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="card-grid is-highlight" data-item-count="4" style="--component-columns: 4">
-                <article class="report-card"><h3 class="report-card__title">完整</h3><p class="report-card__body">保留连续阅读所需的上下文。</p></article>
-                <article class="report-card"><h3 class="report-card__title">清晰</h3><p class="report-card__body">用层级与节奏突出主判断。</p></article>
-                <article class="report-card"><h3 class="report-card__title">可验证</h3><p class="report-card__body">结论、证据与口径彼此相邻。</p></article>
-                <article class="report-card"><h3 class="report-card__title">可行动</h3><p class="report-card__body">明确优先级与下一步动作。</p></article>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="content" data-content="point"><h3 class="content__title">客舱不是默认选项</h3><p class="content__body">客舱携带不是“能不能带上飞机”，而是航司白名单、体重、笼具和主人是否同行同时成立。先把这四条收成一条可核对的链路，再谈体验和溢价。</p></div></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="single" data-slide="01.c" id="single-cards">
+        <section class="report-section report-slide" data-chapter="grid1" data-slide="01.c" id="g1-signal">
           <header class="section-header">
-            <span class="section-header__no">01.c · 一分区</span>
+            <span class="section-header__no">01.c · Grid 1</span>
             <div>
-              <h2 class="section-header__title">Card Grid</h2>
-              <p class="section-header__part">并列要点，一卡一眼</p>
+              <h2 class="section-header__title">带序号观点</h2>
+              <p class="section-header__part">一格 · SIGNAL + 标题 + 说明</p>
             </div>
           </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="card-grid" data-item-count="3" style="--component-columns: 3">
-                <article class="report-card">
-                  <span class="report-card__kicker">SIGNAL 01</span>
-                  <h3 class="report-card__title">用户需要一个明确入口</h3>
-                  <p class="report-card__body">把分散信息收拢成一条连续路径，减少反复确认。</p>
-                </article>
-                <article class="report-card">
-                  <span class="report-card__kicker">SIGNAL 02</span>
-                  <h3 class="report-card__title">比较必须使用同一口径</h3>
-                  <p class="report-card__body">价格、条件与履约方式需要在相同维度下呈现。</p>
-                </article>
-                <article class="report-card">
-                  <span class="report-card__kicker">SIGNAL 03</span>
-                  <h3 class="report-card__title">证据要紧邻结论</h3>
-                  <p class="report-card__body">截图、数据和来源不应与所支持的判断分离。</p>
-                </article>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="content" data-content="signal"><span class="content__kicker">SIGNAL 01</span><h3 class="content__title">入口必须先问能不能带</h3><p class="content__body">先核航司白名单和体重，再谈舱位与价格，避免先下单后拒载。</p></div></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="single" data-slide="01.d" id="single-stats">
+        <section class="report-section report-slide" data-chapter="grid1" data-slide="01.d" id="g1-stat">
           <header class="section-header">
-            <span class="section-header__no">01.d · 一分区</span>
+            <span class="section-header__no">01.d · Grid 1</span>
             <div>
-              <h2 class="section-header__title">Stat Grid</h2>
-              <p class="section-header__part">钉尺度。数字行只放数字或符号</p>
+              <h2 class="section-header__title">数据</h2>
+              <p class="section-header__part">一格 · 数字 + 名 + 口径</p>
             </div>
           </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="card-grid" data-item-count="4" style="--component-columns: 4">
-                <article class="report-card">
-                  <b class="stat-value">72%</b>
-                  <h3 class="report-card__title">核心覆盖率</h3>
-                  <p class="report-card__body">说明指标口径与统计范围，避免数字悬空。</p>
-                </article>
-                <article class="report-card">
-                  <b class="stat-value">3.4×</b>
-                  <h3 class="report-card__title">效率变化</h3>
-                  <p class="report-card__body">与基线对比，写明观察周期。</p>
-                </article>
-                <article class="report-card">
-                  <b class="stat-value">18</b>
-                  <h3 class="report-card__title">有效样本</h3>
-                  <p class="report-card__body">交代样本来源与筛选条件。</p>
-                </article>
-                <article class="report-card">
-                  <b class="stat-value">6</b>
-                  <h3 class="report-card__title">研究周期</h3>
-                  <p class="report-card__body">让时间边界与结论同步可见。</p>
-                </article>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="content" data-content="stat"><b class="stat-value">11</b><h3 class="content__title">可客舱航司</h3><p class="content__body">统计口径：国内客运航司官网 2026 年 6 月公示，不含包机。</p></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="single" data-slide="01.e" id="single-list">
+        <section class="report-section report-slide" data-chapter="grid1" data-slide="01.e" id="g1-list">
           <header class="section-header">
-            <span class="section-header__no">01.e · 一分区</span>
+            <span class="section-header__no">01.e · Grid 1</span>
             <div>
-              <h2 class="section-header__title">Labeled List</h2>
-              <p class="section-header__part">属性、规则、条目</p>
+              <h2 class="section-header__title">列表</h2>
+              <p class="section-header__part">一格 · 一条</p>
             </div>
           </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="list-block" data-item-count="3">
-                <div class="list-row"><span class="list-row__label">适用场景</span><p class="list-row__text">需要快速建立问题框架，并让读者在进入细节前形成共同语境。</p></div>
-                <div class="list-row"><span class="list-row__label">信息密度</span><p class="list-row__text">每项只保留一个主题；次要解释下沉到证据或附录。</p></div>
-                <div class="list-row"><span class="list-row__label">阅读节奏</span><p class="list-row__text">先给判断，再给条件，最后给证据，避免先堆材料。</p></div>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="content" data-content="list"><span class="content__label">短途探亲</span><p class="content__body">主人同行、宠物低于客舱限重时，优先核对航司白名单，而不是先订人票。</p></div></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="single" data-slide="01.f" id="single-steps">
+        <section class="report-section report-slide" data-chapter="grid1" data-slide="01.f" id="g1-step">
           <header class="section-header">
-            <span class="section-header__no">01.f · 一分区</span>
+            <span class="section-header__no">01.f · Grid 1</span>
             <div>
-              <h2 class="section-header__title">Process Steps</h2>
-              <p class="section-header__part">有先后的步骤</p>
+              <h2 class="section-header__title">编号列表</h2>
+              <p class="section-header__part">一格 · 序号在左</p>
             </div>
           </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="steps" data-item-count="4">
-                <article class="step">
-                  <span class="step__index">01</span>
-                  <div>
-                    <h3 class="step__title">先确定核心命题</h3>
-                    <p class="step__body">确认这份汇报最终要让读者理解或决定什么。</p>
-                  </div>
-                </article>
-                <article class="step">
-                  <span class="step__index">02</span>
-                  <div>
-                    <h3 class="step__title">组织章节推进</h3>
-                    <p class="step__body">让每一节回答一个问题，并自然引出下一节。</p>
-                  </div>
-                </article>
-                <article class="step">
-                  <span class="step__index">03</span>
-                  <div>
-                    <h3 class="step__title">把证据放在判断旁边</h3>
-                    <p class="step__body">数据、图片和案例共同构成可追溯的论证。</p>
-                  </div>
-                </article>
-                <article class="step">
-                  <span class="step__index">04</span>
-                  <div>
-                    <h3 class="step__title">收束为可执行建议</h3>
-                    <p class="step__body">写清优先级、负责人、时间与验收标准。</p>
-                  </div>
-                </article>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="content" data-content="step"><span class="content__index">01</span><div class="content__copy"><h3 class="content__title">核白名单和体重</h3><p class="content__body">先确认这只宠物能否进客舱或必须货舱，再决定人票舱位。</p></div></div></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="single" data-slide="01.g" id="single-table">
+        <section class="report-section report-slide" data-chapter="grid1" data-slide="01.g" id="g1-step-stack">
           <header class="section-header">
-            <span class="section-header__no">01.g · 一分区</span>
+            <span class="section-header__no">01.g · Grid 1</span>
             <div>
-              <h2 class="section-header__title">Data Table</h2>
-              <p class="section-header__part">比较表 / 明细表。一种字段一列</p>
+              <h2 class="section-header__title">编号列表纵向</h2>
+              <p class="section-header__part">一格 · 序号压在标题上</p>
             </div>
           </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="table-wrap">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>方案</th>
-                      <th>覆盖能力</th>
-                      <th>实施成本</th>
-                      <th>主要风险</th>
-                      <th>结论</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><strong>方案 A</strong></td>
-                      <td>完整</td>
-                      <td>中等</td>
-                      <td>需要跨团队协同</td>
-                      <td class="cell-best">优先验证</td>
-                    </tr>
-                    <tr>
-                      <td><strong>方案 B</strong></td>
-                      <td>局部</td>
-                      <td>较低</td>
-                      <td>覆盖不足</td>
-                      <td>作为补充</td>
-                    </tr>
-                    <tr>
-                      <td><strong>方案 C</strong></td>
-                      <td>有限</td>
-                      <td>较高</td>
-                      <td>收益不确定</td>
-                      <td class="cell-weak">暂不采用</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="content" data-content="step-stack"><div class="content__lead"><span class="content__index">01</span><h3 class="content__title">核白名单和体重</h3></div><p class="content__body">先确认这只宠物能否进客舱或必须货舱，再决定人票舱位。</p></div></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="single" data-slide="01.h" id="single-bar">
+        <section class="report-section report-slide" data-chapter="grid1" data-slide="01.h" id="g1-table">
           <header class="section-header">
-            <span class="section-header__no">01.h · 一分区</span>
+            <span class="section-header__no">01.h · Grid 1</span>
             <div>
-              <h2 class="section-header__title">Bar Compare</h2>
-              <p class="section-header__part">同类量比较。默认横条</p>
+              <h2 class="section-header__title">表格宽</h2>
+              <p class="section-header__part">一格 · 整表 · 10 列 · strong / em</p>
             </div>
           </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="bar-compare" data-item-count="3">
-                <div class="bar-compare__item">
-                  <div class="bar-compare__row">
-                    <span class="bar-compare__label">方案 A</span>
-                    <div class="bar-compare__track"><div class="bar-compare__fill" style="width:43%"></div></div>
-                    <strong class="bar-compare__value">43</strong>
-                  </div>
-                  <p class="bar-compare__note">覆盖完整，实施成本中等</p>
-                </div>
-                <div class="bar-compare__item">
-                  <div class="bar-compare__row">
-                    <span class="bar-compare__label">方案 B</span>
-                    <div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="width:74%"></div></div>
-                    <strong class="bar-compare__value">74</strong>
-                  </div>
-                  <p class="bar-compare__note">成本低，覆盖不足</p>
-                </div>
-                <div class="bar-compare__item">
-                  <div class="bar-compare__row">
-                    <span class="bar-compare__label">方案 C</span>
-                    <div class="bar-compare__track"><div class="bar-compare__fill" data-tone="danger" style="width:100%"></div></div>
-                    <strong class="bar-compare__value">100</strong>
-                  </div>
-                  <p class="bar-compare__note">投入最高，收益不确定</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="content" data-content="table"><div class="content-cols"><div class="content-col"><strong>航司</strong><span>国航</span><span>东航</span><span>南航</span><span>海航</span><span>厦航</span><span>春秋</span><span>吉祥</span><span>川航</span><span>山航</span><span>深航</span></div><div class="content-col"><strong>客舱</strong><span><strong>可带</strong></span><span>可带</span><span><strong>可带</strong></span><span>可带</span><span>部分</span><span>不可</span><span>可带</span><span>部分</span><span>不可</span><span>可带</span></div><div class="content-col"><strong>限重</strong><span>5 kg</span><span>5 kg</span><span>5 kg</span><span>5 kg</span><span>5 kg</span><span>—</span><span>5 kg</span><span>5 kg</span><span>—</span><span>5 kg</span></div><div class="content-col"><strong>笼具</strong><span>软包</span><span>软包</span><span>软包</span><span>软包</span><span>软包</span><span>航空箱</span><span>软包</span><span>软包</span><span>航空箱</span><span>软包</span></div><div class="content-col"><strong>证件</strong><span>狂犬+健康</span><span>狂犬+健康</span><span>狂犬+健康</span><span>狂犬+健康</span><span>狂犬+健康</span><span>狂犬+健康</span><span>狂犬+健康</span><span>狂犬+健康</span><span>狂犬+健康</span><span>狂犬+健康</span></div><div class="content-col"><strong>报备</strong><span>48 h</span><span>24 h</span><span>48 h</span><span>48 h</span><span>72 h</span><span>72 h</span><span>48 h</span><span>48 h</span><span>72 h</span><span>48 h</span></div><div class="content-col"><strong>旺季</strong><span>限额</span><span>限额</span><span>严控</span><span>限额</span><span>停售</span><span>货舱</span><span>限额</span><span>限额</span><span>货舱</span><span>限额</span></div><div class="content-col"><strong>中转</strong><span>需重办</span><span>需重办</span><span>不承诺</span><span>需重办</span><span>不接受</span><span>可中转</span><span>需重办</span><span>需重办</span><span>可中转</span><span>需重办</span></div><div class="content-col"><strong>价位</strong><span>高</span><span>高</span><span>高</span><span>中</span><span>中</span><span>低</span><span>中</span><span>中</span><span>低</span><span>中</span></div><div class="content-col"><strong>判断</strong><span><em>优先验证</em></span><span>作备选</span><span><em>优先验证</em></span><span>航线先核</span><span>看始发站</span><span>改货舱</span><span>作补充</span><span>航线先核</span><span>改货舱</span><span>作备选</span></div></div></div><p class="report-source" data-report-source>数据来源 <a href="https://www.csair.com/" target="_blank" rel="noopener noreferrer">南航旅客服务·宠物运输</a></p></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="single" data-slide="01.i" id="single-bar-v">
+        <section class="report-section report-slide" data-chapter="grid1" data-slide="01.i" id="g1-bar">
           <header class="section-header">
-            <span class="section-header__no">01.i · 一分区</span>
+            <span class="section-header__no">01.i · Grid 1</span>
             <div>
-              <h2 class="section-header__title">Bar Compare · 纵向</h2>
-              <p class="section-header__part">同类量比较。竖条加 is-vertical</p>
+              <h2 class="section-header__title">Bar</h2>
+              <p class="section-header__part">一格 · 横条 + 结构标题</p>
             </div>
           </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="bar-compare is-vertical" data-item-count="3">
-                <div class="bar-compare__item">
-                  <div class="bar-compare__row">
-                    <span class="bar-compare__label">方案 A</span>
-                    <div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:43%"></div></div>
-                    <strong class="bar-compare__value">43</strong>
-                  </div>
-                  <p class="bar-compare__note">覆盖完整，实施成本中等</p>
-                </div>
-                <div class="bar-compare__item">
-                  <div class="bar-compare__row">
-                    <span class="bar-compare__label">方案 B</span>
-                    <div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="--bar-size:74%"></div></div>
-                    <strong class="bar-compare__value">74</strong>
-                  </div>
-                  <p class="bar-compare__note">成本低，覆盖不足</p>
-                </div>
-                <div class="bar-compare__item">
-                  <div class="bar-compare__row">
-                    <span class="bar-compare__label">方案 C</span>
-                    <div class="bar-compare__track"><div class="bar-compare__fill" data-tone="danger" style="--bar-size:100%"></div></div>
-                    <strong class="bar-compare__value">100</strong>
-                  </div>
-                  <p class="bar-compare__note">投入最高，收益不确定</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="bar-compare" data-item-count="8"><p class="bar-compare__title">咨询结构 · 出行方式</p><div class="bar-compare__item"><div class="bar-compare__row"><span class="bar-compare__label">客舱携带</span><div class="bar-compare__track"><div class="bar-compare__fill" style="width:36%"></div></div><strong class="bar-compare__value">36</strong></div><p class="bar-compare__note">体验最好，规则最碎</p></div><div class="bar-compare__item"><div class="bar-compare__row"><span class="bar-compare__label">货舱托运</span><div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="width:82%"></div></div><strong class="bar-compare__value">82</strong></div><p class="bar-compare__note">供给最大，应激最高</p></div><div class="bar-compare__item"><div class="bar-compare__row"><span class="bar-compare__label">高铁托运</span><div class="bar-compare__track"><div class="bar-compare__fill" style="width:61%"></div></div><strong class="bar-compare__value">61</strong></div><p class="bar-compare__note">体验稳定，线路有限</p></div><div class="bar-compare__item"><div class="bar-compare__row"><span class="bar-compare__label">专车陆运</span><div class="bar-compare__track"><div class="bar-compare__fill" style="width:48%"></div></div><strong class="bar-compare__value">48</strong></div><p class="bar-compare__note">门到门，成本最高</p></div><div class="bar-compare__item"><div class="bar-compare__row"><span class="bar-compare__label">人宠大巴</span><div class="bar-compare__track"><div class="bar-compare__fill" style="width:24%"></div></div><strong class="bar-compare__value">24</strong></div><p class="bar-compare__note">覆盖窄，需白名单</p></div><div class="bar-compare__item"><div class="bar-compare__row"><span class="bar-compare__label">中转联运</span><div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="width:55%"></div></div><strong class="bar-compare__value">55</strong></div><p class="bar-compare__note">时效难承诺</p></div><div class="bar-compare__item"><div class="bar-compare__row"><span class="bar-compare__label">同城接驳</span><div class="bar-compare__track"><div class="bar-compare__fill" style="width:19%"></div></div><strong class="bar-compare__value">19</strong></div><p class="bar-compare__note">只补最后一公里</p></div><div class="bar-compare__item"><div class="bar-compare__row"><span class="bar-compare__label">改期等待</span><div class="bar-compare__track"><div class="bar-compare__fill" data-tone="danger" style="width:88%"></div></div><strong class="bar-compare__value">88</strong></div><p class="bar-compare__note">旺季几乎必然</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="single" data-slide="01.j" id="single-photo">
+        <section class="report-section report-slide" data-chapter="grid1" data-slide="01.j" id="g1-bar-v">
           <header class="section-header">
-            <span class="section-header__no">01.j · 一分区</span>
+            <span class="section-header__no">01.j · Grid 1</span>
             <div>
-              <h2 class="section-header__title">Evidence · 图片</h2>
-              <p class="section-header__part">图 + 图注。通用图默认 Fill</p>
+              <h2 class="section-header__title">Bar 纵向</h2>
+              <p class="section-header__part">一格 · 竖条 + 结构标题</p>
             </div>
           </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="image-grid evidence-gallery" data-image-ratio="3:4" data-image-fit="fill" data-item-count="3">
-                <figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fill">
-                  <div class="evidence-window"><img src="../states-demo/assets/cabin-01.jpg" alt="现场照片占位"></div>
-                  <figcaption><b>现场证据</b><span>指出图里要看的区域与观察时间。</span></figcaption>
-                </figure>
-                <figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fill">
-                  <div class="evidence-window"><img src="../states-demo/assets/rail-01.jpg" alt="规则材料占位"></div>
-                  <figcaption><b>规则材料</b><span>交代来源、版本和适用范围。</span></figcaption>
-                </figure>
-                <figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fill">
-                  <div class="evidence-window"><img src="../states-demo/assets/road-01.jpg" alt="过程记录占位"></div>
-                  <figcaption><b>过程记录</b><span>同时说明单位与统计口径。</span></figcaption>
-                </figure>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">履约把握</p><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">客舱携带</span><p class="bar-compare__note">体验最好，规则最碎</p></div><div class="bar-compare__item"><strong class="bar-compare__value">82</strong><div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="--bar-size:82%"></div></div><span class="bar-compare__label">货舱托运</span><p class="bar-compare__note">供给最大，应激最高</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">高铁托运</span><p class="bar-compare__note">体验稳定，线路有限</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">专车陆运</span><p class="bar-compare__note">门到门，成本最高</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="single" data-slide="01.k" id="single-shot">
+        <section class="report-section report-slide" data-chapter="grid1" data-slide="01.k" id="g1-formula">
           <header class="section-header">
-            <span class="section-header__no">01.k · 一分区</span>
+            <span class="section-header__no">01.k · Grid 1</span>
             <div>
-              <h2 class="section-header__title">Evidence · 截图</h2>
-              <p class="section-header__part">shot + 0.46:1 Fit。界面完整露出</p>
+              <h2 class="section-header__title">因子公式</h2>
+              <p class="section-header__part">一格 · 用 x 相乘</p>
             </div>
           </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="image-grid evidence-gallery" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit" data-item-count="3">
-                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit">
-                  <div class="evidence-window"><img src="../states-demo/assets/pet-profile.png" alt="界面截图占位"></div>
-                  <figcaption><b>档案界面</b><span>窗口锁定 0.46:1，Fit 完整露出。</span></figcaption>
-                </figure>
-                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit">
-                  <div class="evidence-window"><img src="../states-demo/assets/pet-travel.png" alt="下单界面占位"></div>
-                  <figcaption><b>下单界面</b><span>卡片宽度跟图走，图注不比图宽。</span></figcaption>
-                </figure>
-                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit">
-                  <div class="evidence-window"><img src="../states-demo/assets/pet-delivery.png" alt="进度界面占位"></div>
-                  <figcaption><b>进度界面</b><span>长截图在窗内上下滚，禁止 cover。</span></figcaption>
-                </figure>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="formula" data-item-count="4"><div class="formula__factor"><b><small>≤</small>5 kg</b><span>客舱限重</span></div><span class="formula__op">×</span><div class="formula__factor"><b>证件</b><span>狂犬+健康证</span></div><span class="formula__op">×</span><div class="formula__factor"><b>白名单</b><span>航司允许客舱</span></div><span class="formula__op is-eq">=</span><div class="formula__factor is-result"><b>可带</b><span>主人同行客舱</span></div></div><p class="report-source" data-report-source>数据来源 <a href="https://www.caac.gov.cn/" target="_blank" rel="noopener noreferrer">民航局客舱携带规定</a></p></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="single" data-slide="01.l" id="single-strip">
+        <section class="report-section report-slide" data-chapter="grid1" data-slide="01.l" id="g1-matrix">
           <header class="section-header">
-            <span class="section-header__no">01.l · 一分区</span>
+            <span class="section-header__no">01.l · Grid 1</span>
             <div>
-              <h2 class="section-header__title">Evidence · 条带</h2>
-              <p class="section-header__part">宽/高 ≥ 2 时只放 1 张，过宽横滑</p>
+              <h2 class="section-header__title">Matrix</h2>
+              <p class="section-header__part">一格 · 两轴四象限</p>
             </div>
           </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="image-grid evidence-gallery" data-image-kind="strip" data-item-count="1">
-                <figure class="evidence-figure" data-image-kind="strip">
-                  <div class="evidence-window"><img src="../states-demo/assets/rail-ota-flow.jpg" alt="流程条带占位"></div>
-                  <figcaption><b>流程条带</b><span>只放 1 张，左对齐，过宽横滑。</span></figcaption>
-                </figure>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="matrix" data-item-count="4"><span class="matrix__axis" data-edge="left">难协调</span><div class="matrix__plot"><span class="matrix__axis" data-edge="top">体验好</span><div class="matrix__quads"><article class="matrix__cell"><strong>客舱携带</strong><p>体验最好，规则最碎，要逐家核</p></article><article class="matrix__cell"><strong>高铁托运</strong><p>体验稳定，线路少，箱位要预留</p></article><article class="matrix__cell"><strong>货舱托运</strong><p>供给最大，应激高，中转需重办</p></article><article class="matrix__cell"><strong>专车陆运</strong><p>门到门可控，成本最高</p></article></div><span class="matrix__axis" data-edge="bottom">体验差</span></div><span class="matrix__axis" data-edge="right">好落地</span></div></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="single" data-slide="01.m" id="single-cover">
+        <section class="report-section report-slide" data-chapter="grid1" data-slide="01.m" id="g1-line">
           <header class="section-header">
-            <span class="section-header__no">01.m · 一分区</span>
+            <span class="section-header__no">01.m · Grid 1</span>
             <div>
-              <h2 class="section-header__title">Media Switch 封面</h2>
-              <p class="section-header__part">一卡一眼。底部缩略图换主图</p>
+              <h2 class="section-header__title">Line Chart</h2>
+              <p class="section-header__part">一格 · 同一指标随时间</p>
             </div>
           </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill">
-                <div class="evidence-window">
-                  <img data-media-main src="../states-demo/assets/cabin-01.jpg" alt="封面主图占位">
-                  <div class="media-switch__thumbs" aria-label="切换封面图">
-                    <button class="media-switch__thumb is-active" type="button" data-src="../states-demo/assets/cabin-01.jpg" data-alt="封面主图占位"><img src="../states-demo/assets/cabin-01.jpg" alt="封面图 1"></button>
-                    <button class="media-switch__thumb" type="button" data-src="../states-demo/assets/cabin-02.jpg" data-alt="封面附图占位"><img src="../states-demo/assets/cabin-02.jpg" alt="封面图 2"></button>
-                  </div>
-                  <button class="media-switch__label" type="button">方案 A</button>
-                  <div class="media-switch__panel">
-                    <h3>方案 A</h3>
-                    <p>主图当封面。文字浮层铺满图窗，不留边距。</p>
-                    <div class="list-block">
-                      <div class="list-row"><span class="list-row__label">覆盖</span><p class="list-row__text">完整</p></div>
-                      <div class="list-row"><span class="list-row__label">成本</span><p class="list-row__text">中等</p></div>
-                      <div class="list-row"><span class="list-row__label">结论</span><p class="list-row__text">优先验证</p></div>
-                    </div>
-                  </div>
-                </div>
-              </figure>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><figure class="line-chart" data-series="1"><ul class="line-chart__legend"><li data-series="a">客舱携带咨询</li></ul><svg class="line-chart__plot" viewBox="0 0 640 280" preserveAspectRatio="xMidYMid meet"></svg><ol class="line-chart__points"><li><span>1月</span><b data-chart-series="a">18</b></li><li><span>2月</span><b data-chart-series="a">41</b></li><li><span>3月</span><b data-chart-series="a">27</b></li><li><span>4月</span><b data-chart-series="a">33</b></li><li><span>5月</span><b data-chart-series="a">38</b></li></ol></figure><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="single" data-slide="01.n" id="single-covers">
+        <section class="report-section report-slide" data-chapter="grid1" data-slide="01.n" id="g1-venn">
           <header class="section-header">
-            <span class="section-header__no">01.n · 一分区</span>
+            <span class="section-header__no">01.n · Grid 1</span>
             <div>
-              <h2 class="section-header__title">Media Switch 封面并排</h2>
-              <p class="section-header__part">同一问的多张封面排一屏，不要拆开</p>
+              <h2 class="section-header__title">Venn 两圆</h2>
+              <p class="section-header__part">一格 · 两个集合</p>
             </div>
           </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="image-grid evidence-gallery" data-image-ratio="9:16" data-image-fit="fill" data-item-count="3">
-                <figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill">
-                  <div class="evidence-window">
-                    <img data-media-main src="../states-demo/assets/cabin-01.jpg" alt="方案 A 封面">
-                    <div class="media-switch__thumbs" aria-label="切换方案 A">
-                      <button class="media-switch__thumb is-active" type="button" data-src="../states-demo/assets/cabin-01.jpg" data-alt="方案 A 封面"><img src="../states-demo/assets/cabin-01.jpg" alt="方案 A 图 1"></button>
-                      <button class="media-switch__thumb" type="button" data-src="../states-demo/assets/cabin-02.jpg" data-alt="方案 A 附图"><img src="../states-demo/assets/cabin-02.jpg" alt="方案 A 图 2"></button>
-                    </div>
-                    <button class="media-switch__label" type="button">方案 A</button>
-                    <div class="media-switch__panel">
-                      <h3>方案 A</h3>
-                      <p>同一问下的多张封面排一屏。</p>
-                      <div class="list-block">
-                        <div class="list-row"><span class="list-row__label">覆盖</span><p class="list-row__text">完整</p></div>
-                        <div class="list-row"><span class="list-row__label">结论</span><p class="list-row__text">优先验证</p></div>
-                      </div>
-                    </div>
-                  </div>
-                </figure>
-                <figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill">
-                  <div class="evidence-window">
-                    <img data-media-main src="../states-demo/assets/air-cargo-01.jpg" alt="方案 B 封面">
-                    <div class="media-switch__thumbs" aria-label="切换方案 B">
-                      <button class="media-switch__thumb is-active" type="button" data-src="../states-demo/assets/air-cargo-01.jpg" data-alt="方案 B 封面"><img src="../states-demo/assets/air-cargo-01.jpg" alt="方案 B 图 1"></button>
-                      <button class="media-switch__thumb" type="button" data-src="../states-demo/assets/air-cargo-02.jpg" data-alt="方案 B 附图"><img src="../states-demo/assets/air-cargo-02.jpg" alt="方案 B 图 2"></button>
-                    </div>
-                    <button class="media-switch__label" type="button">方案 B</button>
-                    <div class="media-switch__panel">
-                      <h3>方案 B</h3>
-                      <p>Hover 只作用于当前这一张。</p>
-                      <div class="list-block">
-                        <div class="list-row"><span class="list-row__label">覆盖</span><p class="list-row__text">局部</p></div>
-                        <div class="list-row"><span class="list-row__label">结论</span><p class="list-row__text">作为补充</p></div>
-                      </div>
-                    </div>
-                  </div>
-                </figure>
-                <figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill">
-                  <div class="evidence-window">
-                    <img data-media-main src="../states-demo/assets/road-01.jpg" alt="方案 C 封面">
-                    <div class="media-switch__thumbs" aria-label="切换方案 C">
-                      <button class="media-switch__thumb is-active" type="button" data-src="../states-demo/assets/road-01.jpg" data-alt="方案 C 封面"><img src="../states-demo/assets/road-01.jpg" alt="方案 C 图 1"></button>
-                      <button class="media-switch__thumb" type="button" data-src="../states-demo/assets/road-03.jpg" data-alt="方案 C 附图"><img src="../states-demo/assets/road-03.jpg" alt="方案 C 图 2"></button>
-                    </div>
-                    <button class="media-switch__label" type="button">方案 C</button>
-                    <div class="media-switch__panel">
-                      <h3>方案 C</h3>
-                      <p>这是一次比较，不是三个主张。</p>
-                      <div class="list-block">
-                        <div class="list-row"><span class="list-row__label">覆盖</span><p class="list-row__text">有限</p></div>
-                        <div class="list-row"><span class="list-row__label">结论</span><p class="list-row__text">暂不采用</p></div>
-                      </div>
-                    </div>
-                  </div>
-                </figure>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="venn" data-circles="2"><svg class="venn__plot" viewBox="0 0 400 240" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><defs><clipPath id="venn-2-a"><circle cx="145" cy="120" r="92"></circle></clipPath></defs><circle class="venn__circle" data-set="a" cx="145" cy="120" r="92"></circle><circle class="venn__circle" data-set="b" cx="255" cy="120" r="92"></circle><circle class="venn__overlap" cx="255" cy="120" r="92" clip-path="url(#venn-2-a)"></circle></svg><p class="venn__label" data-region="a">客舱规则</p><p class="venn__label" data-region="b">货舱规则</p><p class="venn__label" data-region="ab">检疫与箱包</p></div></article></div>
         </section>
-
-        <section class="report-slide is-chapter-cover" data-chapter="split" data-slide="02" id="split">
+        <section class="report-section report-slide" data-chapter="grid1" data-slide="01.o" id="g1-venn3">
+          <header class="section-header">
+            <span class="section-header__no">01.o · Grid 1</span>
+            <div>
+              <h2 class="section-header__title">Venn 三圆</h2>
+              <p class="section-header__part">一格 · 三个集合</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="venn" data-circles="3"><svg class="venn__plot" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><defs><clipPath id="venn-3-a"><circle cx="150" cy="118" r="86"></circle></clipPath><clipPath id="venn-3-ab"><circle cx="150" cy="118" r="86"></circle></clipPath></defs><circle class="venn__circle" data-set="a" cx="150" cy="118" r="86"></circle><circle class="venn__circle" data-set="b" cx="250" cy="118" r="86"></circle><circle class="venn__circle" data-set="c" cx="200" cy="198" r="86"></circle><circle class="venn__overlap" cx="250" cy="118" r="86" clip-path="url(#venn-3-a)"></circle><circle class="venn__overlap" cx="200" cy="198" r="86" clip-path="url(#venn-3-ab)"></circle></svg><p class="venn__label" data-region="a">客舱</p><p class="venn__label" data-region="b">货舱</p><p class="venn__label" data-region="c">中转</p><p class="venn__label" data-region="ab">箱包</p><p class="venn__label" data-region="abc">检疫</p></div></article></div>
+        </section>
+        <section class="report-slide is-chapter-cover" data-chapter="grid2" data-slide="02" id="grid2">
           <header class="chapter-cover">
             <span class="chapter-cover__no">02</span>
-            <span class="chapter-cover__kicker">配图 · 左右</span>
-            <h2 class="chapter-cover__title">左边固定是图，右侧逐一换壳</h2>
-            <p class="chapter-cover__lead">图槽不是 Evidence，不显示图注。右侧可放默认文案、List、Steps、强调色、Bar Compare。不得放普通 Card Grid 和 Data Table。</p>
+            <span class="chapter-cover__kicker">两格</span>
+            <h2 class="chapter-cover__title">Grid 2</h2>
+            
+            <p class="chapter-cover__lead">并排两格，同一种 Content。</p>
+            
+            
           </header>
         </section>
-
-        <section class="report-section report-slide" data-chapter="split" data-slide="02.a" id="split-copy">
+        <section class="report-section report-slide" data-chapter="grid2" data-slide="02.a" id="g2-signal">
           <header class="section-header">
-            <span class="section-header__no">02.a · 左右配图</span>
+            <span class="section-header__no">02.a · Grid 2</span>
             <div>
-              <h2 class="section-header__title">默认文案</h2>
-              <p class="section-header__part">图当主角，字解释图。只出现在配图页</p>
+              <h2 class="section-header__title">带序号观点</h2>
+              <p class="section-header__part">两格</p>
             </div>
           </header>
-          <div class="page-regions media-page" data-media-page="split" data-regions="2" data-split="columns" data-track="fill-fit">
-            <div class="page-region" data-slot="media" data-size="fill" data-align="start">
-              <figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fill" data-caption="off">
-                <div class="evidence-window"><img src="../states-demo/assets/pet-van.jpg" alt="配图占位"></div>
-              </figure>
-            </div>
-            <div class="page-region" data-slot="copy" data-size="fill" data-align="start">
-              <div class="media-page__copy">
-                <span class="eyebrow">EVIDENCE 01</span>
-                <h3>图片不是装饰，而是证据</h3>
-                <p>说明图像展示了什么，以及它支持哪一个判断。关键信息不能只存在于图片内部。</p>
-                <div class="media-meta">来源：示例资料 · 2026</div>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="2"><article class="grid-cell"><div class="content" data-content="signal"><span class="content__kicker">SIGNAL 01</span><h3 class="content__title">入口必须先问能不能带</h3><p class="content__body">先核航司白名单和体重，再谈舱位与价格，避免先下单后拒载。</p></div></article><article class="grid-cell"><div class="content" data-content="signal"><span class="content__kicker">SIGNAL 02</span><h3 class="content__title">比较必须同一口径</h3><p class="content__body">客舱、货舱、高铁、陆运都写：证件、箱包、时效、是否主人同行。</p></div></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="split" data-slide="02.b" id="split-list">
+        <section class="report-section report-slide" data-chapter="grid2" data-slide="02.b" id="g2-stat">
           <header class="section-header">
-            <span class="section-header__no">02.b · 左右配图</span>
+            <span class="section-header__no">02.b · Grid 2</span>
             <div>
-              <h2 class="section-header__title">Labeled List</h2>
-              <p class="section-header__part">右侧铺满。属性、规则、条目</p>
+              <h2 class="section-header__title">数据</h2>
+              <p class="section-header__part">两格</p>
             </div>
           </header>
-          <div class="page-regions media-page" data-media-page="split" data-regions="2" data-split="columns" data-track="fill-fit">
-            <div class="page-region" data-slot="media" data-size="fill" data-align="start">
-              <figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fill" data-caption="off">
-                <div class="evidence-window"><img src="../states-demo/assets/rail-05.jpg" alt="配图占位"></div>
-              </figure>
-            </div>
-            <div class="page-region" data-slot="copy" data-size="fill" data-align="start">
-              <div class="list-block" data-item-count="4">
-                <div class="list-row"><span class="list-row__label">输入</span><p class="list-row__text">问题定义、样本范围、既有材料与约束条件。</p></div>
-                <div class="list-row"><span class="list-row__label">输出</span><p class="list-row__text">可共享的判断、比较表与下一步行动清单。</p></div>
-                <div class="list-row"><span class="list-row__label">验收</span><p class="list-row__text">读者能复述核心结论，并知道先做什么。</p></div>
-                <div class="list-row"><span class="list-row__label">边界</span><p class="list-row__text">材料不能支撑的判断，写进口径，不要抬到标题。</p></div>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="2"><article class="grid-cell"><div class="content" data-content="stat"><b class="stat-value">11</b><h3 class="content__title">可客舱航司</h3><p class="content__body">统计口径：国内客运航司官网 2026 年 6 月公示，不含包机。</p></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article><article class="grid-cell"><div class="content" data-content="stat"><b class="stat-value">2.1×</b><h3 class="content__title">咨询到下单</h3><p class="content__body">有完整证件清单的会话，相对口头咨询的下单倍率。</p></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="split" data-slide="02.c" id="split-steps">
+        <section class="report-section report-slide" data-chapter="grid2" data-slide="02.c" id="g2-list">
           <header class="section-header">
-            <span class="section-header__no">02.c · 左右配图</span>
+            <span class="section-header__no">02.c · Grid 2</span>
             <div>
-              <h2 class="section-header__title">Process Steps</h2>
-              <p class="section-header__part">右侧铺满。有先后的步骤</p>
+              <h2 class="section-header__title">列表</h2>
+              <p class="section-header__part">两格</p>
             </div>
           </header>
-          <div class="page-regions media-page" data-media-page="split" data-regions="2" data-split="columns" data-track="fill-fit">
-            <div class="page-region" data-slot="media" data-size="fill" data-align="start">
-              <figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fill" data-caption="off">
-                <div class="evidence-window"><img src="../states-demo/assets/monitoring.jpg" alt="配图占位"></div>
-              </figure>
-            </div>
-            <div class="page-region" data-slot="copy" data-size="fill" data-align="start">
-              <div class="steps" data-item-count="3">
-                <article class="step">
-                  <span class="step__index">01</span>
-                  <div>
-                    <h3 class="step__title">先锁定比较维度</h3>
-                    <p class="step__body">任何新增字段都要同时出现在所有方案中。</p>
-                  </div>
-                </article>
-                <article class="step">
-                  <span class="step__index">02</span>
-                  <div>
-                    <h3 class="step__title">把证据放在判断旁边</h3>
-                    <p class="step__body">图槽只放光图。有图注就改用 1 分区 Evidence。</p>
-                  </div>
-                </article>
-                <article class="step">
-                  <span class="step__index">03</span>
-                  <div>
-                    <h3 class="step__title">收束为可执行建议</h3>
-                    <p class="step__body">写清优先级、负责人和验收标准。</p>
-                  </div>
-                </article>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="2"><article class="grid-cell"><div class="content" data-content="list"><span class="content__label">短途探亲</span><p class="content__body">主人同行、宠物低于客舱限重时，优先核对航司白名单，而不是先订人票。</p></div></article><article class="grid-cell"><div class="content" data-content="list"><span class="content__label">跨城搬家</span><p class="content__body">人宠不同行时走陆运专车或货舱，航空箱和检疫证明必须同一天核验。</p></div></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="split" data-slide="02.d" id="split-highlight">
+        <section class="report-section report-slide" data-chapter="grid2" data-slide="02.d" id="g2-step">
           <header class="section-header">
-            <span class="section-header__no">02.d · 左右配图</span>
+            <span class="section-header__no">02.d · Grid 2</span>
             <div>
-              <h2 class="section-header__title">Card Grid · 强调</h2>
-              <p class="section-header__part">贴边铺满右格。必须并排钉住的判断</p>
+              <h2 class="section-header__title">编号列表</h2>
+              <p class="section-header__part">两格 · 横排</p>
             </div>
           </header>
-          <div class="page-regions media-page" data-media-page="split" data-regions="2" data-split="columns" data-track="fill-fit">
-            <div class="page-region" data-slot="media" data-size="fill" data-align="start">
-              <figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fill" data-caption="off">
-                <div class="evidence-window"><img src="../states-demo/assets/cabin-01.jpg" alt="配图占位"></div>
-              </figure>
-            </div>
-            <div class="page-region" data-slot="copy" data-size="fill" data-align="start">
-              <div class="card-grid is-highlight" data-item-count="4" style="--component-columns: 2">
-                <article class="report-card"><h3 class="report-card__title">完整</h3><p class="report-card__body">判断旁边就能看到证据。</p></article>
-                <article class="report-card"><h3 class="report-card__title">清晰</h3><p class="report-card__body">一屏只推进一个问题。</p></article>
-                <article class="report-card"><h3 class="report-card__title">可验证</h3><p class="report-card__body">数字和来源跟句子相邻。</p></article>
-                <article class="report-card"><h3 class="report-card__title">可行动</h3><p class="report-card__body">离开时知道下一步先做什么。</p></article>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="2"><article class="grid-cell"><div class="content" data-content="step"><span class="content__index">01</span><div class="content__copy"><h3 class="content__title">核白名单和体重</h3><p class="content__body">先确认这只宠物能否进客舱或必须货舱，再决定人票舱位。</p></div></div></article><article class="grid-cell"><div class="content" data-content="step"><span class="content__index">02</span><div class="content__copy"><h3 class="content__title">收齐证件和箱包</h3><p class="content__body">狂犬免疫、健康证明、航空箱内尺寸按最严的一段准备。</p></div></div></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="split" data-slide="02.e" id="split-bar">
+        <section class="report-section report-slide" data-chapter="grid2" data-slide="02.e" id="g2-table">
           <header class="section-header">
-            <span class="section-header__no">02.e · 左右配图</span>
+            <span class="section-header__no">02.e · Grid 2</span>
             <div>
-              <h2 class="section-header__title">Bar Compare</h2>
-              <p class="section-header__part">右侧铺满。同类量比较，默认横条</p>
+              <h2 class="section-header__title">表格</h2>
+              <p class="section-header__part">两格 · 客舱 / 高铁</p>
             </div>
           </header>
-          <div class="page-regions media-page" data-media-page="split" data-regions="2" data-split="columns" data-track="fill-fit">
-            <div class="page-region" data-slot="media" data-size="fill" data-align="start">
-              <figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fill" data-caption="off">
-                <div class="evidence-window"><img src="../states-demo/assets/air-cargo-01.jpg" alt="配图占位"></div>
-              </figure>
-            </div>
-            <div class="page-region" data-slot="copy" data-size="fill" data-align="start">
-              <div class="bar-compare" data-item-count="3">
-                <div class="bar-compare__item">
-                  <div class="bar-compare__row">
-                    <span class="bar-compare__label">方案 A</span>
-                    <div class="bar-compare__track"><div class="bar-compare__fill" style="width:43%"></div></div>
-                    <strong class="bar-compare__value">43</strong>
-                  </div>
-                  <p class="bar-compare__note">覆盖完整，实施成本中等</p>
-                </div>
-                <div class="bar-compare__item">
-                  <div class="bar-compare__row">
-                    <span class="bar-compare__label">方案 B</span>
-                    <div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="width:74%"></div></div>
-                    <strong class="bar-compare__value">74</strong>
-                  </div>
-                  <p class="bar-compare__note">成本低，覆盖不足</p>
-                </div>
-                <div class="bar-compare__item">
-                  <div class="bar-compare__row">
-                    <span class="bar-compare__label">方案 C</span>
-                    <div class="bar-compare__track"><div class="bar-compare__fill" data-tone="danger" style="width:100%"></div></div>
-                    <strong class="bar-compare__value">100</strong>
-                  </div>
-                  <p class="bar-compare__note">投入最高，收益不确定</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="2"><article class="grid-cell"><div class="content" data-content="table"><div class="content-cols"><div class="content-col"><strong>航司</strong><span>国航</span><span>南航</span><span>东航</span><span>春秋</span><span>厦航</span><span>海航</span></div><div class="content-col"><strong>客舱政策</strong><span>主人同行 · ≤5 kg · 软包</span><span>主人同行 · ≤5 kg · 提前 48 h</span><span>主人同行 · 名额少</span><span>不接受客舱</span><span>视始发站开放</span><span>可带但旺季限额</span></div><div class="content-col"><strong>判断</strong><span><em>优先验证</em></span><span><strong>可锁舱</strong></span><span>作备选</span><span>改货舱或陆运</span><span>当天核官网</span><span>先问热线</span></div></div></div><p class="report-source" data-report-source>数据来源 <a href="https://www.csair.com/" target="_blank" rel="noopener noreferrer">南航旅客服务·宠物运输</a></p></article><article class="grid-cell"><div class="content" data-content="table"><div class="content-cols"><div class="content-col"><strong>线路</strong><span>京沪</span><span>广深港</span><span>成渝</span><span>杭温</span><span>京广</span><span>沪昆</span></div><div class="content-col"><strong>托运条件</strong><span>专用运输箱 · 同一车次</span><span>不接受活体</span><span>行李车有位才收</span><span>检疫证明当日有效</span><span>高峰停办</span><span>箱内温湿度可查</span></div><div class="content-col"><strong>判断</strong><span><strong>体验稳定</strong></span><span>改陆运</span><span>出发前 24 h 确认</span><span>可作补充</span><span>避开节前三天</span><span><em>优先联运</em></span></div></div></div><p class="report-source" data-report-source>数据来源 <a href="https://www.12306.cn/" target="_blank" rel="noopener noreferrer">铁路 12306 宠物托运须知</a></p></article></div>
         </section>
-
-        <section class="report-slide is-chapter-cover" data-chapter="stack" data-slide="03" id="stack">
+        <section class="report-section report-slide" data-chapter="grid2" data-slide="02.f" id="g2-bar">
+          <header class="section-header">
+            <span class="section-header__no">02.f · Grid 2</span>
+            <div>
+              <h2 class="section-header__title">Bar</h2>
+              <p class="section-header__part">两格 · 竖条</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="2"><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">履约把握</p><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">客舱携带</span><p class="bar-compare__note">体验最好，规则最碎</p></div><div class="bar-compare__item"><strong class="bar-compare__value">82</strong><div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="--bar-size:82%"></div></div><span class="bar-compare__label">货舱托运</span><p class="bar-compare__note">供给最大，应激最高</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">高铁托运</span><p class="bar-compare__note">体验稳定，线路有限</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">专车陆运</span><p class="bar-compare__note">门到门，成本最高</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">履约把握</p><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">客舱携带</span><p class="bar-compare__note">体验最好，规则最碎</p></div><div class="bar-compare__item"><strong class="bar-compare__value">82</strong><div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="--bar-size:82%"></div></div><span class="bar-compare__label">货舱托运</span><p class="bar-compare__note">供给最大，应激最高</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">高铁托运</span><p class="bar-compare__note">体验稳定，线路有限</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">专车陆运</span><p class="bar-compare__note">门到门，成本最高</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article></div>
+        </section>
+        <section class="report-slide is-chapter-cover" data-chapter="grid3" data-slide="03" id="grid3">
           <header class="chapter-cover">
             <span class="chapter-cover__no">03</span>
-            <span class="chapter-cover__kicker">配图 · 上下</span>
-            <h2 class="chapter-cover__title">上边铺满图，底部只排一行</h2>
-            <p class="chapter-cover__lead">图槽不显示图注。底栏定高，可放默认文案、Callout、强调色、Card Grid、Stat Grid。不得放 List、Steps、Table、Bar。</p>
+            <span class="chapter-cover__kicker">三格</span>
+            <h2 class="chapter-cover__title">Grid 3</h2>
+            
+            <p class="chapter-cover__lead">并排三格。编号列表用纵向。</p>
+            
+            
           </header>
         </section>
-
-        <section class="report-section report-slide" data-chapter="stack" data-slide="03.a" id="stack-copy">
+        <section class="report-section report-slide" data-chapter="grid3" data-slide="03.a" id="g3-signal">
           <header class="section-header">
-            <span class="section-header__no">03.a · 上下配图</span>
+            <span class="section-header__no">03.a · Grid 3</span>
             <div>
-              <h2 class="section-header__title">默认文案</h2>
-              <p class="section-header__part">图当底，字收束。底部只排一行</p>
+              <h2 class="section-header__title">带序号观点</h2>
+              <p class="section-header__part">三格</p>
             </div>
           </header>
-          <div class="page-regions media-page" data-media-page="stack" data-regions="2" data-split="rows" data-track="fill-fit">
-            <div class="page-region" data-slot="media" data-size="fill" data-align="start">
-              <figure class="evidence-figure" data-image-ratio="4:3" data-image-fit="fill" data-caption="off">
-                <div class="evidence-window"><img src="../states-demo/assets/road-01.jpg" alt="配图占位"></div>
-              </figure>
-            </div>
-            <div class="page-region" data-slot="copy" data-size="fill" data-align="start">
-              <div class="media-page__copy">
-                <span class="eyebrow">EVIDENCE 02</span>
-                <h3>图是场景，字是收束</h3>
-                <p>底部只排一行。关键信息写在字里，不要只藏在图里。</p>
-                <div class="media-meta">来源：示例资料 · 2026</div>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="3"><article class="grid-cell"><div class="content" data-content="signal"><span class="content__kicker">SIGNAL 01</span><h3 class="content__title">入口必须先问能不能带</h3><p class="content__body">先核航司白名单和体重，再谈舱位与价格，避免先下单后拒载。</p></div></article><article class="grid-cell"><div class="content" data-content="signal"><span class="content__kicker">SIGNAL 02</span><h3 class="content__title">比较必须同一口径</h3><p class="content__body">客舱、货舱、高铁、陆运都写：证件、箱包、时效、是否主人同行。</p></div></article><article class="grid-cell"><div class="content" data-content="signal"><span class="content__kicker">SIGNAL 03</span><h3 class="content__title">证据要贴着判断</h3><p class="content__body">现场照片和截图只解释这一条规则，不另开一页堆图。</p></div></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="stack" data-slide="03.b" id="stack-callout">
+        <section class="report-section report-slide" data-chapter="grid3" data-slide="03.b" id="g3-stat">
           <header class="section-header">
-            <span class="section-header__no">03.b · 上下配图</span>
+            <span class="section-header__no">03.b · Grid 3</span>
             <div>
-              <h2 class="section-header__title">Decision Callout</h2>
-              <p class="section-header__part">图当底。改一个判断，只要一句</p>
+              <h2 class="section-header__title">数据</h2>
+              <p class="section-header__part">三格</p>
             </div>
           </header>
-          <div class="page-regions media-page" data-media-page="stack" data-regions="2" data-split="rows" data-track="fill-fit">
-            <div class="page-region" data-slot="media" data-size="fill" data-align="start">
-              <figure class="evidence-figure" data-image-ratio="4:3" data-image-fit="fill" data-caption="off">
-                <div class="evidence-window"><img src="../states-demo/assets/ride-together.jpg" alt="配图占位"></div>
-              </figure>
-            </div>
-            <div class="page-region" data-slot="copy" data-size="fill" data-align="start">
-              <aside class="callout">
-                <strong>判断：</strong>
-                <p>图铺满当底时，底部只收一句必须做的决定。细节不要再堆进底栏。</p>
-              </aside>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="3"><article class="grid-cell"><div class="content" data-content="stat"><b class="stat-value">11</b><h3 class="content__title">可客舱航司</h3><p class="content__body">统计口径：国内客运航司官网 2026 年 6 月公示，不含包机。</p></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article><article class="grid-cell"><div class="content" data-content="stat"><b class="stat-value">2.1×</b><h3 class="content__title">咨询到下单</h3><p class="content__body">有完整证件清单的会话，相对口头咨询的下单倍率。</p></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article><article class="grid-cell"><div class="content" data-content="stat"><b class="stat-value">36</b><h3 class="content__title">有效城市对</h3><p class="content__body">陆运专车当前可履约的对开城市，含接驳高铁的组合。</p></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="stack" data-slide="03.c" id="stack-highlight">
+        <section class="report-section report-slide" data-chapter="grid3" data-slide="03.c" id="g3-list">
           <header class="section-header">
-            <span class="section-header__no">03.c · 上下配图</span>
+            <span class="section-header__no">03.c · Grid 3</span>
             <div>
-              <h2 class="section-header__title">Card Grid · 强调</h2>
-              <p class="section-header__part">底栏贴边。必须并排钉住的判断</p>
+              <h2 class="section-header__title">列表</h2>
+              <p class="section-header__part">三格</p>
             </div>
           </header>
-          <div class="page-regions media-page" data-media-page="stack" data-regions="2" data-split="rows" data-track="fill-fit">
-            <div class="page-region" data-slot="media" data-size="fill" data-align="start">
-              <figure class="evidence-figure" data-image-ratio="4:3" data-image-fit="fill" data-caption="off">
-                <div class="evidence-window"><img src="../states-demo/assets/road-03.jpg" alt="配图占位"></div>
-              </figure>
-            </div>
-            <div class="page-region" data-slot="copy" data-size="fill" data-align="start">
-              <div class="card-grid is-highlight" data-item-count="3" style="--component-columns: 3">
-                <article class="report-card"><h3 class="report-card__title">完整</h3><p class="report-card__body">判断旁边就能看到证据。</p></article>
-                <article class="report-card"><h3 class="report-card__title">清晰</h3><p class="report-card__body">一屏只推进一个问题。</p></article>
-                <article class="report-card"><h3 class="report-card__title">可行动</h3><p class="report-card__body">离开时知道下一步先做什么。</p></article>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="3"><article class="grid-cell"><div class="content" data-content="list"><span class="content__label">短途探亲</span><p class="content__body">主人同行、宠物低于客舱限重时，优先核对航司白名单，而不是先订人票。</p></div></article><article class="grid-cell"><div class="content" data-content="list"><span class="content__label">跨城搬家</span><p class="content__body">人宠不同行时走陆运专车或货舱，航空箱和检疫证明必须同一天核验。</p></div></article><article class="grid-cell"><div class="content" data-content="list"><span class="content__label">旺季出行</span><p class="content__body">春运和暑运客舱名额先锁，锁不到再给货舱或改期，不要并行占两张舱。</p></div></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="stack" data-slide="03.d" id="stack-cards">
+        <section class="report-section report-slide" data-chapter="grid3" data-slide="03.d" id="g3-step">
           <header class="section-header">
-            <span class="section-header__no">03.d · 上下配图</span>
+            <span class="section-header__no">03.d · Grid 3</span>
             <div>
-              <h2 class="section-header__title">Card Grid</h2>
-              <p class="section-header__part">底栏浅色毛玻。并列要点，一卡一眼</p>
+              <h2 class="section-header__title">编号列表</h2>
+              <p class="section-header__part">三格 · 纵向</p>
             </div>
           </header>
-          <div class="page-regions media-page" data-media-page="stack" data-regions="2" data-split="rows" data-track="fill-fit">
-            <div class="page-region" data-slot="media" data-size="fill" data-align="start">
-              <figure class="evidence-figure" data-image-ratio="4:3" data-image-fit="fill" data-caption="off">
-                <div class="evidence-window"><img src="../states-demo/assets/air-methods.png" alt="配图占位"></div>
-              </figure>
-            </div>
-            <div class="page-region" data-slot="copy" data-size="fill" data-align="start">
-              <div class="card-grid" data-item-count="3" style="--component-columns: 3">
-                <article class="report-card">
-                  <span class="report-card__kicker">NEXT 01</span>
-                  <h3 class="report-card__title">共用一份信息档案</h3>
-                  <p class="report-card__body">关键字段只维护一次。</p>
-                </article>
-                <article class="report-card">
-                  <span class="report-card__kicker">NEXT 02</span>
-                  <h3 class="report-card__title">查询前先校验约束</h3>
-                  <p class="report-card__body">提前判断资格与边界。</p>
-                </article>
-                <article class="report-card">
-                  <span class="report-card__kicker">NEXT 03</span>
-                  <h3 class="report-card__title">报价带上履约条件</h3>
-                  <p class="report-card__body">同时列清成本、时效与责任。</p>
-                </article>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="3"><article class="grid-cell"><div class="content" data-content="step-stack"><div class="content__lead"><span class="content__index">01</span><h3 class="content__title">核白名单和体重</h3></div><p class="content__body">先确认这只宠物能否进客舱或必须货舱，再决定人票舱位。</p></div></article><article class="grid-cell"><div class="content" data-content="step-stack"><div class="content__lead"><span class="content__index">02</span><h3 class="content__title">收齐证件和箱包</h3></div><p class="content__body">狂犬免疫、健康证明、航空箱内尺寸按最严的一段准备。</p></div></article><article class="grid-cell"><div class="content" data-content="step-stack"><div class="content__lead"><span class="content__index">03</span><h3 class="content__title">锁舱位再通知现场</h3></div><p class="content__body">客舱名额或陆运笼位确认后，才把航班号发给司机和接驳人。</p></div></article></div>
         </section>
-
-        <section class="report-section report-slide" data-chapter="stack" data-slide="03.e" id="stack-stats">
+        <section class="report-section report-slide" data-chapter="grid3" data-slide="03.e" id="g3-table">
           <header class="section-header">
-            <span class="section-header__no">03.e · 上下配图</span>
+            <span class="section-header__no">03.e · Grid 3</span>
             <div>
-              <h2 class="section-header__title">Stat Grid</h2>
-              <p class="section-header__part">底栏浅色毛玻。钉尺度</p>
+              <h2 class="section-header__title">表格</h2>
+              <p class="section-header__part">三格 · 客舱 / 高铁 / 陆运</p>
             </div>
           </header>
-          <div class="page-regions media-page" data-media-page="stack" data-regions="2" data-split="rows" data-track="fill-fit">
-            <div class="page-region" data-slot="media" data-size="fill" data-align="start">
-              <figure class="evidence-figure" data-image-ratio="4:3" data-image-fit="fill" data-caption="off">
-                <div class="evidence-window"><img src="../states-demo/assets/rail-01.jpg" alt="配图占位"></div>
-              </figure>
-            </div>
-            <div class="page-region" data-slot="copy" data-size="fill" data-align="start">
-              <div class="card-grid" data-item-count="4" style="--component-columns: 4">
-                <article class="report-card">
-                  <b class="stat-value">72%</b>
-                  <h3 class="report-card__title">核心覆盖率</h3>
-                  <p class="report-card__body">说明指标口径与统计范围。</p>
-                </article>
-                <article class="report-card">
-                  <b class="stat-value">3.4×</b>
-                  <h3 class="report-card__title">效率变化</h3>
-                  <p class="report-card__body">与基线对比，写明观察周期。</p>
-                </article>
-                <article class="report-card">
-                  <b class="stat-value">18</b>
-                  <h3 class="report-card__title">有效样本</h3>
-                  <p class="report-card__body">交代样本来源与筛选条件。</p>
-                </article>
-                <article class="report-card">
-                  <b class="stat-value">6</b>
-                  <h3 class="report-card__title">研究周期</h3>
-                  <p class="report-card__body">让时间边界与结论同步可见。</p>
-                </article>
-              </div>
-            </div>
-          </div>
+          <div class="page-grid" data-slots="3"><article class="grid-cell"><div class="content" data-content="table"><div class="content-cols"><div class="content-col"><strong>航司</strong><span>国航</span><span>南航</span><span>东航</span><span>春秋</span><span>厦航</span><span>海航</span></div><div class="content-col"><strong>客舱政策</strong><span>主人同行 · ≤5 kg · 软包</span><span>主人同行 · ≤5 kg · 提前 48 h</span><span>主人同行 · 名额少</span><span>不接受客舱</span><span>视始发站开放</span><span>可带但旺季限额</span></div><div class="content-col"><strong>判断</strong><span><em>优先验证</em></span><span><strong>可锁舱</strong></span><span>作备选</span><span>改货舱或陆运</span><span>当天核官网</span><span>先问热线</span></div></div></div><p class="report-source" data-report-source>数据来源 <a href="https://www.csair.com/" target="_blank" rel="noopener noreferrer">南航旅客服务·宠物运输</a></p></article><article class="grid-cell"><div class="content" data-content="table"><div class="content-cols"><div class="content-col"><strong>线路</strong><span>京沪</span><span>广深港</span><span>成渝</span><span>杭温</span><span>京广</span><span>沪昆</span></div><div class="content-col"><strong>托运条件</strong><span>专用运输箱 · 同一车次</span><span>不接受活体</span><span>行李车有位才收</span><span>检疫证明当日有效</span><span>高峰停办</span><span>箱内温湿度可查</span></div><div class="content-col"><strong>判断</strong><span><strong>体验稳定</strong></span><span>改陆运</span><span>出发前 24 h 确认</span><span>可作补充</span><span>避开节前三天</span><span><em>优先联运</em></span></div></div></div><p class="report-source" data-report-source>数据来源 <a href="https://www.12306.cn/" target="_blank" rel="noopener noreferrer">铁路 12306 宠物托运须知</a></p></article><article class="grid-cell"><div class="content" data-content="table"><div class="content-cols"><div class="content-col"><strong>城市对</strong><span>沪杭</span><span>京津</span><span>广深</span><span>成渝</span><span>沪宁</span><span>京沪</span></div><div class="content-col"><strong>时效</strong><span>门到门 4 h</span><span>门到门 3 h</span><span>6–8 h · 含接驳</span><span>4 h</span><span>3 h</span><span>过夜专车</span></div><div class="content-col"><strong>判断</strong><span><em>优先</em></span><span><strong>可当日</strong></span><span>避开晚高峰</span><span>笼位充足</span><span>可加急</span><span>不承诺次日早</span></div></div></div></article></div>
         </section>
-
+        <section class="report-section report-slide" data-chapter="grid3" data-slide="03.f" id="g3-bar">
+          <header class="section-header">
+            <span class="section-header__no">03.f · Grid 3</span>
+            <div>
+              <h2 class="section-header__title">Bar</h2>
+              <p class="section-header__part">三格 · 竖条</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="3"><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">履约把握</p><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">客舱携带</span><p class="bar-compare__note">体验最好，规则最碎</p></div><div class="bar-compare__item"><strong class="bar-compare__value">82</strong><div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="--bar-size:82%"></div></div><span class="bar-compare__label">货舱托运</span><p class="bar-compare__note">供给最大，应激最高</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">高铁托运</span><p class="bar-compare__note">体验稳定，线路有限</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">专车陆运</span><p class="bar-compare__note">门到门，成本最高</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">履约把握</p><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">客舱携带</span><p class="bar-compare__note">体验最好，规则最碎</p></div><div class="bar-compare__item"><strong class="bar-compare__value">82</strong><div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="--bar-size:82%"></div></div><span class="bar-compare__label">货舱托运</span><p class="bar-compare__note">供给最大，应激最高</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">高铁托运</span><p class="bar-compare__note">体验稳定，线路有限</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">专车陆运</span><p class="bar-compare__note">门到门，成本最高</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">履约把握</p><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">客舱携带</span><p class="bar-compare__note">体验最好，规则最碎</p></div><div class="bar-compare__item"><strong class="bar-compare__value">82</strong><div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="--bar-size:82%"></div></div><span class="bar-compare__label">货舱托运</span><p class="bar-compare__note">供给最大，应激最高</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">高铁托运</span><p class="bar-compare__note">体验稳定，线路有限</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">专车陆运</span><p class="bar-compare__note">门到门，成本最高</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article></div>
+        </section>
+        <section class="report-slide is-chapter-cover" data-chapter="grid4" data-slide="04" id="grid4">
+          <header class="chapter-cover">
+            <span class="chapter-cover__no">04</span>
+            <span class="chapter-cover__kicker">四格</span>
+            <h2 class="chapter-cover__title">Grid 4</h2>
+            
+            <p class="chapter-cover__lead">2×2。</p>
+            
+            
+          </header>
+        </section>
+        <section class="report-section report-slide" data-chapter="grid4" data-slide="04.a" id="g4-signal">
+          <header class="section-header">
+            <span class="section-header__no">04.a · Grid 4</span>
+            <div>
+              <h2 class="section-header__title">带序号观点</h2>
+              <p class="section-header__part">四格 · 2×2</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="4"><article class="grid-cell"><div class="content" data-content="signal"><span class="content__kicker">SIGNAL 01</span><h3 class="content__title">入口必须先问能不能带</h3><p class="content__body">先核航司白名单和体重，再谈舱位与价格，避免先下单后拒载。</p></div></article><article class="grid-cell"><div class="content" data-content="signal"><span class="content__kicker">SIGNAL 02</span><h3 class="content__title">比较必须同一口径</h3><p class="content__body">客舱、货舱、高铁、陆运都写：证件、箱包、时效、是否主人同行。</p></div></article><article class="grid-cell"><div class="content" data-content="signal"><span class="content__kicker">SIGNAL 03</span><h3 class="content__title">证据要贴着判断</h3><p class="content__body">现场照片和截图只解释这一条规则，不另开一页堆图。</p></div></article><article class="grid-cell"><div class="content" data-content="signal"><span class="content__kicker">SIGNAL 04</span><h3 class="content__title">下一步写到人</h3><p class="content__body">离开时知道先打哪个航司热线、准备哪两份证。</p></div></article></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="grid4" data-slide="04.b" id="g4-stat">
+          <header class="section-header">
+            <span class="section-header__no">04.b · Grid 4</span>
+            <div>
+              <h2 class="section-header__title">数据</h2>
+              <p class="section-header__part">四格 · 2×2</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="4"><article class="grid-cell"><div class="content" data-content="stat"><b class="stat-value">11</b><h3 class="content__title">可客舱航司</h3><p class="content__body">统计口径：国内客运航司官网 2026 年 6 月公示，不含包机。</p></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article><article class="grid-cell"><div class="content" data-content="stat"><b class="stat-value">2.1×</b><h3 class="content__title">咨询到下单</h3><p class="content__body">有完整证件清单的会话，相对口头咨询的下单倍率。</p></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article><article class="grid-cell"><div class="content" data-content="stat"><b class="stat-value">36</b><h3 class="content__title">有效城市对</h3><p class="content__body">陆运专车当前可履约的对开城市，含接驳高铁的组合。</p></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article><article class="grid-cell"><div class="content" data-content="stat"><b class="stat-value">4</b><h3 class="content__title">硬限制</h3><p class="content__body">体重、狂犬免疫、航空箱尺寸、主人是否必须同行。</p></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="grid4" data-slide="04.c" id="g4-list">
+          <header class="section-header">
+            <span class="section-header__no">04.c · Grid 4</span>
+            <div>
+              <h2 class="section-header__title">列表</h2>
+              <p class="section-header__part">四格 · 2×2</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="4"><article class="grid-cell"><div class="content" data-content="list"><span class="content__label">短途探亲</span><p class="content__body">主人同行、宠物低于客舱限重时，优先核对航司白名单，而不是先订人票。</p></div></article><article class="grid-cell"><div class="content" data-content="list"><span class="content__label">跨城搬家</span><p class="content__body">人宠不同行时走陆运专车或货舱，航空箱和检疫证明必须同一天核验。</p></div></article><article class="grid-cell"><div class="content" data-content="list"><span class="content__label">旺季出行</span><p class="content__body">春运和暑运客舱名额先锁，锁不到再给货舱或改期，不要并行占两张舱。</p></div></article><article class="grid-cell"><div class="content" data-content="list"><span class="content__label">中转行程</span><p class="content__body">中转超过一次不承诺当天达；每段都要重新确认箱包和交接人。</p></div></article></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="grid4" data-slide="04.d" id="g4-step">
+          <header class="section-header">
+            <span class="section-header__no">04.d · Grid 4</span>
+            <div>
+              <h2 class="section-header__title">编号列表</h2>
+              <p class="section-header__part">四格 · 横排</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="4"><article class="grid-cell"><div class="content" data-content="step"><span class="content__index">01</span><div class="content__copy"><h3 class="content__title">核白名单和体重</h3><p class="content__body">先确认这只宠物能否进客舱或必须货舱，再决定人票舱位。</p></div></div></article><article class="grid-cell"><div class="content" data-content="step"><span class="content__index">02</span><div class="content__copy"><h3 class="content__title">收齐证件和箱包</h3><p class="content__body">狂犬免疫、健康证明、航空箱内尺寸按最严的一段准备。</p></div></div></article><article class="grid-cell"><div class="content" data-content="step"><span class="content__index">03</span><div class="content__copy"><h3 class="content__title">锁舱位再通知现场</h3><p class="content__body">客舱名额或陆运笼位确认后，才把航班号发给司机和接驳人。</p></div></div></article><article class="grid-cell"><div class="content" data-content="step"><span class="content__index">04</span><div class="content__copy"><h3 class="content__title">出发日只核对变化</h3><p class="content__body">只看限重、体温和箱包有没有改口，不再重新讲方案。</p></div></div></article></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="grid4" data-slide="04.e" id="g4-table">
+          <header class="section-header">
+            <span class="section-header__no">04.e · Grid 4</span>
+            <div>
+              <h2 class="section-header__title">表格</h2>
+              <p class="section-header__part">四格 · 客舱 / 高铁 / 陆运 / 证件</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="4"><article class="grid-cell"><div class="content" data-content="table"><div class="content-cols"><div class="content-col"><strong>航司</strong><span>国航</span><span>南航</span><span>东航</span><span>春秋</span><span>厦航</span><span>海航</span></div><div class="content-col"><strong>客舱政策</strong><span>主人同行 · ≤5 kg · 软包</span><span>主人同行 · ≤5 kg · 提前 48 h</span><span>主人同行 · 名额少</span><span>不接受客舱</span><span>视始发站开放</span><span>可带但旺季限额</span></div><div class="content-col"><strong>判断</strong><span><em>优先验证</em></span><span><strong>可锁舱</strong></span><span>作备选</span><span>改货舱或陆运</span><span>当天核官网</span><span>先问热线</span></div></div></div><p class="report-source" data-report-source>数据来源 <a href="https://www.csair.com/" target="_blank" rel="noopener noreferrer">南航旅客服务·宠物运输</a></p></article><article class="grid-cell"><div class="content" data-content="table"><div class="content-cols"><div class="content-col"><strong>线路</strong><span>京沪</span><span>广深港</span><span>成渝</span><span>杭温</span><span>京广</span><span>沪昆</span></div><div class="content-col"><strong>托运条件</strong><span>专用运输箱 · 同一车次</span><span>不接受活体</span><span>行李车有位才收</span><span>检疫证明当日有效</span><span>高峰停办</span><span>箱内温湿度可查</span></div><div class="content-col"><strong>判断</strong><span><strong>体验稳定</strong></span><span>改陆运</span><span>出发前 24 h 确认</span><span>可作补充</span><span>避开节前三天</span><span><em>优先联运</em></span></div></div></div><p class="report-source" data-report-source>数据来源 <a href="https://www.12306.cn/" target="_blank" rel="noopener noreferrer">铁路 12306 宠物托运须知</a></p></article><article class="grid-cell"><div class="content" data-content="table"><div class="content-cols"><div class="content-col"><strong>城市对</strong><span>沪杭</span><span>京津</span><span>广深</span><span>成渝</span><span>沪宁</span><span>京沪</span></div><div class="content-col"><strong>时效</strong><span>门到门 4 h</span><span>门到门 3 h</span><span>6–8 h · 含接驳</span><span>4 h</span><span>3 h</span><span>过夜专车</span></div><div class="content-col"><strong>判断</strong><span><em>优先</em></span><span><strong>可当日</strong></span><span>避开晚高峰</span><span>笼位充足</span><span>可加急</span><span>不承诺次日早</span></div></div></div></article><article class="grid-cell"><div class="content" data-content="table"><div class="content-cols"><div class="content-col"><strong>材料</strong><span>狂犬免疫</span><span>健康证明</span><span>宠物照片</span><span>航空箱尺寸</span><span>主人证件</span><span>交接授权</span></div><div class="content-col"><strong>有效期</strong><span>接种满 21 天</span><span>出具 7 日内</span><span>近 30 日</span><span>按最严航司</span><span>与订票一致</span><span>当日手写</span></div><div class="content-col"><strong>用途</strong><span>客舱 / 货舱 / 高铁</span><span>货舱与跨省陆运</span><span>下单核对毛色</span><span>货舱必查</span><span>客舱同行</span><span>人宠不同行</span></div></div></div><p class="report-source" data-report-source>数据来源 <a href="https://www.caac.gov.cn/" target="_blank" rel="noopener noreferrer">民航局客舱携带规定</a></p></article></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="grid4" data-slide="04.f" id="g4-bar">
+          <header class="section-header">
+            <span class="section-header__no">04.f · Grid 4</span>
+            <div>
+              <h2 class="section-header__title">Bar</h2>
+              <p class="section-header__part">四格 · 竖条</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="4"><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">履约把握</p><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">客舱携带</span><p class="bar-compare__note">体验最好，规则最碎</p></div><div class="bar-compare__item"><strong class="bar-compare__value">82</strong><div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="--bar-size:82%"></div></div><span class="bar-compare__label">货舱托运</span><p class="bar-compare__note">供给最大，应激最高</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">高铁托运</span><p class="bar-compare__note">体验稳定，线路有限</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">专车陆运</span><p class="bar-compare__note">门到门，成本最高</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">履约把握</p><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">客舱携带</span><p class="bar-compare__note">体验最好，规则最碎</p></div><div class="bar-compare__item"><strong class="bar-compare__value">82</strong><div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="--bar-size:82%"></div></div><span class="bar-compare__label">货舱托运</span><p class="bar-compare__note">供给最大，应激最高</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">高铁托运</span><p class="bar-compare__note">体验稳定，线路有限</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">专车陆运</span><p class="bar-compare__note">门到门，成本最高</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">履约把握</p><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">客舱携带</span><p class="bar-compare__note">体验最好，规则最碎</p></div><div class="bar-compare__item"><strong class="bar-compare__value">82</strong><div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="--bar-size:82%"></div></div><span class="bar-compare__label">货舱托运</span><p class="bar-compare__note">供给最大，应激最高</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">高铁托运</span><p class="bar-compare__note">体验稳定，线路有限</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">专车陆运</span><p class="bar-compare__note">门到门，成本最高</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">履约把握</p><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">客舱携带</span><p class="bar-compare__note">体验最好，规则最碎</p></div><div class="bar-compare__item"><strong class="bar-compare__value">82</strong><div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="--bar-size:82%"></div></div><span class="bar-compare__label">货舱托运</span><p class="bar-compare__note">供给最大，应激最高</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">高铁托运</span><p class="bar-compare__note">体验稳定，线路有限</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">专车陆运</span><p class="bar-compare__note">门到门，成本最高</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article></div>
+        </section>
+        <section class="report-slide is-chapter-cover" data-chapter="more" data-slide="05" id="more">
+          <header class="chapter-cover">
+            <span class="chapter-cover__no">05</span>
+            <span class="chapter-cover__kicker">更多格子</span>
+            <h2 class="chapter-cover__title">More Grids</h2>
+            
+            <p class="chapter-cover__lead">5+ 横滑复用 Grid 3。</p>
+            
+            
+          </header>
+        </section>
+        <section class="report-section report-slide" data-chapter="more" data-slide="05.a" id="g5-signal">
+          <header class="section-header">
+            <span class="section-header__no">05.a · More</span>
+            <div>
+              <h2 class="section-header__title">带序号观点</h2>
+              <p class="section-header__part">5+ · 横滑</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="5"><article class="grid-cell"><div class="content" data-content="signal"><span class="content__kicker">SIGNAL 01</span><h3 class="content__title">入口必须先问能不能带</h3><p class="content__body">先核航司白名单和体重，再谈舱位与价格，避免先下单后拒载。</p></div></article><article class="grid-cell"><div class="content" data-content="signal"><span class="content__kicker">SIGNAL 02</span><h3 class="content__title">比较必须同一口径</h3><p class="content__body">客舱、货舱、高铁、陆运都写：证件、箱包、时效、是否主人同行。</p></div></article><article class="grid-cell"><div class="content" data-content="signal"><span class="content__kicker">SIGNAL 03</span><h3 class="content__title">证据要贴着判断</h3><p class="content__body">现场照片和截图只解释这一条规则，不另开一页堆图。</p></div></article><article class="grid-cell"><div class="content" data-content="signal"><span class="content__kicker">SIGNAL 04</span><h3 class="content__title">下一步写到人</h3><p class="content__body">离开时知道先打哪个航司热线、准备哪两份证。</p></div></article><article class="grid-cell"><div class="content" data-content="signal"><span class="content__kicker">SIGNAL 05</span><h3 class="content__title">承诺止于材料</h3><p class="content__body">季节限额和中转重办，不能写成“一定能带上”。</p></div></article></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="more" data-slide="05.b" id="g5-stat">
+          <header class="section-header">
+            <span class="section-header__no">05.b · More</span>
+            <div>
+              <h2 class="section-header__title">数据</h2>
+              <p class="section-header__part">5+ · 横滑</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="5"><article class="grid-cell"><div class="content" data-content="stat"><b class="stat-value">11</b><h3 class="content__title">可客舱航司</h3><p class="content__body">统计口径：国内客运航司官网 2026 年 6 月公示，不含包机。</p></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article><article class="grid-cell"><div class="content" data-content="stat"><b class="stat-value">2.1×</b><h3 class="content__title">咨询到下单</h3><p class="content__body">有完整证件清单的会话，相对口头咨询的下单倍率。</p></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article><article class="grid-cell"><div class="content" data-content="stat"><b class="stat-value">36</b><h3 class="content__title">有效城市对</h3><p class="content__body">陆运专车当前可履约的对开城市，含接驳高铁的组合。</p></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article><article class="grid-cell"><div class="content" data-content="stat"><b class="stat-value">4</b><h3 class="content__title">硬限制</h3><p class="content__body">体重、狂犬免疫、航空箱尺寸、主人是否必须同行。</p></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="more" data-slide="05.c" id="g5-list">
+          <header class="section-header">
+            <span class="section-header__no">05.c · More</span>
+            <div>
+              <h2 class="section-header__title">列表</h2>
+              <p class="section-header__part">5+ · 横滑</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="5"><article class="grid-cell"><div class="content" data-content="list"><span class="content__label">短途探亲</span><p class="content__body">主人同行、宠物低于客舱限重时，优先核对航司白名单，而不是先订人票。</p></div></article><article class="grid-cell"><div class="content" data-content="list"><span class="content__label">跨城搬家</span><p class="content__body">人宠不同行时走陆运专车或货舱，航空箱和检疫证明必须同一天核验。</p></div></article><article class="grid-cell"><div class="content" data-content="list"><span class="content__label">旺季出行</span><p class="content__body">春运和暑运客舱名额先锁，锁不到再给货舱或改期，不要并行占两张舱。</p></div></article><article class="grid-cell"><div class="content" data-content="list"><span class="content__label">中转行程</span><p class="content__body">中转超过一次不承诺当天达；每段都要重新确认箱包和交接人。</p></div></article></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="more" data-slide="05.d" id="g5-step">
+          <header class="section-header">
+            <span class="section-header__no">05.d · More</span>
+            <div>
+              <h2 class="section-header__title">编号列表</h2>
+              <p class="section-header__part">5+ · 纵向</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="5"><article class="grid-cell"><div class="content" data-content="step-stack"><div class="content__lead"><span class="content__index">01</span><h3 class="content__title">核白名单和体重</h3></div><p class="content__body">先确认这只宠物能否进客舱或必须货舱，再决定人票舱位。</p></div></article><article class="grid-cell"><div class="content" data-content="step-stack"><div class="content__lead"><span class="content__index">02</span><h3 class="content__title">收齐证件和箱包</h3></div><p class="content__body">狂犬免疫、健康证明、航空箱内尺寸按最严的一段准备。</p></div></article><article class="grid-cell"><div class="content" data-content="step-stack"><div class="content__lead"><span class="content__index">03</span><h3 class="content__title">锁舱位再通知现场</h3></div><p class="content__body">客舱名额或陆运笼位确认后，才把航班号发给司机和接驳人。</p></div></article><article class="grid-cell"><div class="content" data-content="step-stack"><div class="content__lead"><span class="content__index">04</span><h3 class="content__title">出发日只核对变化</h3></div><p class="content__body">只看限重、体温和箱包有没有改口，不再重新讲方案。</p></div></article></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="more" data-slide="05.e" id="g5-table">
+          <header class="section-header">
+            <span class="section-header__no">05.e · More</span>
+            <div>
+              <h2 class="section-header__title">表格</h2>
+              <p class="section-header__part">5+ · 横滑</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="5"><article class="grid-cell"><div class="content" data-content="table"><div class="content-cols"><div class="content-col"><strong>航司</strong><span>国航</span><span>南航</span><span>东航</span><span>春秋</span><span>厦航</span><span>海航</span></div><div class="content-col"><strong>客舱政策</strong><span>主人同行 · ≤5 kg · 软包</span><span>主人同行 · ≤5 kg · 提前 48 h</span><span>主人同行 · 名额少</span><span>不接受客舱</span><span>视始发站开放</span><span>可带但旺季限额</span></div><div class="content-col"><strong>判断</strong><span><em>优先验证</em></span><span><strong>可锁舱</strong></span><span>作备选</span><span>改货舱或陆运</span><span>当天核官网</span><span>先问热线</span></div></div></div><p class="report-source" data-report-source>数据来源 <a href="https://www.csair.com/" target="_blank" rel="noopener noreferrer">南航旅客服务·宠物运输</a></p></article><article class="grid-cell"><div class="content" data-content="table"><div class="content-cols"><div class="content-col"><strong>线路</strong><span>京沪</span><span>广深港</span><span>成渝</span><span>杭温</span><span>京广</span><span>沪昆</span></div><div class="content-col"><strong>托运条件</strong><span>专用运输箱 · 同一车次</span><span>不接受活体</span><span>行李车有位才收</span><span>检疫证明当日有效</span><span>高峰停办</span><span>箱内温湿度可查</span></div><div class="content-col"><strong>判断</strong><span><strong>体验稳定</strong></span><span>改陆运</span><span>出发前 24 h 确认</span><span>可作补充</span><span>避开节前三天</span><span><em>优先联运</em></span></div></div></div><p class="report-source" data-report-source>数据来源 <a href="https://www.12306.cn/" target="_blank" rel="noopener noreferrer">铁路 12306 宠物托运须知</a></p></article><article class="grid-cell"><div class="content" data-content="table"><div class="content-cols"><div class="content-col"><strong>城市对</strong><span>沪杭</span><span>京津</span><span>广深</span><span>成渝</span><span>沪宁</span><span>京沪</span></div><div class="content-col"><strong>时效</strong><span>门到门 4 h</span><span>门到门 3 h</span><span>6–8 h · 含接驳</span><span>4 h</span><span>3 h</span><span>过夜专车</span></div><div class="content-col"><strong>判断</strong><span><em>优先</em></span><span><strong>可当日</strong></span><span>避开晚高峰</span><span>笼位充足</span><span>可加急</span><span>不承诺次日早</span></div></div></div></article><article class="grid-cell"><div class="content" data-content="table"><div class="content-cols"><div class="content-col"><strong>材料</strong><span>狂犬免疫</span><span>健康证明</span><span>宠物照片</span><span>航空箱尺寸</span><span>主人证件</span><span>交接授权</span></div><div class="content-col"><strong>有效期</strong><span>接种满 21 天</span><span>出具 7 日内</span><span>近 30 日</span><span>按最严航司</span><span>与订票一致</span><span>当日手写</span></div><div class="content-col"><strong>用途</strong><span>客舱 / 货舱 / 高铁</span><span>货舱与跨省陆运</span><span>下单核对毛色</span><span>货舱必查</span><span>客舱同行</span><span>人宠不同行</span></div></div></div><p class="report-source" data-report-source>数据来源 <a href="https://www.caac.gov.cn/" target="_blank" rel="noopener noreferrer">民航局客舱携带规定</a></p></article></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="more" data-slide="05.f" id="g5-bar">
+          <header class="section-header">
+            <span class="section-header__no">05.f · More</span>
+            <div>
+              <h2 class="section-header__title">Bar</h2>
+              <p class="section-header__part">5+ · 竖条</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="5"><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">履约把握</p><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">客舱携带</span><p class="bar-compare__note">体验最好，规则最碎</p></div><div class="bar-compare__item"><strong class="bar-compare__value">82</strong><div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="--bar-size:82%"></div></div><span class="bar-compare__label">货舱托运</span><p class="bar-compare__note">供给最大，应激最高</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">高铁托运</span><p class="bar-compare__note">体验稳定，线路有限</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">专车陆运</span><p class="bar-compare__note">门到门，成本最高</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">履约把握</p><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">客舱携带</span><p class="bar-compare__note">体验最好，规则最碎</p></div><div class="bar-compare__item"><strong class="bar-compare__value">82</strong><div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="--bar-size:82%"></div></div><span class="bar-compare__label">货舱托运</span><p class="bar-compare__note">供给最大，应激最高</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">高铁托运</span><p class="bar-compare__note">体验稳定，线路有限</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">专车陆运</span><p class="bar-compare__note">门到门，成本最高</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">履约把握</p><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">客舱携带</span><p class="bar-compare__note">体验最好，规则最碎</p></div><div class="bar-compare__item"><strong class="bar-compare__value">82</strong><div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="--bar-size:82%"></div></div><span class="bar-compare__label">货舱托运</span><p class="bar-compare__note">供给最大，应激最高</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">高铁托运</span><p class="bar-compare__note">体验稳定，线路有限</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">专车陆运</span><p class="bar-compare__note">门到门，成本最高</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">履约把握</p><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">客舱携带</span><p class="bar-compare__note">体验最好，规则最碎</p></div><div class="bar-compare__item"><strong class="bar-compare__value">82</strong><div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="--bar-size:82%"></div></div><span class="bar-compare__label">货舱托运</span><p class="bar-compare__note">供给最大，应激最高</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">高铁托运</span><p class="bar-compare__note">体验稳定，线路有限</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">专车陆运</span><p class="bar-compare__note">门到门，成本最高</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>2026 上半年咨询会话抽样</span></p></article></div>
+        </section>
+        <section class="report-slide is-chapter-cover" data-chapter="evidence" data-slide="06" id="evidence">
+          <header class="chapter-cover">
+            <span class="chapter-cover__no">06</span>
+            <span class="chapter-cover__kicker">证据</span>
+            <h2 class="chapter-cover__title">Evidence</h2>
+            
+            <p class="chapter-cover__lead">图、截图、条带与 Media Switch。不进 Grid 格。</p>
+            
+            
+          </header>
+        </section>
+        <section class="report-section report-slide" data-chapter="evidence" data-slide="06.a" id="ev-photo">
+          <header class="section-header">
+            <span class="section-header__no">06.a · Evidence</span>
+            <div>
+              <h2 class="section-header__title">Evidence</h2>
+              <p class="section-header__part">图 + 图注。不进 Grid 格</p>
+            </div>
+          </header>
+          <div class="page-regions" data-regions="1" data-align="center"><div class="page-region" data-size="fill" data-align="center"><div class="image-grid evidence-gallery" data-image-ratio="3:4" data-image-fit="fill" data-item-count="3"><figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fill"><div class="evidence-window"><img src="../states-demo/assets/cabin-01.jpg" alt="宠物装入软包进入飞机客舱"></div><figcaption><b>客舱软包</b><span>登机口称重后装入软包，置于座椅下方</span></figcaption></figure><figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fill"><div class="evidence-window"><img src="../states-demo/assets/rail-01.jpg" alt="高铁行李车厢内的宠物专用运输箱"></div><figcaption><b>高铁运输箱</b><span>行李车厢固定位，温湿度可查，需预留箱位</span></figcaption></figure><figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fill"><div class="evidence-window"><img src="../states-demo/assets/road-01.jpg" alt="宠物跨城运输车辆内部"></div><figcaption><b>陆运笼位</b><span>专车固定笼，人宠可不同行，交接人写进运单</span></figcaption></figure></div></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="evidence" data-slide="06.b" id="ev-shot">
+          <header class="section-header">
+            <span class="section-header__no">06.b · Evidence</span>
+            <div>
+              <h2 class="section-header__title">Evidence 截图</h2>
+              <p class="section-header__part">截图 · 0.46:1 Fit。不进 Grid 格</p>
+            </div>
+          </header>
+          <div class="page-regions" data-regions="1" data-align="center"><div class="page-region" data-size="fill" data-align="center"><div class="image-grid evidence-gallery" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit" data-item-count="3"><figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit"><div class="evidence-window"><img src="../states-demo/assets/pet-profile.png" alt="宠物档案界面"></div><figcaption><b>宠物档案</b><span>体重、疫苗和近照必须对上同一只</span></figcaption></figure><figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit"><div class="evidence-window"><img src="../states-demo/assets/pet-travel.png" alt="宠物出行下单界面"></div><figcaption><b>出行下单</b><span>先锁舱位，再填箱包尺寸和证件有效期</span></figcaption></figure><figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit"><div class="evidence-window"><img src="../states-demo/assets/pet-delivery.png" alt="宠物配送进度界面"></div><figcaption><b>配送进度</b><span>交接人、箱号和下一站在同一屏核对</span></figcaption></figure></div></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="evidence" data-slide="06.c" id="ev-wide">
+          <header class="section-header">
+            <span class="section-header__no">06.c · Evidence</span>
+            <div>
+              <h2 class="section-header__title">Evidence 横屏</h2>
+              <p class="section-header__part">横屏大图 · 4:3 Fill。不进 Grid 格</p>
+            </div>
+          </header>
+          <div class="page-regions" data-regions="1" data-align="center"><div class="page-region" data-size="fill" data-align="center"><div class="image-grid evidence-gallery" data-image-ratio="4:3" data-image-fit="fill" data-item-count="3"><figure class="evidence-figure" data-image-ratio="4:3" data-image-fit="fill"><div class="evidence-window"><img src="../states-demo/assets/road-01.jpg" alt="宠物跨城运输车辆内部"></div><figcaption><b>跨城专车</b><span>笼位固定、空调直吹箱体，适合人宠不同行</span></figcaption></figure><figure class="evidence-figure" data-image-ratio="4:3" data-image-fit="fill"><div class="evidence-window"><img src="../states-demo/assets/road-03.jpg" alt="带固定笼位的专业宠物运输车"></div><figcaption><b>专业运输车</b><span>独立笼位带锁定，出发前核对箱号与芯片</span></figcaption></figure><figure class="evidence-figure" data-image-ratio="4:3" data-image-fit="fill"><div class="evidence-window"><img src="../states-demo/assets/ride-together.jpg" alt="人宠共同乘坐跨城车辆"></div><figcaption><b>人宠同行</b><span>主人坐副驾，宠物在后舱笼位，中途可停车查看</span></figcaption></figure></div></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="evidence" data-slide="06.d" id="ev-strip">
+          <header class="section-header">
+            <span class="section-header__no">06.d · Evidence</span>
+            <div>
+              <h2 class="section-header__title">Evidence 条带</h2>
+              <p class="section-header__part">宽图横滑。不进 Grid 格</p>
+            </div>
+          </header>
+          <div class="page-regions" data-regions="1" data-align="center"><div class="page-region" data-size="fill" data-align="center"><div class="image-grid evidence-gallery" data-image-kind="strip" data-item-count="1"><figure class="evidence-figure" data-image-kind="strip"><div class="evidence-window"><img src="../states-demo/assets/rail-ota-flow.jpg" alt="高铁宠物托运预约流程合成条"></div><figcaption><b>12306 预约</b><span>选车次 → 填箱位 → 上传检疫证明，箱位确认前不要买人票</span></figcaption></figure></div></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="evidence" data-slide="06.e" id="ev-switch">
+          <header class="section-header">
+            <span class="section-header__no">06.e · Evidence</span>
+            <div>
+              <h2 class="section-header__title">Evidence 封面</h2>
+              <p class="section-header__part">Media Switch · 默认多张并排。不进 Grid 格</p>
+            </div>
+          </header>
+          <div class="page-regions" data-regions="1" data-align="center"><div class="page-region" data-size="fill" data-align="center"><div class="image-grid evidence-gallery" data-image-ratio="9:16" data-image-fit="fill" data-item-count="4"><figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill"><div class="evidence-window"><img data-media-main src="../states-demo/assets/cabin-01.jpg" alt="宠物装入软包进入飞机客舱"><div class="media-switch__thumbs" aria-label="切换飞机进客舱图片"><button class="media-switch__thumb is-active" type="button" data-src="../states-demo/assets/cabin-01.jpg" data-alt="宠物装入软包进入飞机客舱"><img src="../states-demo/assets/cabin-01.jpg" alt="软包内的客舱宠物"></button><button class="media-switch__thumb" type="button" data-src="../states-demo/assets/cabin-02.jpg" data-alt="宠物在飞机客舱内"><img src="../states-demo/assets/cabin-02.jpg" alt="客舱内的宠物"></button></div><div class="media-switch__panel"><h3>飞机进客舱</h3><p>软包进客舱只在主人同行、体重 ≤5 kg、航司在白名单时成立</p><div class="list-block"><div class="list-row"><span class="list-row__label">宠物位置</span><p class="list-row__text">客舱座椅下方软包</p></div><div class="list-row"><span class="list-row__label">主人</span><p class="list-row__text">必须同行</p></div></div></div></div><button class="media-switch__label" type="button">飞机进客舱</button></figure><figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill"><div class="evidence-window"><img data-media-main src="../states-demo/assets/air-cargo-01.jpg" alt="航空箱在机场完成固定与交运"><div class="media-switch__thumbs" aria-label="切换飞机托运图片"><button class="media-switch__thumb is-active" type="button" data-src="../states-demo/assets/air-cargo-01.jpg" data-alt="航空箱在机场完成固定与交运"><img src="../states-demo/assets/air-cargo-01.jpg" alt="航空箱固定"></button><button class="media-switch__thumb" type="button" data-src="../states-demo/assets/air-cargo-02.jpg" data-alt="工作人员装卸宠物航空箱"><img src="../states-demo/assets/air-cargo-02.jpg" alt="机场装卸"></button><button class="media-switch__thumb" type="button" data-src="../states-demo/assets/air-cargo-03.jpg" data-alt="飞机货舱内部环境"><img src="../states-demo/assets/air-cargo-03.jpg" alt="货舱内部"></button></div><div class="media-switch__panel"><h3>飞机托运</h3><p>货舱供给最大，应激高；中转超过一次必须重新交运，不承诺当天达</p><div class="list-block"><div class="list-row"><span class="list-row__label">宠物位置</span><p class="list-row__text">有氧货舱航空箱</p></div><div class="list-row"><span class="list-row__label">主人</span><p class="list-row__text">可同行或不同行</p></div></div></div></div><button class="media-switch__label" type="button">飞机托运</button></figure><figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill"><div class="evidence-window"><img data-media-main src="../states-demo/assets/rail-05.jpg" alt="高铁宠物运输箱的温湿度与氧气监控"><div class="media-switch__thumbs" aria-label="切换高铁托运图片"><button class="media-switch__thumb is-active" type="button" data-src="../states-demo/assets/rail-05.jpg" data-alt="高铁宠物运输箱的温湿度与氧气监控"><img src="../states-demo/assets/rail-05.jpg" alt="环境监控屏"></button><button class="media-switch__thumb" type="button" data-src="../states-demo/assets/rail-01.jpg" data-alt="高铁行李车厢内的宠物专用运输箱"><img src="../states-demo/assets/rail-01.jpg" alt="高铁宠物运输箱"></button></div><div class="media-switch__panel"><h3>高铁托运</h3><p>体验稳定、线路有限；箱位要提前锁，高峰车次可能停办活体</p><div class="list-block"><div class="list-row"><span class="list-row__label">宠物位置</span><p class="list-row__text">行李车厢专用运输箱</p></div><div class="list-row"><span class="list-row__label">主人</span><p class="list-row__text">通常乘坐同一车次</p></div></div></div></div><button class="media-switch__label" type="button">高铁托运</button></figure><figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill"><div class="evidence-window"><img data-media-main src="../states-demo/assets/road-01.jpg" alt="宠物跨城运输车辆内部"><div class="media-switch__thumbs" aria-label="切换陆运图片"><button class="media-switch__thumb is-active" type="button" data-src="../states-demo/assets/road-01.jpg" data-alt="宠物跨城运输车辆内部"><img src="../states-demo/assets/road-01.jpg" alt="运输车辆内部"></button><button class="media-switch__thumb" type="button" data-src="../states-demo/assets/road-03.jpg" data-alt="带固定笼位的专业宠物运输车"><img src="../states-demo/assets/road-03.jpg" alt="专业运输车"></button></div><div class="media-switch__panel"><h3>陆运</h3><p>门到门可控，成本最高；适合人宠不同行，或客舱、高铁都走不通的城市对</p><div class="list-block"><div class="list-row"><span class="list-row__label">宠物位置</span><p class="list-row__text">运输车笼位或同行座舱</p></div><div class="list-row"><span class="list-row__label">主人</span><p class="list-row__text">可同行或不同行</p></div></div></div></div><button class="media-switch__label" type="button">陆运</button></figure></div></div></div>
+        </section>
+        <section class="report-slide is-chapter-cover" data-chapter="fullscreen" data-slide="07" id="fullscreen">
+          <header class="chapter-cover">
+            <span class="chapter-cover__no">07</span>
+            <span class="chapter-cover__kicker">页皮</span>
+            <h2 class="chapter-cover__title">全屏</h2>
+            
+            <p class="chapter-cover__lead">永远 1 块。有图、无图，或只有图。</p>
+            
+            
+          </header>
+        </section>
+        <section class="report-section report-slide" data-chapter="fullscreen" data-slide="07.a" id="full-image">
+          <header class="section-header">
+            <span class="section-header__no">07.a · fullscreen</span>
+            <div>
+              <h2 class="section-header__title">全屏有图</h2>
+              <p class="section-header__part">图铺满当底，中间一块 Content</p>
+            </div>
+          </header>
+          <div class="full-page" data-full="image"><div class="full-page__media" data-caption="off"><img src="../states-demo/assets/cabin-01.jpg" alt="全屏底图"></div><article class="grid-cell"><div class="content" data-content="copy"><h3 class="content__title">先收成一条可履约的路径</h3><p class="content__body">带宠出行的摩擦，大多发生在规则散落在航司公告、车站须知和司机口头约定里。同一只狗，客舱、货舱、高铁行李车和专车陆运用的不是同一套证件与箱包。咨询阶段把可选项铺开，下单阶段必须收敛成一条可履约路径：谁同行、走哪段、用什么笼子、证件看到哪一天。<br><br>做不到客舱的，不要用货舱话术硬上；中转超过一次的，不要承诺“门到门当天达”。材料撑不住的判断写进口径。离开时只记得大字，必须已经得到这一页该给的东西。</p></div><p class="report-source" data-report-source>数据来源 <a href="https://www.csair.com/" target="_blank" rel="noopener noreferrer">南航旅客服务·宠物运输</a></p></article></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="fullscreen" data-slide="07.b" id="full-none">
+          <header class="section-header">
+            <span class="section-header__no">07.b · fullscreen</span>
+            <div>
+              <h2 class="section-header__title">全屏无图</h2>
+              <p class="section-header__part">浅底，一块 Content · 无出处则不出来源</p>
+            </div>
+          </header>
+          <div class="full-page" data-full="none"><article class="grid-cell"><div class="content" data-content="copy"><h3 class="content__title">先收成一条可履约的路径</h3><p class="content__body">带宠出行的摩擦，大多发生在规则散落在航司公告、车站须知和司机口头约定里。同一只狗，客舱、货舱、高铁行李车和专车陆运用的不是同一套证件与箱包。咨询阶段把可选项铺开，下单阶段必须收敛成一条可履约路径：谁同行、走哪段、用什么笼子、证件看到哪一天。<br><br>做不到客舱的，不要用货舱话术硬上；中转超过一次的，不要承诺“门到门当天达”。材料撑不住的判断写进口径。离开时只记得大字，必须已经得到这一页该给的东西。</p></div></article></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="fullscreen" data-slide="07.c" id="full-photo">
+          <header class="section-header">
+            <span class="section-header__no">07.c · fullscreen</span>
+            <div>
+              <h2 class="section-header__title">全屏只有图</h2>
+              <p class="section-header__part">只有图，没有文字</p>
+            </div>
+          </header>
+          <div class="full-page" data-full="image" data-copy="off"><div class="full-page__media" data-caption="off"><img src="../states-demo/assets/cabin-01.jpg" alt="全屏图片"></div><p class="report-source" data-report-source>数据来源 <a href="https://www.csair.com/" target="_blank" rel="noopener noreferrer">南航旅客服务·宠物运输</a></p></div>
+        </section>
         <section class="report-slide" data-chapter="notes" data-slide="09" id="notes">
           <footer class="report-notes">
             <h2>模板使用说明</h2>
             <ol>
-              <li>壳只有封面、章封面、口径。内容屏只有 1 分区、左图右文、上图下文。一个格子只放一个父组件。</li>
-              <li>1 分区：Callout、Card Grid、强调色、Stat Grid、List、Steps、Table、Bar Compare（横 / 竖）、Evidence（图片 / 截图 / 条带）、Media Switch 封面（单张 / 并排）。</li>
-              <li>左右右侧：默认文案、List、Steps、强调色、Bar Compare。上下底栏：默认文案、Callout、强调色、Card Grid、Stat Grid。</li>
-              <li>标题是组件名，副题是使用场景。套进报告时抄 class 和结构，不要按一组件一屏切。</li>
-              <li>不要加装饰线，不要把 `report-section__stack` / `report-split` 当分页。</li>
+              <li>封面用真实文案：标题、说明、分类章节、作者、日期，并提供开始阅读。</li>
+              <li>先定 Content，再选 Grid。一个 Grid 只放一种 Content。</li>
+              <li>Grid 1 / 2 / 3 / 4 / More。列表和步骤一条就是一格。Grid 3 / 5+ 的编号列表用纵向。</li>
+              <li>表和条整块占一格，宽度铺满，行间有分割线。可以上下滚动，不显示滚动条。有出处才写「数据来源」并挂链接；没有出处这一行不出现。字号 Caption（12），放在白卡内容区，居中。</li>
+              <li>单元格里 <strong>加粗</strong> 用 strong，<em>强调</em> 用 em（强调色 + 加粗）。同一张表里示意即可，不要另开强调组件。</li>
+              <li>Evidence 单独成章：现场图、截图、横屏、条带、Media Switch。不进 Grid 格。封面默认并排多张。</li>
+              <li>全屏单独成章：有图、无图，或只有图。永远 1 块。</li>
               <li>视觉由设计 Token 驱动。主题与翻页栏默认隐藏，鼠标移到屏幕左下角才显示。</li>
             </ol>
           </footer>
@@ -897,7 +629,7 @@
     </div>
   </div>
 
-  <script src="../../design-system/assets/design-data.js"></script>
+  <script src="../shared/design-data.js"></script>
   <script src="../shared/theme-runtime.js"></script>
   <script src="assets/template.js"></script>
 </body>

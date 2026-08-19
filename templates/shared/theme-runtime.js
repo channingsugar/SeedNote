@@ -71,12 +71,14 @@
   }
 
   function ensureFunctionalTokens(tokens) {
-    const defaults = DS.createDefaultTheme().tokens.colors;
-    tokens.colors ||= [];
-    defaults.forEach((token) => {
-      if (!tokens.colors.some((item) => item.id === token.id || item.variable === token.variable)) {
-        tokens.colors.push(clone(token));
-      }
+    const defaults = DS.createDefaultTheme().tokens;
+    ['colors', 'typeScale', 'radii', 'lineWidths', 'spaces'].forEach((category) => {
+      tokens[category] ||= [];
+      defaults[category].forEach((token) => {
+        if (!tokens[category].some((item) => item.id === token.id || item.variable === token.variable)) {
+          tokens[category].push(clone(token));
+        }
+      });
     });
     return tokens;
   }
@@ -87,8 +89,9 @@
       (next[category] || []).forEach((token) => {
         const unit = category === 'colors' ? '' : 'px';
         root.style.setProperty(token.variable, `${token.value}${unit}`);
-        if (token.lineHeight && token.id === 'body') root.style.setProperty('--line-body', token.lineHeight);
-        if (token.lineHeight && token.id === 'small') root.style.setProperty('--line-small', token.lineHeight);
+        if (category === 'typeScale' && token.lineHeight) {
+          root.style.setProperty(`--line-${token.id}`, token.lineHeight);
+        }
       });
     });
     Object.entries(next.aliases || {}).forEach(([retired, replacement]) => {
