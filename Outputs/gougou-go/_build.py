@@ -661,11 +661,13 @@ parts.append(slide("hotel", "06.p", "hotel-plan-steps", "用档案自动筛，�
     step_stack_c("03", "健全的政策表达", "详情页首屏需要看到政策，有独立页面展示政策、设施、活动。"),
     n=3,
 )))
-parts.append(slide("hotel", "06.q", "hotel-plan-ui", "档案和详情要接到筛选之前", "", evidence([
+parts.append(slide("hotel", "06.q", "hotel-plan-archive", "档案要接到筛选之前", "", evidence([
     (f"{A}/hotel-solution-47-酒店宠物档案设计方案-覆盖证件上传-AI图片识别和档案填写.png", "酒店宠物档案设计方案", "宠物档案", "通过照片或证件识别有效字段，再由用户确认"),
+], kind="strip")))
+parts.append(slide("hotel", "06.r", "hotel-plan-detail", "详情要接到筛选之前", "", evidence([
     (f"{A}/hotel-solution-48-宠物友好酒店设计方案-覆盖自动筛选-酒店详情-宠物政策与设施详情.png", "宠物友好酒店设计方案", "酒店详情", "自动筛选，并把收费、准入、设施前置"),
 ], kind="strip")))
-parts.append(slide("hotel", "06.r", "hotel-plan-funnel", "从飞猪标签到核实成功，供给会少一截", "", cells(
+parts.append(slide("hotel", "06.s", "hotel-plan-funnel", "从飞猪标签到核实成功，供给会少一截", "", cells(
     step_c("01", "2500 家飞猪宠物友好", "爬取小红书笔记去重后，先从平台标签池开始。"),
     step_c("02", "165 家真实入住经验", "有效笔记 469 条：有明确住宿实体，且有宠物可以跟人一起入住的信号。"),
     step_c("03", "100 家撞库优选", "与飞猪供给撞库后的 TOP。"),

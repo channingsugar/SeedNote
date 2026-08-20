@@ -1983,6 +1983,13 @@ html:has(.report-slide.is-active [data-media-page="stack"]) .report-deck-head .s
   cursor: not-allowed;
 }
 
+/* Flow reading lives in assets/flow.css — same markup, document column. */
+.report-chrome [data-reading-mode] {
+  min-height: 34px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-small);
+}
+
 @keyframes fragment-in-forward {
   from { opacity: 0; }
   to { opacity: 1; }

@@ -1,6 +1,8 @@
 (() => {
   window.ThemeRuntime?.mountThemeControl(document.querySelector('#themeControl'));
 
+  const isFlowReading = () => Boolean(document.querySelector('.report-shell.is-flow'));
+
   const applyMediaThumb = (thumb) => {
     const figure = thumb.closest('.media-switch');
     if (!figure) return;
@@ -129,12 +131,25 @@
     return items?.[0]?.querySelector('figcaption')?.offsetHeight || 0;
   };
 
+  const flowEvidenceFrame = (node) => {
+    const parent = node?.parentElement;
+    const width = Math.max(
+      evidenceInnerBox(node).w,
+      parent ? evidenceInnerBox(parent).w : 0,
+      node?.clientWidth || 0,
+    );
+    return {
+      w: Math.max(240, width),
+      h: Math.max(280, Math.min(Math.round(window.innerHeight * 0.58), 560)),
+    };
+  };
+
   const layoutEvidenceStandalone = (node) => {
     if (!node || node.getAttribute('data-image-kind') === 'strip' || node.closest('.evidence-gallery')) return;
     if (node.closest('[data-media-page] [data-slot="media"]')) {
       node.style.removeProperty('width');
       node.style.removeProperty('--evidence-item-width');
-      node.style.height = '100%';
+      node.style.height = isFlowReading() ? 'auto' : '100%';
       return;
     }
     const ratio = parseEvidenceRatio(node);
@@ -148,15 +163,21 @@
     }
     node.dataset.evidenceLayout = 'center';
     const region = node.closest('.page-region');
+    const flow = isFlowReading();
     if (region) {
       const box = evidenceInnerBox(node.clientHeight >= 8 ? node : region);
-      const boxH = box.h || evidenceInnerBox(region).h;
-      const boxW = box.w || evidenceInnerBox(region).w;
+      let boxH = box.h || evidenceInnerBox(region).h;
+      let boxW = box.w || evidenceInnerBox(region).w;
+      if (flow) {
+        const frame = flowEvidenceFrame(region);
+        if (boxH < 8) boxH = frame.h;
+        if (boxW < 8) boxW = frame.w;
+      }
       if (boxH >= 8) {
         const itemW = Math.min(boxW || boxH, Math.max(1, boxH - evidenceCaptionPx(node, [node])) * (ratio.w / ratio.h));
         node.style.setProperty('--evidence-item-width', `${itemW}px`);
         node.style.width = `${itemW}px`;
-        node.style.height = '100%';
+        node.style.height = flow ? 'auto' : '100%';
         return;
       }
     }
@@ -173,8 +194,16 @@
       item.matches('.evidence-figure, .media-switch, .media-card')
       && !item.classList.contains('is-component-item-hidden')
     ));
-    const box = evidenceInnerBox(gallery);
-    if (box.w < 8 || box.h < 8) return;
+    const flow = isFlowReading();
+    let box = evidenceInnerBox(gallery);
+    if (box.w < 8 || box.h < 8) {
+      if (!flow) return;
+      const frame = flowEvidenceFrame(gallery);
+      box = {
+        w: box.w >= 8 ? box.w : frame.w,
+        h: box.h >= 8 ? box.h : frame.h,
+      };
+    }
     items.forEach((item) => {
       const windowNode = item.querySelector(':scope > .evidence-window');
       const img = windowNode?.querySelector('img');
@@ -192,7 +221,7 @@
       img.style.objectFit = 'contain';
       img.style.objectPosition = 'center';
       item.style.alignItems = 'center';
-      if (fillH <= maxH + 1) {
+      if (flow || fillH <= maxH + 1) {
         windowNode.style.width = '100%';
         windowNode.style.height = 'auto';
         windowNode.style.maxHeight = 'none';
@@ -205,7 +234,7 @@
         windowNode.style.marginInline = 'auto';
       }
     });
-    gallery.classList.toggle('is-scrollable', items.length > 1);
+    gallery.classList.toggle('is-scrollable', !flow && items.length > 1);
     if (items.length <= 1) gallery.classList.remove('is-scroll-end');
     else syncEvidenceScrollFade(gallery);
   };
@@ -220,20 +249,32 @@
       && !item.classList.contains('is-component-item-hidden')
     ));
     if (!items.length) return;
+    const flow = isFlowReading();
     const box = evidenceInnerBox(gallery);
-    const galleryH = box.h || evidenceInnerBox(gallery.parentElement || gallery).h;
-    const galleryW = box.w || evidenceInnerBox(gallery.parentElement || gallery).w;
+    const parentBox = evidenceInnerBox(gallery.parentElement || gallery);
+    const frame = flow ? flowEvidenceFrame(gallery) : null;
+    const galleryW = box.w || parentBox.w || frame?.w || 0;
+    const galleryH = flow
+      ? (box.h >= 80 ? box.h : frame.h)
+      : (box.h || parentBox.h);
     if (galleryH < 8 || galleryW < 8) return;
     const ratio = parseEvidenceRatio(gallery);
     const ratioCssValue = `${ratio.w} / ${ratio.h}`;
     gallery.style.setProperty('--image-ratio', ratioCssValue);
-    const ratioW = Math.max(1, galleryH - evidenceCaptionPx(gallery, items)) * (ratio.w / ratio.h);
+    const captionH = evidenceCaptionPx(gallery, items);
     const gap = evidenceGapPx(gallery);
-    const nFull = Math.max(1, Math.floor((galleryW + gap) / (ratioW + gap)));
     const count = items.length;
+    let ratioW = Math.max(1, galleryH - captionH) * (ratio.w / ratio.h);
+    if (flow && count === 1) {
+      ratioW = Math.min(galleryW, Math.max(1, galleryH - captionH) * (ratio.w / ratio.h));
+    } else if (flow && count > 1) {
+      const fitW = Math.max(120, (galleryW - gap * (count - 1)) / count);
+      ratioW = Math.min(ratioW, fitW);
+    }
+    const nFull = Math.max(1, Math.floor((galleryW + gap) / (ratioW + gap)));
     let layout = 'center';
     if (count === 1) layout = 'center';
-    else if (count <= nFull) layout = 'even';
+    else if (count <= nFull || flow) layout = 'even';
     else layout = 'pages';
     gallery.dataset.evidenceLayout = layout;
     gallery.style.setProperty('--evidence-item-width', `${ratioW}px`);
@@ -261,6 +302,7 @@
       windowNode.addEventListener('wheel', (event) => {
         const max = windowNode.scrollWidth - windowNode.clientWidth;
         if (max <= 1) return;
+        if (isFlowReading() && Math.abs(event.deltaY) >= Math.abs(event.deltaX)) return;
         const delta = event.deltaY + event.deltaX;
         if (!delta) return;
         event.preventDefault();
@@ -278,6 +320,7 @@
         if (!gallery.classList.contains('is-scrollable')) return;
         const max = gallery.scrollWidth - gallery.clientWidth;
         if (max <= 1) return;
+        if (isFlowReading() && Math.abs(event.deltaY) >= Math.abs(event.deltaX)) return;
         const delta = event.deltaY + event.deltaX;
         if (!delta) return;
         event.preventDefault();
@@ -316,6 +359,14 @@
       if (toast) document.body.appendChild(toast);
       chrome.appendChild(theme);
     }
+    if (!chrome.querySelector('[data-reading-mode]')) {
+      const btn = document.createElement('button');
+      btn.className = 'button subtle';
+      btn.type = 'button';
+      btn.dataset.readingMode = '';
+      btn.textContent = '流式阅读';
+      chrome.appendChild(btn);
+    }
     if (!document.querySelector('.report-chrome-hotspot')) {
       const spot = document.createElement('button');
       spot.type = 'button';
@@ -331,6 +382,9 @@
     if (!shell || !stage) return false;
 
     assembleChrome();
+
+    const readingBtn = document.querySelector('[data-reading-mode]');
+    const isFlow = () => shell.classList.contains('is-flow');
 
     const slidesRoot = stage.querySelector('[data-report-slides]') || stage;
     const slides = [...slidesRoot.querySelectorAll(':scope > .report-slide')];
@@ -448,6 +502,15 @@
       const clamped = Math.max(0, Math.min(slides.length - 1, next));
       const from = slides[index];
       const to = slides[clamped];
+      if (isFlow()) {
+        index = clamped;
+        slides.forEach((slide) => slide.classList.toggle('is-active', slide === to));
+        activateNav(to.dataset.chapter);
+        if (hash && to.id) history.replaceState(null, '', `#${to.id}`);
+        to.scrollIntoView({ behavior: motion === 'none' ? 'auto' : 'smooth', block: 'start' });
+        document.dispatchEvent(new CustomEvent('seed:slidechange'));
+        return;
+      }
       if (clamped === index && to.classList.contains('is-active')) {
         syncChrome(to);
         return;
@@ -499,7 +562,7 @@
     };
 
     const go = (delta) => {
-      if (!delta || locked) return;
+      if (!delta || locked || isFlow()) return;
       const next = index + delta;
       if (next < 0 || next >= slides.length) return;
       locked = true;
@@ -560,7 +623,7 @@
     });
 
     stage.addEventListener('click', (event) => {
-      if (lightboxOpen()) return;
+      if (isFlow() || lightboxOpen()) return;
       if (!isBlankClick(event)) return;
       go(1);
     });
@@ -577,6 +640,7 @@
     document.querySelectorAll('.page-grid[data-slots="10"]').forEach((grid) => {
       grid.addEventListener('wheel', (event) => {
         if (grid.scrollWidth <= grid.clientWidth + 1) return;
+        if (isFlow() && Math.abs(event.deltaY) >= Math.abs(event.deltaX)) return;
         const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
         if (!delta) return;
         const max = grid.scrollWidth - grid.clientWidth;
@@ -589,7 +653,7 @@
     });
 
     document.addEventListener('keydown', (event) => {
-      if (lightboxOpen()) return;
+      if (isFlow() || lightboxOpen()) return;
       const tag = event.target?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || event.target?.isContentEditable) return;
       const strip = document.querySelector('.report-slide.is-active .page-grid[data-slots="10"]');
@@ -633,6 +697,128 @@
         show(slides.length - 1, { motion: 'chapter' });
       }
     });
+
+    const visibleSlideIndex = () => {
+      const navH = nav?.getBoundingClientRect().height || 88;
+      let best = index;
+      let bestDist = Infinity;
+      slides.forEach((slide, i) => {
+        if (getComputedStyle(slide).display === 'none') return;
+        const dist = Math.abs(slide.getBoundingClientRect().top - navH);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = i;
+        }
+      });
+      return best;
+    };
+
+    const relayout = () => {
+      requestAnimationFrame(() => {
+        layoutAllEvidence();
+        drawLineCharts();
+        syncTableTracks();
+      });
+    };
+
+    const syncFlowHeadings = () => {
+      const flow = isFlow();
+      let prev = '';
+      slides.forEach((slide) => {
+        slide.classList.remove('is-flow-chapter-start', 'is-flow-keep-title');
+        slide.removeAttribute('data-flow-chapter-title');
+        if (!flow) return;
+        if (slide.classList.contains('is-chapter-cover') || slide.dataset.chapter === 'cover') return;
+        const chapter = slide.dataset.chapter || '';
+        if (chapter && chapter !== prev) {
+          prev = chapter;
+          if (!slide.querySelector(':scope > .report-notes > h2')) {
+            const label = (nav?.querySelector(`a[href="#${chapter}"]`)?.textContent || '').trim();
+            if (label) {
+              slide.classList.add('is-flow-chapter-start');
+              slide.setAttribute('data-flow-chapter-title', label);
+            }
+          }
+        }
+        const keep = Boolean(slide.querySelector(
+          '.page-grid[data-slots="1"] .content[data-content="copy"], .page-grid[data-slots="1"] .content[data-content="point"]'
+        ));
+        slide.classList.toggle('is-flow-keep-title', keep);
+      });
+    };
+
+    const enterFlow = () => {
+      window.clearTimeout(animTimer);
+      locked = false;
+      slides.forEach((slide) => {
+        clearMotion(slide);
+        slide.removeAttribute('inert');
+        slide.setAttribute('aria-hidden', 'false');
+      });
+      shell.classList.remove('is-deck');
+      shell.classList.add('is-flow');
+      stage.classList.remove('has-deck-head');
+      if (readingBtn) readingBtn.textContent = '分屏演示';
+      syncFlowHeadings();
+      relayout();
+      requestAnimationFrame(() => {
+        slides[index]?.scrollIntoView({ block: 'start' });
+        relayout();
+      });
+    };
+
+    const exitFlow = () => {
+      const next = visibleSlideIndex();
+      window.scrollTo(0, 0);
+      shell.classList.remove('is-flow');
+      shell.classList.add('is-deck');
+      syncFlowHeadings();
+      if (readingBtn) readingBtn.textContent = '流式阅读';
+      index = next;
+      slides.forEach((slide, i) => {
+        const on = i === next;
+        clearMotion(slide);
+        slide.classList.toggle('is-active', on);
+        if (on) {
+          slide.removeAttribute('inert');
+          slide.setAttribute('aria-hidden', 'false');
+        } else {
+          slide.setAttribute('inert', '');
+          slide.setAttribute('aria-hidden', 'true');
+        }
+      });
+      syncChrome(slides[next]);
+      if (slides[next]?.id) history.replaceState(null, '', `#${slides[next].id}`);
+      document.dispatchEvent(new CustomEvent('seed:slidechange'));
+      relayout();
+    };
+
+    readingBtn?.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (isFlow()) exitFlow();
+      else enterFlow();
+      readingBtn.blur();
+    });
+
+    const flowObserver = new IntersectionObserver((entries) => {
+      if (!isFlow()) return;
+      const visible = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (!visible) return;
+      const slide = visible.target;
+      const i = slides.indexOf(slide);
+      if (i < 0 || i === index) return;
+      index = i;
+      slides.forEach((item) => item.classList.toggle('is-active', item === slide));
+      activateNav(slide.dataset.chapter);
+      if (slide.id) history.replaceState(null, '', `#${slide.id}`);
+    }, {
+      rootMargin: '-18% 0px -62% 0px',
+      threshold: [0.12, 0.35, 0.6],
+    });
+    slides.forEach((slide) => flowObserver.observe(slide));
 
     window.addEventListener('hashchange', () => {
       show(slideIndexForHash(location.hash), { hash: false, motion: 'none' });

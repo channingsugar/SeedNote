@@ -1983,6 +1983,423 @@ html:has(.report-slide.is-active [data-media-page="stack"]) .report-deck-head .s
   cursor: not-allowed;
 }
 
+html:has(.report-shell.is-flow) {
+  height: auto;
+  max-height: none;
+  overflow-x: clip;
+  overflow-y: auto;
+  overscroll-behavior: auto;
+  scroll-behavior: smooth;
+}
+html:has(.report-shell.is-flow) body {
+  display: block;
+  height: auto;
+  max-height: none;
+  min-height: 100dvh;
+  overflow: visible;
+  overscroll-behavior: auto;
+}
+html:has(.report-shell.is-flow) .theme-control {
+  position: static;
+  flex-shrink: 0;
+  z-index: 30;
+  min-height: 0;
+  padding: 0 var(--space-2) 0 0;
+  border: 0;
+  background: transparent;
+  backdrop-filter: none;
+}
+html:has(.report-shell.is-flow) .theme-control__hint { display: none; }
+.report-chrome [data-reading-mode] {
+  min-height: 34px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-small);
+}
+.report-shell.is-flow {
+  --page-gutter: clamp(64px, 10.417vw, 200px);
+  --chrome-nav: 88px;
+  --flow-block-min: 280px;
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  margin: 0;
+  box-shadow: none;
+}
+.report-shell.is-flow .document-nav,
+.report-shell.is-flow .document-nav.is-sticky {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  height: var(--chrome-nav);
+  padding: 0 var(--page-gutter);
+  border-bottom: var(--line-thin) solid var(--line);
+  background: var(--paper);
+}
+.report-shell.is-flow .report-stage {
+  display: block;
+  height: auto;
+  overflow: visible;
+  padding-top: 0;
+}
+.report-shell.is-flow .report-deck-head,
+.report-shell.is-flow .report-stage.has-deck-head .report-deck-head {
+  display: none !important;
+}
+.report-shell.is-flow > .report-pager,
+.report-shell.is-flow .report-pager {
+  display: none !important;
+}
+.report-shell.is-flow .report-slides {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  overflow: visible;
+}
+.report-shell.is-flow .report-slide {
+  position: relative;
+  inset: auto;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  z-index: 0;
+}
+.report-shell.is-flow .report-slide.is-chapter-cover {
+  min-height: 100dvh;
+}
+.report-shell.is-flow .chapter-cover {
+  min-height: 100dvh;
+}
+.report-shell.is-flow .report-section {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  padding: var(--space-4) var(--page-gutter);
+  border-bottom: 0;
+  scroll-margin-top: var(--chrome-nav);
+  background: transparent;
+}
+.report-shell.is-flow .report-section.is-flow-chapter-start {
+  padding-top: var(--space-8);
+}
+.report-shell.is-flow .is-flow-chapter-start::before {
+  content: attr(data-flow-chapter-title);
+  display: block;
+  margin: 0 0 var(--space-5);
+  color: var(--ink);
+  font-size: var(--text-h2);
+  font-weight: var(--weight-medium);
+  line-height: var(--line-h2);
+  letter-spacing: 0;
+}
+.report-shell.is-flow .report-section:nth-child(even) {
+  background: transparent;
+}
+.report-shell.is-flow .report-section > .section-header {
+  display: none;
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  margin-bottom: var(--space-3);
+}
+.report-shell.is-flow .report-section.is-flow-keep-title > .section-header {
+  display: block;
+}
+.report-shell.is-flow .section-header__no {
+  display: none;
+}
+.report-shell.is-flow .report-section > .section-header .section-header__title {
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  line-height: var(--line-body);
+}
+.report-shell.is-flow .report-section > .section-header .section-header__part {
+  margin-top: var(--space-1);
+  font-size: var(--text-small);
+  font-weight: var(--weight-regular);
+  line-height: var(--line-small);
+}
+.report-shell.is-flow .report-section > .page-regions,
+.report-shell.is-flow .report-section > .page-grid,
+.report-shell.is-flow .report-section > .full-page {
+  flex: none;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+.report-shell.is-flow .page-grid {
+  column-gap: 0;
+}
+.report-shell.is-flow .page-grid > .grid-cell {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding-left: 0;
+  padding-right: 0;
+  height: auto;
+  max-height: none;
+  min-height: 0;
+  overflow: visible;
+  align-self: stretch;
+}
+.report-shell.is-flow .report-section > .page-grid[data-slots="10"] {
+  overflow-x: hidden;
+  overflow-y: visible;
+  flex-wrap: wrap;
+}
+.report-shell.is-flow .page-grid[data-slots="1"] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto;
+  padding: var(--space-6) 0;
+}
+.report-shell.is-flow .page-grid[data-slots="2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: auto;
+  padding: var(--space-6) 0;
+}
+.report-shell.is-flow .page-grid[data-slots="3"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: auto;
+  padding: var(--space-6) 0;
+}
+.report-shell.is-flow .page-grid[data-slots="4"] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: auto;
+  padding: var(--space-6) 0;
+}
+.report-shell.is-flow .page-grid[data-slots="4"] > .grid-cell {
+  min-height: 0;
+}
+.report-shell.is-flow .page-grid[data-slots="5"],
+.report-shell.is-flow .page-grid[data-slots="6"] {
+  grid-template-rows: repeat(2, auto);
+  padding: var(--space-6) 0;
+}
+.report-shell.is-flow .page-grid[data-slots="7"],
+.report-shell.is-flow .page-grid[data-slots="8"],
+.report-shell.is-flow .page-grid[data-slots="9"] {
+  grid-template-rows: repeat(3, auto);
+  padding: var(--space-5) 0;
+}
+.report-shell.is-flow .page-grid[data-slots="1"] > .grid-cell {
+  min-height: 0;
+}
+.report-shell.is-flow .page-grid[data-slots="1"] .content[data-content="copy"] .content__title,
+.report-shell.is-flow .page-grid[data-slots="1"] .content[data-content="point"] .content__title {
+  display: none;
+}
+.report-shell.is-flow .page-grid[data-slots="1"] .content[data-content="copy"],
+.report-shell.is-flow .page-grid[data-slots="1"] .content[data-content="point"] {
+  display: block;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  text-align: left;
+}
+.report-shell.is-flow .page-grid[data-slots="1"] .content[data-content="copy"] .content__body,
+.report-shell.is-flow .page-grid[data-slots="1"] .content[data-content="point"] .content__body {
+  overflow: visible;
+  padding-top: 0;
+  text-align: left;
+}
+.report-shell.is-flow .page-grid[data-slots="10"] > .grid-cell {
+  height: auto;
+  min-height: var(--flow-block-min, 280px);
+  max-height: none;
+}
+.report-shell.is-flow .grid-cell > .content,
+.report-shell.is-flow .grid-cell > .formula,
+.report-shell.is-flow .grid-cell > .matrix,
+.report-shell.is-flow .grid-cell > .line-chart,
+.report-shell.is-flow .grid-cell > .venn,
+.report-shell.is-flow .grid-cell > .table-wrap,
+.report-shell.is-flow .grid-cell > .bar-compare {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}
+.report-shell.is-flow .page-region,
+.report-shell.is-flow .page-regions {
+  overflow: visible;
+  overflow-x: hidden;
+  height: auto;
+  min-height: 0;
+  max-width: 100%;
+}
+.report-shell.is-flow .page-regions .image-grid.evidence-gallery,
+.report-shell.is-flow .page-region > .image-grid.evidence-gallery,
+.report-shell.is-flow .evidence-gallery {
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+}
+.report-shell.is-flow .image-grid.evidence-gallery:not([data-image-kind="strip"]) {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  row-gap: var(--space-5);
+}
+.report-shell.is-flow .image-grid.evidence-gallery:not([data-image-kind="strip"]) > .evidence-figure,
+.report-shell.is-flow .image-grid.evidence-gallery:not([data-image-kind="strip"]) > .media-switch {
+  flex: 0 1 var(--evidence-item-width, 16rem);
+  width: var(--evidence-item-width, 16rem);
+  max-width: 100%;
+  height: auto;
+}
+.report-shell.is-flow .image-grid.evidence-gallery:not([data-image-kind="strip"]) > .evidence-figure > .evidence-window,
+.report-shell.is-flow .image-grid.evidence-gallery:not([data-image-kind="strip"]) > .media-switch > .evidence-window {
+  flex: 0 0 auto;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  aspect-ratio: var(--image-ratio, 3 / 4);
+}
+.report-shell.is-flow .image-grid.evidence-gallery[data-image-kind="strip"] {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: var(--space-6);
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  overflow-x: hidden;
+  scroll-snap-type: none;
+}
+.report-shell.is-flow .image-grid.evidence-gallery[data-image-kind="strip"] > .evidence-figure {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: auto;
+  max-height: none;
+}
+.report-shell.is-flow .image-grid.evidence-gallery[data-image-kind="strip"] > .evidence-figure > .evidence-window {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  max-height: none;
+  overflow: hidden;
+}
+.report-shell.is-flow .image-grid.evidence-gallery[data-image-kind="strip"] > .evidence-figure > .evidence-window img {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  max-height: none;
+  object-fit: contain;
+}
+.report-shell.is-flow .page-region[data-size="fill"] > .evidence-figure,
+.report-shell.is-flow .page-region[data-size="fill"] > .media-switch {
+  height: auto;
+  max-height: none;
+}
+.report-shell.is-flow .evidence-figure figcaption {
+  position: static;
+  flex: 0 0 auto;
+}
+.report-shell.is-flow .evidence-figure figcaption b,
+.report-shell.is-flow .evidence-figure figcaption span {
+  white-space: normal;
+}
+.report-shell.is-flow .content {
+  height: auto;
+}
+.report-shell.is-flow .grid-cell > .content[data-content="list"],
+.report-shell.is-flow .grid-cell > .content[data-content="step-stack"] {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  height: 100%;
+  min-height: 200px;
+  justify-items: stretch;
+  padding-block: 0;
+}
+.report-shell.is-flow .content[data-content="list"] .content__label,
+.report-shell.is-flow .content[data-content="step-stack"] .content__lead {
+  align-self: end;
+  justify-self: stretch;
+  width: 100%;
+  text-align: left;
+}
+.report-shell.is-flow .content[data-content="list"] .content__body,
+.report-shell.is-flow .content[data-content="step-stack"] .content__body {
+  align-self: start;
+  width: 100%;
+}
+.report-shell.is-flow .content[data-content="stat"],
+.report-shell.is-flow .content[data-content="point"],
+.report-shell.is-flow .content[data-content="signal"] {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 0;
+  padding-block: var(--space-5);
+}
+.report-shell.is-flow .content[data-content="copy"],
+.report-shell.is-flow .content[data-content="step"] {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: 0;
+  padding-block: var(--space-5);
+}
+.report-shell.is-flow .content[data-content="stat"] .stat-value,
+.report-shell.is-flow .content[data-content="stat"] .content__title,
+.report-shell.is-flow .content[data-content="stat"] .content__body,
+.report-shell.is-flow .content[data-content="stat"] .content__kicker,
+.report-shell.is-flow .content[data-content="point"] .content__title,
+.report-shell.is-flow .content[data-content="point"] .content__body,
+.report-shell.is-flow .content[data-content="signal"] .content__title,
+.report-shell.is-flow .content[data-content="signal"] .content__body,
+.report-shell.is-flow .content[data-content="signal"] .content__kicker {
+  grid-row: auto;
+  align-self: center;
+  width: 100%;
+  height: auto;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+.report-shell.is-flow .content[data-content="stat"] .stat-value {
+  min-height: calc(var(--text-display) * var(--line-display));
+  white-space: nowrap;
+}
+.report-shell.is-flow .content[data-content="table"] {
+  height: auto;
+  overflow: visible;
+}
+.report-shell.is-flow .formula,
+.report-shell.is-flow .matrix,
+.report-shell.is-flow .line-chart,
+.report-shell.is-flow .venn {
+  height: auto;
+  min-height: 200px;
+}
+.report-shell.is-flow .report-notes {
+  height: auto;
+  overflow: visible;
+  padding: var(--space-7) var(--page-gutter) var(--space-8);
+  scroll-margin-top: var(--chrome-nav);
+  border-bottom: 0;
+}
+
 @keyframes fragment-in-forward {
   from { opacity: 0; }
   to { opacity: 1; }
