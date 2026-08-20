@@ -1,56 +1,57 @@
 #!/usr/bin/env python3
-"""Generate editorial-default/index.html: Grid 1 / 2 / 3 / 4 / More Grids."""
+"""Generate editorial-default/index.html: Grid 1 / 2 / 3 / 4 / More Grids.
+
+格子里的字是占位，不是成品，也不是用法说明。
+写法：〔槽名〕填法。整句替换；〔〕不要带进报告。
+页眉组件名（纯文字、观点、Grid 1）是目录，不是占位。
+"""
 from pathlib import Path
 
 OUT = Path(__file__).with_name("index.html")
 
-COPY = "客舱携带不是“能不能带上飞机”，而是航司白名单、体重、笼具和主人是否同行同时成立。先把这四条收成一条可核对的链路，再谈体验和溢价。"
+COPY = "〔条件〕这句在什么范围成立，有何例外。一句说完，不另开一问。"
 LONG = (
-    "带宠出行的摩擦，大多发生在规则散落在航司公告、车站须知和司机口头约定里。"
-    "同一只狗，客舱、货舱、高铁行李车和专车陆运用的不是同一套证件与箱包。"
-    "咨询阶段把可选项铺开，下单阶段必须收敛成一条可履约路径：谁同行、走哪段、用什么笼子、证件看到哪一天。"
-    "<br><br>做不到客舱的，不要用货舱话术硬上；中转超过一次的，不要承诺“门到门当天达”。"
-    "材料撑不住的判断写进口径。离开时只记得大字，必须已经得到这一页该给的东西。"
+    "〔正文〕写成完整段落。先回答这一屏的问句，再写条件和例外，最后写材料撑不住什么。"
+    "不要拆成列表，也不要写成判断句。"
+    "<br><br>"
+    "〔续段〕需要第二段时换行接着写。没有第二段就删掉这段。"
 )
 SIGNALS = [
-    ("SIGNAL 01", "入口必须先问能不能带", "先核航司白名单和体重，再谈舱位与价格，避免先下单后拒载。"),
-    ("SIGNAL 02", "比较必须同一口径", "客舱、货舱、高铁、陆运都写：证件、箱包、时效、是否主人同行。"),
-    ("SIGNAL 03", "证据要贴着判断", "现场照片和截图只解释这一条规则，不另开一页堆图。"),
-    ("SIGNAL 04", "下一步写到人", "离开时知道先打哪个航司热线、准备哪两份证。"),
-    ("SIGNAL 05", "承诺止于材料", "季节限额和中转重办，不能写成“一定能带上”。"),
+    ("SIGNAL 01", "〔判断〕有主语、有动作，能单独成立", "〔条件〕只补这一句。一格一句。"),
+    ("SIGNAL 02", "〔判断〕同一问下的第二句", "〔条件〕不要把邻句的材料写进来。"),
+    ("SIGNAL 03", "〔判断〕同一问下的第三句", "〔条件〕图和数字为这一句付账。"),
+    ("SIGNAL 04", "〔判断〕同一问下的第四句", "〔条件〕离开时知道先做什么。"),
+    ("SIGNAL 05", "〔判断〕同一问下的第五句", "〔条件〕材料撑不住就写进口径。"),
 ]
 STATS = [
-    ("11", "可客舱航司", "统计口径：国内客运航司官网 2026 年 6 月公示，不含包机。"),
-    ("2.1×", "咨询到下单", "有完整证件清单的会话，相对口头咨询的下单倍率。"),
-    ("36", "有效城市对", "陆运专车当前可履约的对开城市，含接驳高铁的组合。"),
-    ("4", "硬限制", "体重、狂犬免疫、航空箱尺寸、主人是否必须同行。"),
+    ("00", "〔指标名〕多少、多贵或多窄", "〔口径〕统计范围、时间、是否含例外。"),
+    ("0.0×", "〔倍率名〕相对什么", "〔口径〕对比的基准写清楚。"),
+    ("N", "〔计数名〕有多少个", "〔口径〕含什么、不含什么。"),
+    ("—", "〔尚无数据〕", "〔口径〕材料撑不住就写破折号，不要编数字。"),
 ]
 LISTS = [
-    ("短途探亲", "主人同行、宠物低于客舱限重时，优先核对航司白名单，而不是先订人票。"),
-    ("跨城搬家", "人宠不同行时走陆运专车或货舱，航空箱和检疫证明必须同一天核验。"),
-    ("旺季出行", "春运和暑运客舱名额先锁，锁不到再给货舱或改期，不要并行占两张舱。"),
-    ("中转行程", "中转超过一次不承诺当天达；每段都要重新确认箱包和交接人。"),
+    ("〔对象 A〕", "〔条件〕范围、限制、例外。一句说完。"),
+    ("〔对象 B〕", "〔条件〕范围、限制、例外。一句说完。"),
+    ("〔对象 C〕", "〔条件〕范围、限制、例外。一句说完。"),
+    ("〔对象 D〕", "〔条件〕范围、限制、例外。一句说完。"),
 ]
 STEPS = [
-    ("01", "核白名单和体重", "先确认这只宠物能否进客舱或必须货舱，再决定人票舱位。"),
-    ("02", "收齐证件和箱包", "狂犬免疫、健康证明、航空箱内尺寸按最严的一段准备。"),
-    ("03", "锁舱位再通知现场", "客舱名额或陆运笼位确认后，才把航班号发给司机和接驳人。"),
-    ("04", "出发日只核对变化", "只看限重、体温和箱包有没有改口，不再重新讲方案。"),
+    ("01", "〔这一步做什么〕", "〔完成标准〕做到什么才进入下一步。"),
+    ("02", "〔这一步做什么〕", "〔完成标准〕输入是什么，输出是什么。"),
+    ("03", "〔这一步做什么〕", "〔完成标准〕谁来做，做到什么算过。"),
+    ("04", "〔这一步做什么〕", "〔完成标准〕失败时停在哪，不要跳步。"),
 ]
 BARS = [
-    ("客舱携带", 36, None, "体验最好，规则最碎"),
-    ("货舱托运", 82, "warning", "供给最大，应激最高"),
-    ("高铁托运", 61, None, "体验稳定，线路有限"),
-    ("专车陆运", 48, None, "门到门，成本最高"),
-    ("人宠大巴", 24, None, "覆盖窄，需白名单"),
-    ("中转联运", 55, "warning", "时效难承诺"),
-    ("同城接驳", 19, None, "只补最后一公里"),
-    ("改期等待", 88, "danger", "旺季几乎必然"),
+    ("〔对象 A〕", 24, None, "〔差异〕短句"),
+    ("〔对象 B〕", 36, None, "〔差异〕短句"),
+    ("〔对象 C〕", 48, None, "〔差异〕短句"),
+    ("〔对象 D〕", 61, None, "〔差异〕短句"),
+    ("〔对象 E〕", 70, None, "〔差异〕短句"),
+    ("〔对象 F〕", 82, "warning", "〔差异〕需留意"),
+    ("〔对象 G〕", 88, "danger", "〔差异〕风险高"),
+    ("〔对象 H〕", 92, None, "〔差异〕短句"),
 ]
 
-HREF_CAAC = "https://www.caac.gov.cn/"
-HREF_12306 = "https://www.12306.cn/"
-HREF_AIR = "https://www.csair.com/"
 CABIN = "../states-demo/assets/cabin-01.jpg"
 
 
@@ -65,12 +66,9 @@ def source(name=None, href=None):
     return f'<p class="report-source" data-report-source>数据来源 <span data-source-name>{name}</span></p>'
 
 
-SOURCE = source("民航局客舱携带规定", HREF_CAAC)
-SOURCE_RAIL = source("铁路 12306 宠物托运须知", HREF_12306)
-SOURCE_AIR = source("南航旅客服务·宠物运输", HREF_AIR)
-
-
-SOURCE_OPS = source("2026 上半年咨询会话抽样")
+SOURCE = source("〔出处〕文件名、官网或抽样口径")
+SOURCE_OPS = source("〔出处〕口径写在数字下面")
+SOURCE_DOC = source("〔出处〕公开文件或官网名称")
 
 
 def cells(*inner, n=None, src=True):
@@ -84,35 +82,38 @@ def cells(*inner, n=None, src=True):
     else:
         srcs = [src] * len(items)
     bits = "".join(f'<article class="grid-cell">{x}{s}</article>' for x, s in zip(items, srcs))
-    slots = n if n is not None else len(inner)
+    count = len(items)
+    slots = 10 if count > 9 else count
     return f'<div class="page-grid" data-slots="{slots}">{bits}</div>'
 
 
 def copy_c():
-    return f'<div class="content" data-content="copy"><h3 class="content__title">先收成一条可履约的路径</h3><p class="content__body">{LONG}</p></div>'
+    return f'<div class="content" data-content="copy"><h3 class="content__title">〔范围〕背景、边界或材料撑不住什么</h3><p class="content__body">{LONG}</p></div>'
 
 
 def point_c():
-    return f'<div class="content" data-content="point"><h3 class="content__title">客舱不是默认选项</h3><p class="content__body">{COPY}</p></div>'
+    return f'<div class="content" data-content="point"><h3 class="content__title">〔判断〕有主语、有动作，能讲出口</h3><p class="content__body">{COPY}</p></div>'
 
 
 def signal_c(i=0):
-    k, t, b = SIGNALS[i]
-    return f'<div class="content" data-content="signal"><span class="content__kicker">{k}</span><h3 class="content__title">{t}</h3><p class="content__body">{b}</p></div>'
+    _, t, b = SIGNALS[i % len(SIGNALS)]
+    return f'<div class="content" data-content="signal"><span class="content__kicker">SIGNAL {i + 1:02d}</span><h3 class="content__title">{t}</h3><p class="content__body">{b}</p></div>'
 
 
 def stat_c(i=0):
-    v, t, b = STATS[i]
+    v, t, b = STATS[i % len(STATS)]
     return f'<div class="content" data-content="stat"><b class="stat-value">{v}</b><h3 class="content__title">{t}</h3><p class="content__body">{b}</p></div>'
 
 
 def list_c(i=0):
-    t, b = LISTS[i]
-    return f'<div class="content" data-content="list"><span class="content__label">{t}</span><p class="content__body">{b}</p></div>'
+    letters = "ABCDEFGHIJ"
+    _, b = LISTS[i % len(LISTS)]
+    return f'<div class="content" data-content="list"><span class="content__label">〔对象 {letters[i % 10]}〕</span><p class="content__body">{b}</p></div>'
 
 
 def step_c(i=0):
-    n, t, b = STEPS[i]
+    _, t, b = STEPS[i % len(STEPS)]
+    n = f"{i + 1:02d}"
     return (
         f'<div class="content" data-content="step"><span class="content__index">{n}</span>'
         f'<div class="content__copy"><h3 class="content__title">{t}</h3><p class="content__body">{b}</p></div></div>'
@@ -120,7 +121,8 @@ def step_c(i=0):
 
 
 def step_stack_c(i=0):
-    n, t, b = STEPS[i]
+    _, t, b = STEPS[i % len(STEPS)]
+    n = f"{i + 1:02d}"
     return (
         f'<div class="content" data-content="step-stack"><div class="content__lead">'
         f'<span class="content__index">{n}</span><h3 class="content__title">{t}</h3></div>'
@@ -133,77 +135,90 @@ def table_from(headers, rows):
     for i, head in enumerate(headers):
         cells_html = "".join(f"<span>{row[i]}</span>" for row in rows)
         bits.append(f'<div class="content-col"><strong>{head}</strong>{cells_html}</div>')
-    return f'<div class="content" data-content="table"><div class="content-cols">{"".join(bits)}</div></div>'
+    cols, row_n = len(headers), 1 + len(rows)
+    return (
+        f'<div class="content" data-content="table">'
+        f'<div class="content-cols" style="--table-cols:{cols};--table-rows:{row_n}">{"".join(bits)}</div>'
+        f"</div>"
+    )
 
 
 TABLE_WIDE = table_from(
-    ["航司", "客舱", "限重", "笼具", "证件", "报备", "旺季", "中转", "价位", "判断"],
+    ["〔对象〕", "〔属性〕", "〔条件〕", "〔时效〕", "〔范围〕", "〔例外〕", "〔状态〕", "〔成本〕", "〔风险〕", "〔判断〕"],
     [
-        ["国航", "<strong>可带</strong>", "5 kg", "软包", "狂犬+健康", "48 h", "限额", "需重办", "高", "<em>优先验证</em>"],
-        ["东航", "可带", "5 kg", "软包", "狂犬+健康", "24 h", "限额", "需重办", "高", "作备选"],
-        ["南航", "<strong>可带</strong>", "5 kg", "软包", "狂犬+健康", "48 h", "严控", "不承诺", "高", "<em>优先验证</em>"],
-        ["海航", "可带", "5 kg", "软包", "狂犬+健康", "48 h", "限额", "需重办", "中", "航线先核"],
-        ["厦航", "部分", "5 kg", "软包", "狂犬+健康", "72 h", "停售", "不接受", "中", "看始发站"],
-        ["春秋", "不可", "—", "航空箱", "狂犬+健康", "72 h", "货舱", "可中转", "低", "改货舱"],
-        ["吉祥", "可带", "5 kg", "软包", "狂犬+健康", "48 h", "限额", "需重办", "中", "作补充"],
-        ["川航", "部分", "5 kg", "软包", "狂犬+健康", "48 h", "限额", "需重办", "中", "航线先核"],
-        ["山航", "不可", "—", "航空箱", "狂犬+健康", "72 h", "货舱", "可中转", "低", "改货舱"],
-        ["深航", "可带", "5 kg", "软包", "狂犬+健康", "48 h", "限额", "需重办", "中", "作备选"],
+        ["〔A〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "<em>〔取舍〕</em>"],
+        ["〔B〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔取舍〕"],
+        ["〔C〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "<strong>〔强调〕</strong>"],
+        ["〔D〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔取舍〕"],
+        ["〔E〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔取舍〕"],
+        ["〔F〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔取舍〕"],
+        ["〔G〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "<em>〔取舍〕</em>"],
+        ["〔H〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔取舍〕"],
+        ["〔I〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔取舍〕"],
+        ["〔J〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔值〕", "〔取舍〕"],
     ],
 )
-TABLE_AIR = table_from(
-    ["航司", "客舱政策", "判断"],
+TABLE_CMP = table_from(
+    ["〔对象〕", "〔条件〕", "〔判断〕"],
     [
-        ["国航", "主人同行 · ≤5 kg · 软包", "<em>优先验证</em>"],
-        ["南航", "主人同行 · ≤5 kg · 提前 48 h", "<strong>可锁舱</strong>"],
-        ["东航", "主人同行 · 名额少", "作备选"],
-        ["春秋", "不接受客舱", "改货舱或陆运"],
-        ["厦航", "视始发站开放", "当天核官网"],
-        ["海航", "可带但旺季限额", "先问热线"],
+        ["〔对象 A〕", "〔条件〕范围和例外", "<em>〔取舍〕</em>"],
+        ["〔对象 B〕", "〔条件〕范围和例外", "〔取舍〕"],
+        ["〔对象 C〕", "〔条件〕范围和例外", "<strong>〔强调〕</strong>"],
+        ["〔对象 D〕", "〔条件〕范围和例外", "〔取舍〕"],
+        ["〔对象 E〕", "〔条件〕范围和例外", "〔取舍〕"],
+        ["〔对象 F〕", "〔条件〕范围和例外", "〔取舍〕"],
     ],
 )
-TABLE_RAIL = table_from(
-    ["线路", "托运条件", "判断"],
+TABLE_SPEC = table_from(
+    ["〔对象〕", "〔规格〕", "〔边界〕"],
     [
-        ["京沪", "专用运输箱 · 同一车次", "<strong>体验稳定</strong>"],
-        ["广深港", "不接受活体", "改陆运"],
-        ["成渝", "行李车有位才收", "出发前 24 h 确认"],
-        ["杭温", "检疫证明当日有效", "可作补充"],
-        ["京广", "高峰停办", "避开节前三天"],
-        ["沪昆", "箱内温湿度可查", "<em>优先联运</em>"],
+        ["〔对象 A〕", "〔规格〕可核对的量", "〔边界〕超出就停下"],
+        ["〔对象 B〕", "〔规格〕可核对的量", "〔边界〕超出就停下"],
+        ["〔对象 C〕", "〔规格〕可核对的量", "<strong>〔强调〕</strong>"],
+        ["〔对象 D〕", "〔规格〕可核对的量", "〔边界〕超出就停下"],
+        ["〔对象 E〕", "〔规格〕可核对的量", "<em>〔取舍〕</em>"],
+        ["〔对象 F〕", "〔规格〕可核对的量", "〔边界〕超出就停下"],
     ],
 )
-TABLE_ROAD = table_from(
-    ["城市对", "时效", "判断"],
+TABLE_TIME = table_from(
+    ["〔对象〕", "〔时效〕", "〔判断〕"],
     [
-        ["沪杭", "门到门 4 h", "<em>优先</em>"],
-        ["京津", "门到门 3 h", "<strong>可当日</strong>"],
-        ["广深", "6–8 h · 含接驳", "避开晚高峰"],
-        ["成渝", "4 h", "笼位充足"],
-        ["沪宁", "3 h", "可加急"],
-        ["京沪", "过夜专车", "不承诺次日早"],
+        ["〔对象 A〕", "〔时效〕多久能完成", "<em>〔取舍〕</em>"],
+        ["〔对象 B〕", "〔时效〕多久能完成", "<strong>〔强调〕</strong>"],
+        ["〔对象 C〕", "〔时效〕多久能完成", "〔取舍〕"],
+        ["〔对象 D〕", "〔时效〕多久能完成", "〔取舍〕"],
+        ["〔对象 E〕", "〔时效〕多久能完成", "〔取舍〕"],
+        ["〔对象 F〕", "〔时效〕多久能完成", "〔取舍〕"],
     ],
 )
-TABLE_DOCS = table_from(
-    ["材料", "有效期", "用途"],
+TABLE_DOC = table_from(
+    ["〔材料〕", "〔有效期〕", "〔用途〕"],
     [
-        ["狂犬免疫", "接种满 21 天", "客舱 / 货舱 / 高铁"],
-        ["健康证明", "出具 7 日内", "货舱与跨省陆运"],
-        ["宠物照片", "近 30 日", "下单核对毛色"],
-        ["航空箱尺寸", "按最严航司", "货舱必查"],
-        ["主人证件", "与订票一致", "客舱同行"],
-        ["交接授权", "当日手写", "人宠不同行"],
+        ["〔材料 A〕", "〔有效期〕从何时算", "〔用途〕用在哪一步"],
+        ["〔材料 B〕", "〔有效期〕从何时算", "〔用途〕用在哪一步"],
+        ["〔材料 C〕", "〔有效期〕从何时算", "〔用途〕用在哪一步"],
+        ["〔材料 D〕", "〔有效期〕从何时算", "〔用途〕用在哪一步"],
+        ["〔材料 E〕", "〔有效期〕从何时算", "〔用途〕用在哪一步"],
+        ["〔材料 F〕", "〔有效期〕从何时算", "〔用途〕用在哪一步"],
     ],
 )
 
 
-def table_c(kind="air"):
+def table_c(kind="cmp"):
     return {
         "wide": TABLE_WIDE,
-        "air": TABLE_AIR,
-        "rail": TABLE_RAIL,
-        "road": TABLE_ROAD,
-        "docs": TABLE_DOCS,
+        "when": TABLE_CMP,
+        "slot": TABLE_SPEC,
+        "grid": TABLE_TIME,
+        "fill": TABLE_DOC,
+        "cmp": TABLE_CMP,
+        "spec": TABLE_SPEC,
+        "time": TABLE_TIME,
+        "doc": TABLE_DOC,
+        "air": TABLE_CMP,
+        "rail": TABLE_SPEC,
+        "road": TABLE_TIME,
+        "docs": TABLE_DOC,
     }[kind]
 
 
@@ -218,7 +233,7 @@ def bar_h(n=8):
             f'<strong class="bar-compare__value">{val}</strong></div>'
             f'<p class="bar-compare__note">{note}</p></div>'
         )
-    return f'<div class="bar-compare" data-item-count="{n}"><p class="bar-compare__title">咨询结构 · 出行方式</p>{"".join(items)}</div>'
+    return f'<div class="bar-compare" data-item-count="{n}"><p class="bar-compare__title">〔组标题〕同一口径下比什么</p>{"".join(items)}</div>'
 
 
 def bar_v(n=4):
@@ -232,19 +247,19 @@ def bar_v(n=4):
             f'<span class="bar-compare__label">{label}</span>'
             f'<p class="bar-compare__note">{note}</p></div>'
         )
-    return f'<div class="bar-compare is-vertical" data-item-count="{n}"><p class="bar-compare__title">履约把握</p>{"".join(items)}</div>'
+    return f'<div class="bar-compare is-vertical" data-item-count="{n}"><p class="bar-compare__title">〔组标题〕同一口径下比什么</p>{"".join(items)}</div>'
 
 
 def formula_c():
     return (
         '<div class="formula" data-item-count="4">'
-        '<div class="formula__factor"><b><small>≤</small>5 kg</b><span>客舱限重</span></div>'
+        '<div class="formula__factor"><b>〔A〕</b><span>〔条件〕参与相乘的因子</span></div>'
         '<span class="formula__op">×</span>'
-        '<div class="formula__factor"><b>证件</b><span>狂犬+健康证</span></div>'
+        '<div class="formula__factor"><b>〔B〕</b><span>〔条件〕参与相乘的因子</span></div>'
         '<span class="formula__op">×</span>'
-        '<div class="formula__factor"><b>白名单</b><span>航司允许客舱</span></div>'
+        '<div class="formula__factor"><b>〔C〕</b><span>〔条件〕参与相乘的因子</span></div>'
         '<span class="formula__op is-eq">=</span>'
-        '<div class="formula__factor is-result"><b>可带</b><span>主人同行客舱</span></div>'
+        '<div class="formula__factor is-result"><b>〔结果〕</b><span>〔含义〕同时成立时得到什么</span></div>'
         "</div>"
     )
 
@@ -252,18 +267,18 @@ def formula_c():
 def matrix_c():
     return (
         '<div class="matrix" data-item-count="4">'
-        '<span class="matrix__axis" data-edge="left">难协调</span>'
+        '<span class="matrix__axis" data-edge="left">〔横轴负〕</span>'
         '<div class="matrix__plot">'
-        '<span class="matrix__axis" data-edge="top">体验好</span>'
+        '<span class="matrix__axis" data-edge="top">〔纵轴正〕</span>'
         '<div class="matrix__quads">'
-        '<article class="matrix__cell"><strong>客舱携带</strong><p>体验最好，规则最碎，要逐家核</p></article>'
-        '<article class="matrix__cell"><strong>高铁托运</strong><p>体验稳定，线路少，箱位要预留</p></article>'
-        '<article class="matrix__cell"><strong>货舱托运</strong><p>供给最大，应激高，中转需重办</p></article>'
-        '<article class="matrix__cell"><strong>专车陆运</strong><p>门到门可控，成本最高</p></article>'
+        '<article class="matrix__cell"><strong>〔对象 A〕</strong><p>〔为何在这格〕</p></article>'
+        '<article class="matrix__cell"><strong>〔对象 B〕</strong><p>〔为何在这格〕</p></article>'
+        '<article class="matrix__cell"><strong>〔对象 C〕</strong><p>〔为何在这格〕</p></article>'
+        '<article class="matrix__cell"><strong>〔对象 D〕</strong><p>〔为何在这格〕</p></article>'
         "</div>"
-        '<span class="matrix__axis" data-edge="bottom">体验差</span>'
+        '<span class="matrix__axis" data-edge="bottom">〔纵轴负〕</span>'
         "</div>"
-        '<span class="matrix__axis" data-edge="right">好落地</span>'
+        '<span class="matrix__axis" data-edge="right">〔横轴正〕</span>'
         "</div>"
     )
 
@@ -271,14 +286,14 @@ def matrix_c():
 def line_c():
     return (
         '<figure class="line-chart" data-series="1">'
-        '<ul class="line-chart__legend"><li data-series="a">客舱携带咨询</li></ul>'
+        '<ul class="line-chart__legend"><li data-series="a">〔指标〕同一口径随时间</li></ul>'
         '<svg class="line-chart__plot" viewBox="0 0 640 280" preserveAspectRatio="xMidYMid meet"></svg>'
         '<ol class="line-chart__points">'
-        "<li><span>1月</span><b data-chart-series=\"a\">18</b></li>"
-        "<li><span>2月</span><b data-chart-series=\"a\">41</b></li>"
-        "<li><span>3月</span><b data-chart-series=\"a\">27</b></li>"
-        "<li><span>4月</span><b data-chart-series=\"a\">33</b></li>"
-        "<li><span>5月</span><b data-chart-series=\"a\">38</b></li>"
+        "<li><span>〔期 1〕</span><b data-chart-series=\"a\">18</b></li>"
+        "<li><span>〔期 2〕</span><b data-chart-series=\"a\">41</b></li>"
+        "<li><span>〔期 3〕</span><b data-chart-series=\"a\">27</b></li>"
+        "<li><span>〔期 4〕</span><b data-chart-series=\"a\">33</b></li>"
+        "<li><span>〔期 5〕</span><b data-chart-series=\"a\">38</b></li>"
         "</ol></figure>"
     )
 
@@ -292,9 +307,9 @@ def venn2_c():
         '<circle class="venn__circle" data-set="b" cx="255" cy="120" r="92"></circle>'
         '<circle class="venn__overlap" cx="255" cy="120" r="92" clip-path="url(#venn-2-a)"></circle>'
         "</svg>"
-        '<p class="venn__label" data-region="a">客舱规则</p>'
-        '<p class="venn__label" data-region="b">货舱规则</p>'
-        '<p class="venn__label" data-region="ab">检疫与箱包</p>'
+        '<p class="venn__label" data-region="a">〔集合 A〕</p>'
+        '<p class="venn__label" data-region="b">〔集合 B〕</p>'
+        '<p class="venn__label" data-region="ab">〔交集〕</p>'
         "</div>"
     )
 
@@ -313,11 +328,11 @@ def venn3_c():
         '<circle class="venn__overlap" cx="250" cy="118" r="86" clip-path="url(#venn-3-a)"></circle>'
         '<circle class="venn__overlap" cx="200" cy="198" r="86" clip-path="url(#venn-3-ab)"></circle>'
         "</svg>"
-        '<p class="venn__label" data-region="a">客舱</p>'
-        '<p class="venn__label" data-region="b">货舱</p>'
-        '<p class="venn__label" data-region="c">中转</p>'
-        '<p class="venn__label" data-region="ab">箱包</p>'
-        '<p class="venn__label" data-region="abc">检疫</p>'
+        '<p class="venn__label" data-region="a">〔集合 A〕</p>'
+        '<p class="venn__label" data-region="b">〔集合 B〕</p>'
+        '<p class="venn__label" data-region="c">〔集合 C〕</p>'
+        '<p class="venn__label" data-region="ab">〔AB 交〕</p>'
+        '<p class="venn__label" data-region="abc">〔三交〕</p>'
         "</div>"
     )
 
@@ -336,14 +351,14 @@ def evidence_c():
     return region(
         '<div class="image-grid evidence-gallery" data-image-ratio="3:4" data-image-fit="fill" data-item-count="3">'
         f'<figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fill">'
-        f'<div class="evidence-window"><img src="{ASSET}/cabin-01.jpg" alt="宠物装入软包进入飞机客舱"></div>'
-        "<figcaption><b>客舱软包</b><span>登机口称重后装入软包，置于座椅下方</span></figcaption></figure>"
+        f'<div class="evidence-window"><img src="{ASSET}/cabin-01.jpg" alt="〔图〕现场"></div>'
+        "<figcaption><b>〔对象 A〕</b><span>〔证明〕这张图证明什么</span></figcaption></figure>"
         f'<figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fill">'
-        f'<div class="evidence-window"><img src="{ASSET}/rail-01.jpg" alt="高铁行李车厢内的宠物专用运输箱"></div>'
-        "<figcaption><b>高铁运输箱</b><span>行李车厢固定位，温湿度可查，需预留箱位</span></figcaption></figure>"
+        f'<div class="evidence-window"><img src="{ASSET}/rail-01.jpg" alt="〔图〕现场"></div>'
+        "<figcaption><b>〔对象 B〕</b><span>〔证明〕这张图证明什么</span></figcaption></figure>"
         f'<figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fill">'
-        f'<div class="evidence-window"><img src="{ASSET}/road-01.jpg" alt="宠物跨城运输车辆内部"></div>'
-        "<figcaption><b>陆运笼位</b><span>专车固定笼，人宠可不同行，交接人写进运单</span></figcaption></figure></div>"
+        f'<div class="evidence-window"><img src="{ASSET}/road-01.jpg" alt="〔图〕现场"></div>'
+        "<figcaption><b>〔对象 C〕</b><span>〔证明〕这张图证明什么</span></figcaption></figure></div>"
     )
 
 
@@ -351,14 +366,14 @@ def evidence_shot_c():
     return region(
         '<div class="image-grid evidence-gallery" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit" data-item-count="3">'
         f'<figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit">'
-        f'<div class="evidence-window"><img src="{ASSET}/pet-profile.png" alt="宠物档案界面"></div>'
-        "<figcaption><b>宠物档案</b><span>体重、疫苗和近照必须对上同一只</span></figcaption></figure>"
+        f'<div class="evidence-window"><img src="{ASSET}/pet-profile.png" alt="〔图〕截图"></div>'
+        "<figcaption><b>〔界面 A〕</b><span>〔核对〕这一屏要看清哪个字段</span></figcaption></figure>"
         f'<figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit">'
-        f'<div class="evidence-window"><img src="{ASSET}/pet-travel.png" alt="宠物出行下单界面"></div>'
-        "<figcaption><b>出行下单</b><span>先锁舱位，再填箱包尺寸和证件有效期</span></figcaption></figure>"
+        f'<div class="evidence-window"><img src="{ASSET}/pet-travel.png" alt="〔图〕截图"></div>'
+        "<figcaption><b>〔界面 B〕</b><span>〔核对〕这一屏要看清哪个字段</span></figcaption></figure>"
         f'<figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit">'
-        f'<div class="evidence-window"><img src="{ASSET}/pet-delivery.png" alt="宠物配送进度界面"></div>'
-        "<figcaption><b>配送进度</b><span>交接人、箱号和下一站在同一屏核对</span></figcaption></figure></div>"
+        f'<div class="evidence-window"><img src="{ASSET}/pet-delivery.png" alt="〔图〕截图"></div>'
+        "<figcaption><b>〔界面 C〕</b><span>〔核对〕这一屏要看清哪个字段</span></figcaption></figure></div>"
     )
 
 
@@ -366,14 +381,14 @@ def evidence_wide_c():
     return region(
         '<div class="image-grid evidence-gallery" data-image-ratio="4:3" data-image-fit="fill" data-item-count="3">'
         f'<figure class="evidence-figure" data-image-ratio="4:3" data-image-fit="fill">'
-        f'<div class="evidence-window"><img src="{ASSET}/road-01.jpg" alt="宠物跨城运输车辆内部"></div>'
-        "<figcaption><b>跨城专车</b><span>笼位固定、空调直吹箱体，适合人宠不同行</span></figcaption></figure>"
+        f'<div class="evidence-window"><img src="{ASSET}/road-01.jpg" alt="〔图〕横屏"></div>'
+        "<figcaption><b>〔对象 A〕</b><span>〔证明〕这张图证明什么</span></figcaption></figure>"
         f'<figure class="evidence-figure" data-image-ratio="4:3" data-image-fit="fill">'
-        f'<div class="evidence-window"><img src="{ASSET}/road-03.jpg" alt="带固定笼位的专业宠物运输车"></div>'
-        "<figcaption><b>专业运输车</b><span>独立笼位带锁定，出发前核对箱号与芯片</span></figcaption></figure>"
+        f'<div class="evidence-window"><img src="{ASSET}/road-03.jpg" alt="〔图〕横屏"></div>'
+        "<figcaption><b>〔对象 B〕</b><span>〔证明〕这张图证明什么</span></figcaption></figure>"
         f'<figure class="evidence-figure" data-image-ratio="4:3" data-image-fit="fill">'
-        f'<div class="evidence-window"><img src="{ASSET}/ride-together.jpg" alt="人宠共同乘坐跨城车辆"></div>'
-        "<figcaption><b>人宠同行</b><span>主人坐副驾，宠物在后舱笼位，中途可停车查看</span></figcaption></figure></div>"
+        f'<div class="evidence-window"><img src="{ASSET}/ride-together.jpg" alt="〔图〕横屏"></div>'
+        "<figcaption><b>〔对象 C〕</b><span>〔证明〕这张图证明什么</span></figcaption></figure></div>"
     )
 
 
@@ -381,8 +396,8 @@ def evidence_strip_c():
     return region(
         '<div class="image-grid evidence-gallery" data-image-kind="strip" data-item-count="1">'
         f'<figure class="evidence-figure" data-image-kind="strip">'
-        f'<div class="evidence-window"><img src="{ASSET}/rail-ota-flow.jpg" alt="高铁宠物托运预约流程合成条"></div>'
-        "<figcaption><b>12306 预约</b><span>选车次 → 填箱位 → 上传检疫证明，箱位确认前不要买人票</span></figcaption></figure></div>"
+        f'<div class="evidence-window"><img src="{ASSET}/rail-ota-flow.jpg" alt="〔图〕条带"></div>'
+        "<figcaption><b>〔流程〕</b><span>〔证明〕这一条带证明哪几步按什么顺序</span></figcaption></figure></div>"
     )
 
 
@@ -409,41 +424,41 @@ def evidence_switch_c():
 
     items = [
         fig(
-            "飞机进客舱",
+            "〔对象 A〕",
             [
-                (f"{ASSET}/cabin-01.jpg", "宠物装入软包进入飞机客舱", "软包内的客舱宠物"),
-                (f"{ASSET}/cabin-02.jpg", "宠物在飞机客舱内", "客舱内的宠物"),
+                (f"{ASSET}/cabin-01.jpg", "〔图〕主图", "〔图 1〕"),
+                (f"{ASSET}/cabin-02.jpg", "〔图〕主图", "〔图 2〕"),
             ],
-            "软包进客舱只在主人同行、体重 ≤5 kg、航司在白名单时成立",
-            [("宠物位置", "客舱座椅下方软包"), ("主人", "必须同行")],
+            "〔判断〕这一张要带走什么",
+            [("〔字段〕", "〔值〕"), ("〔字段〕", "〔值〕")],
         ),
         fig(
-            "飞机托运",
+            "〔对象 B〕",
             [
-                (f"{ASSET}/air-cargo-01.jpg", "航空箱在机场完成固定与交运", "航空箱固定"),
-                (f"{ASSET}/air-cargo-02.jpg", "工作人员装卸宠物航空箱", "机场装卸"),
-                (f"{ASSET}/air-cargo-03.jpg", "飞机货舱内部环境", "货舱内部"),
+                (f"{ASSET}/air-cargo-01.jpg", "〔图〕主图", "〔图 1〕"),
+                (f"{ASSET}/air-cargo-02.jpg", "〔图〕主图", "〔图 2〕"),
+                (f"{ASSET}/air-cargo-03.jpg", "〔图〕主图", "〔图 3〕"),
             ],
-            "货舱供给最大，应激高；中转超过一次必须重新交运，不承诺当天达",
-            [("宠物位置", "有氧货舱航空箱"), ("主人", "可同行或不同行")],
+            "〔判断〕这一张要带走什么",
+            [("〔字段〕", "〔值〕"), ("〔字段〕", "〔值〕")],
         ),
         fig(
-            "高铁托运",
+            "〔对象 C〕",
             [
-                (f"{ASSET}/rail-05.jpg", "高铁宠物运输箱的温湿度与氧气监控", "环境监控屏"),
-                (f"{ASSET}/rail-01.jpg", "高铁行李车厢内的宠物专用运输箱", "高铁宠物运输箱"),
+                (f"{ASSET}/rail-05.jpg", "〔图〕主图", "〔图 1〕"),
+                (f"{ASSET}/rail-01.jpg", "〔图〕主图", "〔图 2〕"),
             ],
-            "体验稳定、线路有限；箱位要提前锁，高峰车次可能停办活体",
-            [("宠物位置", "行李车厢专用运输箱"), ("主人", "通常乘坐同一车次")],
+            "〔判断〕这一张要带走什么",
+            [("〔字段〕", "〔值〕"), ("〔字段〕", "〔值〕")],
         ),
         fig(
-            "陆运",
+            "〔对象 D〕",
             [
-                (f"{ASSET}/road-01.jpg", "宠物跨城运输车辆内部", "运输车辆内部"),
-                (f"{ASSET}/road-03.jpg", "带固定笼位的专业宠物运输车", "专业运输车"),
+                (f"{ASSET}/road-01.jpg", "〔图〕主图", "〔图 1〕"),
+                (f"{ASSET}/road-03.jpg", "〔图〕主图", "〔图 2〕"),
             ],
-            "门到门可控，成本最高；适合人宠不同行，或客舱、高铁都走不通的城市对",
-            [("宠物位置", "运输车笼位或同行座舱"), ("主人", "可同行或不同行")],
+            "〔判断〕这一张要带走什么",
+            [("〔字段〕", "〔值〕"), ("〔字段〕", "〔值〕")],
         ),
     ]
     return region(
@@ -573,16 +588,16 @@ parts.append("""<!doctype html>
 """)
 
 parts.append(cover(
-    "cover", "00", "cover", "一站式携宠旅行解决方案", "携宠出行服务",
-    "让“带宠出游”从一次次艰难的攻略拼凑，变成一条可被信赖的完整链路。",
+    "cover", "00", "cover", "〔题域〕", "〔主判断〕整场结束时能复述的一句",
+    "〔开场〕这件事是什么，凭什么成立，出去之后先做什么。",
     image=CABIN,
     active=True,
     number=False,
-    subtitle="Pet-friendly Travel Solution",
-    scope="9 章",
-    kind="提案汇报稿",
-    author="SEED",
-    date="2026.08",
+    subtitle="〔副题〕没有就删",
+    scope="N 章",
+    kind="〔稿件类型〕",
+    author="〔作者〕",
+    date="〔日期〕",
     cta="开始阅读",
     cta_href="#grid1",
 ))
@@ -597,7 +612,7 @@ g1 = [
     ("01.e", "g1-list", "列表", "一格 · 一条", cells(list_c(), src=False)),
     ("01.f", "g1-step", "编号列表", "一格 · 序号在左", cells(step_c(), src=False)),
     ("01.g", "g1-step-stack", "编号列表纵向", "一格 · 序号压在标题上", cells(step_stack_c(), src=False)),
-    ("01.h", "g1-table", "表格宽", "一格 · 整表 · 10 列 · strong / em", cells(table_c("wide"), src=SOURCE_AIR)),
+    ("01.h", "g1-table", "表格宽", "一格 · 整表 · 10 列 · strong / em", cells(table_c("wide"), src=SOURCE_DOC)),
     ("01.i", "g1-bar", "Bar", "一格 · 横条 + 结构标题", cells(bar_h(), src=SOURCE_OPS)),
     ("01.j", "g1-bar-v", "Bar 纵向", "一格 · 竖条 + 结构标题", cells(bar_v(), src=SOURCE_OPS)),
     ("01.k", "g1-formula", "因子公式", "一格 · 用 x 相乘", cells(formula_c(), src=SOURCE)),
@@ -615,7 +630,7 @@ g2 = [
     ("02.b", "g2-stat", "数据", "两格", many(stat_c, 2, 2, src=SOURCE_OPS)),
     ("02.c", "g2-list", "列表", "两格", many(list_c, 2, 2)),
     ("02.d", "g2-step", "编号列表", "两格 · 横排", many(step_c, 2, 2)),
-    ("02.e", "g2-table", "表格", "两格 · 客舱 / 高铁", cells(table_c("air"), table_c("rail"), n=2, src=[SOURCE_AIR, SOURCE_RAIL])),
+    ("02.e", "g2-table", "表格", "两格 · 少列对照", cells(table_c("cmp"), table_c("spec"), n=2, src=[SOURCE_DOC, SOURCE])),
     ("02.f", "g2-bar", "Bar", "两格 · 竖条", cells(bar_v(), bar_v(), n=2, src=SOURCE_OPS)),
 ]
 for no, sid, title, part, body in g2:
@@ -627,7 +642,7 @@ g3 = [
     ("03.b", "g3-stat", "数据", "三格", many(stat_c, 3, 3, src=SOURCE_OPS)),
     ("03.c", "g3-list", "列表", "三格", many(list_c, 3, 3)),
     ("03.d", "g3-step", "编号列表", "三格 · 纵向", many(step_stack_c, 3, 3)),
-    ("03.e", "g3-table", "表格", "三格 · 客舱 / 高铁 / 陆运", cells(table_c("air"), table_c("rail"), table_c("road"), n=3, src=[SOURCE_AIR, SOURCE_RAIL, ""])),
+    ("03.e", "g3-table", "表格", "三格 · 少列对照", cells(table_c("cmp"), table_c("spec"), table_c("time"), n=3, src=[SOURCE_DOC, SOURCE, ""])),
     ("03.f", "g3-bar", "Bar", "三格 · 竖条", cells(bar_v(), bar_v(), bar_v(), n=3, src=SOURCE_OPS)),
 ]
 for no, sid, title, part, body in g3:
@@ -639,20 +654,20 @@ g4 = [
     ("04.b", "g4-stat", "数据", "四格 · 2×2", many(stat_c, 4, 4, src=SOURCE_OPS)),
     ("04.c", "g4-list", "列表", "四格 · 2×2", many(list_c, 4, 4)),
     ("04.d", "g4-step", "编号列表", "四格 · 横排", many(step_c, 4, 4)),
-    ("04.e", "g4-table", "表格", "四格 · 客舱 / 高铁 / 陆运 / 证件", cells(table_c("air"), table_c("rail"), table_c("road"), table_c("docs"), n=4, src=[SOURCE_AIR, SOURCE_RAIL, "", SOURCE])),
+    ("04.e", "g4-table", "表格", "四格 · 少列对照", cells(table_c("cmp"), table_c("spec"), table_c("time"), table_c("doc"), n=4, src=[SOURCE_DOC, SOURCE, "", SOURCE_OPS])),
     ("04.f", "g4-bar", "Bar", "四格 · 竖条", cells(*[bar_v() for _ in range(4)], n=4, src=SOURCE_OPS)),
 ]
 for no, sid, title, part, body in g4:
     parts.append(slide("grid4", no, sid, title, part, body))
 
-parts.append(cover("more", "05", "more", "更多格子", "More Grids", "5+ 横滑复用 Grid 3。"))
+parts.append(cover("more", "05", "more", "更多格子", "More Grids", "5–9 一次铺开；超过 9 格再用横滑。"))
 g5 = [
-    ("05.a", "g5-signal", "带序号观点", "5+ · 横滑", many(signal_c, 5, 5)),
-    ("05.b", "g5-stat", "数据", "5+ · 横滑", many(stat_c, 4, 5, src=SOURCE_OPS)),
-    ("05.c", "g5-list", "列表", "5+ · 横滑", many(list_c, 4, 5)),
-    ("05.d", "g5-step", "编号列表", "5+ · 纵向", many(step_stack_c, 4, 5)),
-    ("05.e", "g5-table", "表格", "5+ · 横滑", cells(table_c("air"), table_c("rail"), table_c("road"), table_c("docs"), n=5, src=[SOURCE_AIR, SOURCE_RAIL, "", SOURCE])),
-    ("05.f", "g5-bar", "Bar", "5+ · 竖条", cells(*[bar_v() for _ in range(4)], n=5, src=SOURCE_OPS)),
+    ("05.a", "g5-signal", "带序号观点", "五格 · 3+2", many(signal_c, 5, 5)),
+    ("05.b", "g5-stat", "数据", "六格 · 3×2", many(stat_c, 6, 6, src=SOURCE_OPS)),
+    ("05.c", "g5-list", "列表", "九格 · 3×3", many(list_c, 9, 9)),
+    ("05.d", "g5-step", "编号列表", "五格 · 纵向", many(step_stack_c, 5, 5)),
+    ("05.e", "g5-table", "表格", "六格 · 3×2", cells(*[table_c("cmp") for _ in range(6)], n=6, src=SOURCE_DOC)),
+    ("05.f", "g5-bar", "Bar", "10+ · 横滑", cells(*[bar_v() for _ in range(10)], n=10, src=SOURCE_OPS)),
 ]
 for no, sid, title, part, body in g5:
     parts.append(slide("more", no, sid, title, part, body))
@@ -668,8 +683,8 @@ parts.append(cover("fullscreen", "07", "fullscreen", "页皮", "全屏", "永远
 parts.append(slide(
     "fullscreen", "07.a", "full-image", "全屏有图", "图铺满当底，中间一块 Content",
     '<div class="full-page" data-full="image">'
-    f'<div class="full-page__media" data-caption="off"><img src="{CABIN}" alt="全屏底图"></div>'
-    f'<article class="grid-cell">{copy_c()}{SOURCE_AIR}</article></div>',
+    f'<div class="full-page__media" data-caption="off"><img src="{CABIN}" alt="〔图〕全屏底图"></div>'
+    f'<article class="grid-cell">{copy_c()}{SOURCE}</article></div>',
 ))
 parts.append(slide(
     "fullscreen", "07.b", "full-none", "全屏无图", "浅底，一块 Content · 无出处则不出来源",
@@ -678,22 +693,24 @@ parts.append(slide(
 parts.append(slide(
     "fullscreen", "07.c", "full-photo", "全屏只有图", "只有图，没有文字",
     '<div class="full-page" data-full="image" data-copy="off">'
-    f'<div class="full-page__media" data-caption="off"><img src="{CABIN}" alt="全屏图片"></div>'
-    f'{SOURCE_AIR}</div>',
+    f'<div class="full-page__media" data-caption="off"><img src="{CABIN}" alt="〔图〕全屏图片"></div>'
+    f'{SOURCE}</div>',
 ))
 
 parts.append("""        <section class="report-slide" data-chapter="notes" data-slide="09" id="notes">
           <footer class="report-notes">
             <h2>模板使用说明</h2>
             <ol>
-              <li>封面用真实文案：标题、说明、分类章节、作者、日期，并提供开始阅读。</li>
+              <li>格子里带〔〕的是占位。整句换成调研原文；〔〕不要带进报告。</li>
+              <li>〔〕里是槽名，后面是填法。页眉组件名（纯文字、观点、Grid 1）是目录，不要改。</li>
+              <li>封面填：题域、主判断、开场、副题、章数、稿件类型、作者、日期。</li>
               <li>先定 Content，再选 Grid。一个 Grid 只放一种 Content。</li>
-              <li>Grid 1 / 2 / 3 / 4 / More。列表和步骤一条就是一格。Grid 3 / 5+ 的编号列表用纵向。</li>
+              <li>Grid 1 / 2 / 3 / 4 / 5–9 / 10+。列表和步骤一条就是一格。Grid 3 / 5–9 / 10+ 的编号列表用纵向。5–9 一次铺开，超过 9 格才横滑。</li>
               <li>表和条整块占一格，宽度铺满，行间有分割线。可以上下滚动，不显示滚动条。有出处才写「数据来源」并挂链接；没有出处这一行不出现。字号 Caption（12），放在白卡内容区，居中。</li>
               <li>单元格里 <strong>加粗</strong> 用 strong，<em>强调</em> 用 em（强调色 + 加粗）。同一张表里示意即可，不要另开强调组件。</li>
               <li>Evidence 单独成章：现场图、截图、横屏、条带、Media Switch。不进 Grid 格。封面默认并排多张。</li>
               <li>全屏单独成章：有图、无图，或只有图。永远 1 块。</li>
-              <li>视觉由设计 Token 驱动。主题与翻页栏默认隐藏，鼠标移到屏幕左下角才显示。</li>
+              <li>视觉由设计 Token 驱动。主题栏固定在左下角。右键文字编辑、右键图片替换。翻页用键盘或顶栏。</li>
             </ol>
           </footer>
         </section>
