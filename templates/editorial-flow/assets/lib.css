@@ -1,0 +1,470 @@
+/* editorial-flow 合并后的父组件。
+   变体用 data-* / is-* ，不要再为同构块另起皮肤。 */
+
+/* —— 横排数字（原 market-proof / audience-stat） —— */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(var(--stat-cols, 4), minmax(0, 1fr));
+}
+.stat-row[data-cols="2"] { --stat-cols: 2; }
+.stat-row[data-cols="3"] { --stat-cols: 3; }
+.stat-row[data-cols="5"] { --stat-cols: 5; }
+.stat-row > article {
+  min-width: 0;
+  padding: 0 20px;
+  border-left: 1px solid var(--c-line-soft);
+}
+.stat-row > article:first-child { padding-left: 0; border-left: 0; }
+.stat-row > article:last-child { padding-right: 0; }
+.stat-row .market-number { font-size: var(--t-num); }
+.stat-row .market-number i { font-size: 15px; }
+.stat-row h3 {
+  margin: 12px 0 0;
+  color: var(--c-text);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.stat-row .stat-row__note {
+  display: block;
+  margin-top: 7px;
+  color: var(--c-accent);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.stat-row > article.is-accent .market-number { color: var(--c-accent); }
+.stat-row > article.is-accent .market-number i {
+  color: color-mix(in srgb, var(--c-accent) 66%, var(--c-text-3));
+}
+
+/* —— 数字信息（原 air-signal / rail-key / hotel-funnel-fact / air-coverage） —— */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--stat-cols, 3), minmax(0, 1fr));
+}
+.stat-grid[data-cols="2"] { --stat-cols: 2; }
+.stat-grid[data-cols="4"] { --stat-cols: 4; }
+.stat-card {
+  min-width: 0;
+  padding: 28px 28px 30px 0;
+}
+.stat-card + .stat-card { padding-left: 28px; border-left: 1px solid var(--c-line); }
+.stat-card__kicker {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--c-text-4);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+.stat-card__num {
+  display: block;
+  color: var(--c-text);
+  font-family: var(--f-num);
+  font-size: var(--t-num);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -.035em;
+  white-space: nowrap;
+}
+.stat-card__ratio {
+  margin-left: 8px;
+  color: var(--c-text-4);
+  font-size: 12px;
+  font-weight: 500;
+}
+.stat-card h3 { margin: 16px 0 7px; font-size: 17px; line-height: 1.35; }
+.stat-card p { margin: 0; color: var(--c-text-3); font-size: 14px; line-height: 1.65; }
+.stat-card.is-pair {
+  padding: 20px 22px;
+  border-radius: var(--r-md);
+  background: var(--c-bg-soft);
+}
+.stat-grid:has(.is-pair) { gap: 12px; }
+.stat-card.is-pair + .stat-card.is-pair {
+  margin-left: 0;
+  padding-left: 22px;
+  border-left: 0;
+}
+.stat-card.is-pair h3 { margin: 0 0 12px; font-size: 16px; }
+.stat-card__pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.stat-card__pair span { color: var(--c-text-3); font-size: 12px; }
+.stat-card__pair b {
+  display: block;
+  margin-top: 3px;
+  color: var(--c-text);
+  font-family: var(--f-num);
+  font-size: var(--t-num-md);
+}
+
+/* —— 编号信息（原 air-feature / step / species-doc / opportunity / qa / rail-rule） —— */
+.info-grid { display: grid; }
+.info {
+  display: grid;
+  align-items: start;
+}
+.info-grid[data-layout="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.info-grid[data-layout="2"] .info {
+  grid-template-columns: 36px 1fr;
+  gap: 6px 14px;
+  min-height: 154px;
+  padding: 24px 28px 24px 0;
+}
+.info-grid[data-layout="2"] .info .info__no { grid-row: 1 / span 2; }
+.info-grid[data-layout="2"] .info:nth-child(even) {
+  padding-left: 28px;
+  border-left: 1px solid var(--c-line);
+}
+.info-grid[data-layout="2"] .info:nth-child(n+3) { border-top: 1px solid var(--c-line); }
+.info-grid[data-layout="stack"] .info {
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: var(--s-2) var(--s-4);
+  padding: 17px 0;
+  border-top: 1px solid var(--c-line);
+}
+.info-grid[data-layout="stack"] .info .info__no { grid-row: 1 / -1; }
+.info-grid[data-layout="stack"] .info > :not(.info__no) { grid-column: 2; min-width: 0; }
+.info-grid[data-layout="stack"] .info:last-child { border-bottom: 1px solid var(--c-line); }
+.info-grid[data-layout="row"] .info {
+  grid-template-columns: 58px minmax(210px, .7fr) minmax(0, 2fr);
+  gap: 22px 28px;
+  align-items: baseline;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--c-line);
+}
+.info-grid[data-layout="label"] .info {
+  grid-template-columns: 118px 1fr;
+  gap: 4px 18px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--c-line);
+}
+.info-grid[data-layout="label"] .info .info__no { grid-row: 1 / span 2; }
+.info-grid[data-layout="split"] {
+  grid-template-columns: repeat(var(--info-cols, 3), minmax(0, 1fr));
+}
+.info-grid[data-layout="split"][data-cols="2"] { --info-cols: 2; }
+.info-grid[data-layout="split"] .info {
+  grid-template-columns: 36px 1fr;
+  gap: 6px 14px;
+  padding: 28px 28px 30px 0;
+}
+.info-grid[data-layout="split"] .info + .info {
+  padding-left: 28px;
+  border-left: 1px solid var(--c-line);
+}
+.info-grid[data-layout="split"] .info .info__no { grid-row: 1 / span 2; }
+.info-grid[data-layout="cols"] {
+  grid-template-columns: repeat(var(--info-cols, 3), minmax(0, 1fr));
+  column-gap: 0;
+  row-gap: var(--s-stack, 40px);
+}
+.info-grid[data-layout="cols"][data-cols="2"] { --info-cols: 2; }
+.info-grid[data-layout="cols"][data-cols="4"] { --info-cols: 4; }
+.info-grid[data-layout="cols"] .info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-3, 12px);
+  min-height: 0;
+  padding: 4px 28px 4px 0;
+}
+.info-grid[data-layout="cols"] .info:not(:nth-child(3n + 1)) {
+  padding-left: 28px;
+  border-left: 1px solid var(--c-line);
+}
+.info-grid[data-layout="cols"][data-cols="2"] .info:not(:nth-child(2n + 1)) {
+  padding-left: 28px;
+  border-left: 1px solid var(--c-line);
+}
+.info-grid[data-layout="cols"][data-cols="2"] .info:nth-child(2n + 1),
+.info-grid[data-layout="cols"][data-cols="4"] .info:nth-child(4n + 1) {
+  padding-left: 0;
+  border-left: 0;
+}
+.info-grid[data-layout="cols"][data-cols="4"] .info:not(:nth-child(4n + 1)) {
+  padding-left: 28px;
+  border-left: 1px solid var(--c-line);
+}
+.info-grid[data-layout="cols"] .info .info__no { grid-row: auto; }
+.info-grid[data-layout="cols"] .info h3,
+.info-grid[data-layout="cols"] .info h4 { margin: 0; }
+.info-grid[data-layout="cols"] .info p { margin: 0; }
+.info__no {
+  color: var(--c-text-4);
+  font-family: var(--f-num);
+  font-size: var(--t-no);
+  font-weight: 600;
+  letter-spacing: .06em;
+}
+.info.is-lg .info__no,
+.info-grid[data-no="lg"] .info__no {
+  color: var(--c-text);
+  font-size: var(--t-no-lg);
+  font-weight: 650;
+  letter-spacing: -.03em;
+  line-height: .95;
+}
+.info-grid[data-layout="2"][data-no="lg"] .info,
+.info-grid[data-layout="2"] .info.is-lg,
+.info-grid[data-layout="split"][data-no="lg"] .info,
+.info-grid[data-layout="split"] .info.is-lg,
+.info-grid[data-layout="stack"] .info.is-lg,
+.info-grid[data-layout="stack"][data-no="lg"] .info {
+  grid-template-columns: 72px minmax(0, 1fr);
+}
+.info-grid[data-layout="row"] .info__no { color: var(--c-accent); font-weight: 650; }
+.info-grid[data-layout="label"] .info__no {
+  color: var(--c-text-3);
+  font-size: 12px;
+  letter-spacing: 0;
+}
+.info h3, .info h4 {
+  margin: 0 0 7px;
+  color: var(--c-text);
+  font-size: 17px;
+  line-height: 1.35;
+}
+.info-grid[data-layout="row"] .info h3,
+.info-grid[data-layout="stack"] .info h3,
+.info-grid[data-layout="stack"] .info h4,
+.info-grid[data-layout="label"] .info h3 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.55;
+}
+.info p {
+  margin: 0;
+  color: var(--c-text-3);
+  font-size: 14px;
+  line-height: 1.65;
+}
+.info-grid[data-layout="2"] .info p { margin: 0; }
+.info-grid[data-layout="stack"] .info h4 { margin: 5px 0 0; }
+.info-grid[data-layout="stack"] .info p { margin: 6px 0 0; }
+.process-branches {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-4);
+  width: 100%;
+  margin-top: var(--s-3);
+}
+
+/* —— 无编号信息（原 road-advantage / process-friction / hotel-qa-verdict） —— */
+.plain-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--plain-cols, 4), minmax(0, 1fr));
+}
+.plain-grid[data-cols="2"] { --plain-cols: 2; }
+.plain-grid[data-cols="3"] { --plain-cols: 3; }
+.plain {
+  min-width: 0;
+  padding: 18px 18px 20px 0;
+}
+.plain + .plain { padding-left: 18px; border-left: 1px solid var(--c-line); }
+.plain b { display: block; font-size: 16px; }
+.plain p { margin: 7px 0 0; color: var(--c-text-3); font-size: 13px; line-height: 1.55; }
+.plain-grid[data-surface="tint"] {
+  padding: 0 20px;
+  color: var(--c-text);
+  background: var(--grad-tint);
+}
+.plain-grid[data-surface="tint"] .plain + .plain { border-left-color: var(--tint-line); }
+.plain-grid[data-surface="tint"] .plain p { color: var(--tint-text-3); }
+.plain-grid[data-surface="line"] {
+  border-top: 1px solid var(--c-line);
+  border-bottom: 1px solid var(--c-line);
+}
+
+/* —— 观点（原 air-thesis / callout / decision-note） —— */
+.point {
+  display: grid;
+  grid-template-columns: 108px 1fr;
+  gap: 22px;
+  align-items: baseline;
+  margin: 0;
+  padding: 22px 24px;
+  border-radius: var(--r-md);
+  background: var(--grad-tint);
+  color: var(--c-text);
+}
+.point > span {
+  color: var(--tint-text-3);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  letter-spacing: .06em;
+}
+.point p {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+.point.is-soft {
+  grid-template-columns: 1fr;
+  border: 1px solid var(--c-line);
+  background: var(--c-bg-soft);
+  border-radius: 0;
+}
+.point.is-soft p {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.7;
+}
+
+/* —— 图（原 evidence-shot / certificate / provider / wide / film / poster） —— */
+.shot-grid {
+  display: grid;
+  gap: var(--s-4);
+  grid-template-columns: repeat(var(--shot-cols, 1), minmax(0, 1fr));
+}
+.shot-grid[data-cols="2"] { --shot-cols: 2; }
+.shot-grid[data-cols="3"] { --shot-cols: 3; }
+.shot-grid[data-cols="4"] { --shot-cols: 4; }
+.shot {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--c-line);
+  background: var(--c-bg);
+}
+.shot__frame { background: var(--c-bg-soft); }
+.shot[data-kind="photo"] .shot__frame { height: 470px; overflow: hidden; }
+.shot[data-kind="photo"] img,
+.shot[data-kind="crop"] img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+  cursor: zoom-in;
+}
+.shot[data-kind="crop"] .shot__frame { height: 500px; overflow: hidden; }
+.shot[data-kind="scroll"] .shot__frame { height: 440px; overflow-y: auto; }
+.shot[data-kind="scroll"] img { display: block; width: 100%; height: auto; }
+.shot[data-kind="wide"] img { display: block; width: 100%; cursor: zoom-in; }
+.shot[data-kind="film"] .shot__frame { aspect-ratio: 16 / 9; overflow: hidden; background: var(--c-text); }
+.shot[data-kind="film"] img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.shot[data-kind="poster"] { aspect-ratio: 608 / 1080; cursor: zoom-in; }
+.shot[data-kind="poster"] .shot__frame,
+.shot[data-kind="poster"] img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.shot[data-kind="poster"] figcaption { display: none; }
+.shot figcaption {
+  padding: 13px 14px 15px;
+  border-top: 1px solid var(--c-line);
+}
+.shot figcaption b,
+.shot figcaption strong { display: block; font-size: 14px; }
+.shot figcaption span {
+  display: block;
+  margin-top: 4px;
+  color: var(--c-text-3);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.shot-plan { min-width: 0; }
+.shot-plan__label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+}
+.shot-plan__label span,
+.shot-plan__label h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.shot-plan__label span { color: var(--c-text-4); }
+.shot-plan__label h4 { color: var(--c-text); }
+
+/* 表：表头/左列用正文层级；数据栏可正负向 */
+.plain-table-wrap th { color: var(--c-text-3); font-size: var(--t-aux); font-weight: 600; }
+.plain-table-wrap thead th:first-child { color: var(--c-text-3); }
+.plain-table-wrap td { color: var(--c-text); font-size: var(--t-small); }
+.plain-table-wrap td:first-child { color: var(--c-text); }
+.plain-table-wrap td.number,
+.plain-table-wrap td.ratio {
+  font-family: var(--f-num);
+  font-size: var(--t-num-md);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.plain-table-wrap td.best,
+.plain-table-wrap td.is-pos { color: var(--c-pos); font-weight: 700; }
+.plain-table-wrap td.weak,
+.plain-table-wrap td.is-neg { color: var(--c-neg); }
+
+/* 图：对齐 / 填充（编辑器可写 data-*） */
+.shot[data-align="center"] { margin-left: auto; margin-right: auto; }
+.shot[data-align="right"] { margin-left: auto; }
+.shot[data-fit="fit"] img,
+.shot[data-fit="fit"] video { object-fit: contain; width: 100%; height: auto; }
+.shot[data-fit="fill"] .shot__frame { overflow: hidden; }
+.shot[data-fit="fill"] img,
+.shot[data-fit="fill"] video { object-fit: cover; width: 100%; height: 100%; }
+
+@media (max-width: 900px) {
+  .stat-row,
+  .stat-grid,
+  .info-grid[data-layout="2"],
+  .plain-grid,
+  .shot-grid[data-cols="3"],
+  .shot-grid[data-cols="4"] {
+    grid-template-columns: 1fr 1fr;
+  }
+  .stat-card + .stat-card,
+  .plain + .plain,
+  .info-grid[data-layout="2"] .info:nth-child(even) {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .stat-card,
+  .info-grid[data-layout="2"] .info {
+    padding: 22px 0;
+    border-top: 1px solid var(--c-line);
+  }
+  .info-grid[data-layout="row"] .info {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+  .info-grid[data-layout="row"] .info p { grid-column: 2; }
+  .info-grid[data-layout="cols"] {
+    grid-template-columns: 1fr;
+    row-gap: 0;
+  }
+  .info-grid[data-layout="cols"] .info,
+  .info-grid[data-layout="cols"] .info:not(:nth-child(3n + 1)),
+  .info-grid[data-layout="cols"][data-cols="2"] .info:not(:nth-child(2n + 1)),
+  .info-grid[data-layout="cols"][data-cols="4"] .info:not(:nth-child(4n + 1)) {
+    padding: 20px 0 0;
+    border-left: 0;
+  }
+  .info-grid[data-layout="cols"] .info:first-child { padding-top: 0; }
+  .info-grid[data-layout="cols"] .info + .info {
+    border-top: 1px solid var(--c-line);
+  }
+}
+@media (max-width: 620px) {
+  .stat-row,
+  .stat-grid,
+  .info-grid[data-layout="2"],
+  .plain-grid,
+  .shot-grid {
+    grid-template-columns: 1fr;
+  }
+}

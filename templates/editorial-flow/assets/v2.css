@@ -1,0 +1,169 @@
+/* editorial-flow glue.
+   Shell = flow document column. Content = source.html 拆出的原组件。
+   不要把原组件再收成 flow-h1 / flow-block。 */
+
+.report-shell.is-flow {
+  --flow-column: 1160px;
+  --flow-prose: 1160px;
+  --flow-row: 1160px;
+  --flow-gutter: clamp(24px, 4vw, 48px);
+  font-family: var(--f-text);
+  color: var(--c-text);
+  background: var(--c-bg);
+}
+
+.report-shell.is-flow .flow-stack {
+  font-family: var(--f-text);
+  color: var(--c-text);
+}
+
+/* 组合页：不要用 flow-stack 的统一 30px gap。
+   区内 --s-3/4，章内换排 --s-7。组件陈列页仍用目录默认间距。 */
+.report-shell.is-flow[data-catalog] .report-section[data-chapter="combo"] .flow-stack {
+  gap: 0;
+}
+.report-shell.is-flow[data-catalog] .report-section[data-chapter="combo"] .flow-stack > * + * {
+  margin-top: var(--s-stack);
+}
+.report-shell.is-flow[data-catalog] .report-section[data-chapter="combo"] .flow-stack > .slide-head + .rule {
+  margin-top: var(--s-in);
+}
+.report-shell.is-flow[data-catalog] .report-section[data-chapter="combo"] .flow-stack > .slide-head + .rule + * {
+  margin-top: var(--s-stack);
+}
+.report-shell.is-flow[data-catalog] .report-section[data-chapter="combo"] .flow-stack > .source-note {
+  margin-top: var(--s-3);
+}
+.report-shell.is-flow .source-note {
+  margin-top: var(--s-3);
+}
+.report-shell.is-flow .subsection > h3 {
+  border-bottom: 1px solid var(--c-line);
+  padding-bottom: var(--s-3);
+}
+
+.report-shell.is-flow .document-nav {
+  background: rgba(255, 255, 255, .78);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--c-line-soft);
+}
+
+.report-shell.is-flow .document-nav a.is-active {
+  font-weight: 600;
+}
+
+/* 章头：分割线不写进组件，用独立 .rule */
+.report-shell.is-flow .slide-head {
+  max-width: none;
+  margin: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.report-shell.is-flow .kicker {
+  font-size: 12px;
+  letter-spacing: .08em;
+  color: var(--c-text-3);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  font-weight: 500;
+  display: block;
+}
+.report-shell.is-flow .slide-head h2 {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: var(--t-h1);
+  line-height: 1.25;
+  letter-spacing: -.02em;
+  color: var(--c-text);
+  margin: 0 0 14px;
+  white-space: normal;
+}
+.report-shell.is-flow .slide-head:not(:has(> .sub)) h2:last-child {
+  margin-bottom: 0;
+}
+.report-shell.is-flow .sub {
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--c-text-2);
+  max-width: none;
+  margin: 0;
+}
+
+.report-shell.is-flow .rule {
+  display: block;
+  width: 100%;
+  height: 2px;
+  margin: 0;
+  border: 0;
+  background: var(--c-text);
+}
+.report-shell.is-flow .rule.is-soft {
+  height: 1px;
+  background: var(--c-line);
+}
+
+/* 主标题下必须有可见强线：有 .rule 就显示；没有就用伪元素补上。不得藏线。 */
+.report-shell.is-flow .slide-head + .rule {
+  display: block !important;
+  height: 2px !important;
+  background: var(--c-text) !important;
+  margin-top: var(--s-in);
+}
+.report-shell.is-flow .slide-head + .rule + * {
+  margin-top: var(--s-stack);
+}
+.report-shell.is-flow .slide-head:not(:has(+ .rule))::after {
+  content: "";
+  display: block;
+  height: 2px;
+  margin-top: var(--s-in);
+  background: var(--c-text);
+}
+
+.report-shell.is-flow .pain-text-list,
+.report-shell.is-flow .plain-table-wrap,
+.report-shell.is-flow .research-lead,
+.report-shell.is-flow .market-block,
+.report-shell.is-flow .audience-metrics,
+.report-shell.is-flow .opportunity-list {
+  border-top: 0;
+  border-bottom: 0;
+}
+.report-shell.is-flow .research-lead {
+  border-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.report-shell.is-flow .transport-card-copy > p {
+  height: auto;
+}
+
+/* 目录里的组合示例：原 chapter 宽度交给 flow-stack */
+.report-shell.is-flow .flow-stack > .chapter {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  scroll-margin-top: 0;
+}
+
+.report-shell.is-flow .topbar,
+.report-shell.is-flow .progress {
+  display: none !important;
+}
+
+.report-shell.is-flow .report-notes {
+  width: min(var(--flow-column), calc(100% - 2 * var(--flow-gutter)));
+  margin: 48px auto 80px;
+  color: var(--c-text-2);
+}
+.report-shell.is-flow .report-notes h2 {
+  margin: 0 0 16px;
+  color: var(--c-text);
+  font-size: 22px;
+}
+.report-shell.is-flow .report-notes li {
+  margin: 0 0 8px;
+  line-height: 1.6;
+}

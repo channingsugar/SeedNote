@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>知识汇报模板 · 分屏</title>
+  <link rel="stylesheet" href="../shared/components.css">
+  <link rel="stylesheet" href="assets/template.css">
+  <link rel="stylesheet" href="assets/modules.css">
+</head>
+<body>
+  <div class="theme-control" id="themeControl" aria-label="主题控制">
+    <div class="theme-control__label">
+      <span>THEME</span>
+      <strong data-theme-name>Editorial 默认</strong>
+    </div>
+    <select data-theme-select aria-label="切换主题"></select>
+    <button type="button" data-theme-import-trigger>导入主题</button>
+    <input data-theme-import type="file" accept="application/json,.json" hidden>
+    <p class="theme-control__hint">切换或导入主题后，整页设计语言会同步替换</p>
+    <div class="theme-control__toast" data-theme-toast role="status" aria-live="polite"></div>
+  </div>
+
+  <div class="report-shell is-deck" data-catalog>
+    <nav class="document-nav nav-underline is-sticky" data-component-id="navigation" aria-label="文档章节">
+      <div class="document-nav__brand"><span class="document-nav__mark" aria-hidden="true"></span><strong>SEED</strong></div>
+      <div class="document-nav__links">
+        <a href="#cover" class="is-active">封面</a>
+        <a href="#lib">组件</a>
+        <a href="#combo">组合</a>
+        <a href="#grid1">分页</a>
+        <a href="#notes">口径</a>
+      </div>
+    </nav>
+
+    <div class="report-stage" data-report-stage>
+      <header class="section-header report-deck-head" data-deck-head>
+        <div class="report-deck-head__copy">
+          <h2 class="section-header__title" data-deck-title></h2>
+          <p class="section-header__part" data-deck-part hidden></p>
+        </div>
+        <span class="section-header__no" data-deck-no></span>
+      </header>
+
+      <div class="report-slides" data-report-slides>
+        <section class="report-slide is-chapter-cover is-active" data-chapter="cover" data-slide="00" id="cover">
+          <header class="chapter-cover" data-cover="image">
+            <div class="chapter-cover__media" data-caption="off"><img src="../states-demo/assets/cabin-01.jpg" alt=""></div>
+            <span class="chapter-cover__kicker">分屏组件库</span>
+            <h2 class="chapter-cover__title">从源稿拆出的可复用模块</h2>
+            <p class="chapter-cover__subtitle">editorial-page</p>
+            <p class="chapter-cover__lead">厚卡、公式、数据带、运输图库、问答行、机会行。格子里的〔〕是占位，整句替换。</p>
+            <p class="chapter-cover__byline"><span class="chapter-cover__scope">组件 + 组合 + 分页</span><span class="chapter-cover__kind">分屏目录</span></p>
+            <div class="chapter-cover__actions"><a class="button inverse" href="#lib">开始阅读</a></div>
+          </header>
+        </section>
+        <section class="report-slide is-chapter-cover" data-chapter="lib" data-slide="01" id="lib">
+          <header class="chapter-cover">
+            <span class="chapter-cover__no">01</span>
+            <span class="chapter-cover__kicker">父组件</span>
+            <h2 class="chapter-cover__title">组件</h2>
+            
+            <p class="chapter-cover__lead">每一屏一种模块。抄 class 和结构，不要另起皮肤。</p>
+            
+            
+          </header>
+        </section>
+        <section class="report-section report-slide" data-chapter="lib" data-slide="01.a" id="lib-lead">
+          <header class="section-header">
+            <span class="section-header__no">01.a · 组件</span>
+            <div>
+              <h2 class="section-header__title">导语</h2>
+              <p class="section-header__part">一段说明，顶底有线</p>
+            </div>
+          </header>
+          <div class="page-module"><div class="research-lead"><p>〔正文〕先回答这一屏的问句。条件、例外和第二段写在这里，不要拆成列表。</p><p>〔续段〕没有第二段就删掉。</p></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="lib" data-slide="01.b" id="lib-formula">
+          <header class="section-header">
+            <span class="section-header__no">01.b · 组件</span>
+            <div>
+              <h2 class="section-header__title">公式</h2>
+              <p class="section-header__part">因子相乘，最多 5 个</p>
+            </div>
+          </header>
+          <div class="page-module"><div class="market-block"><div class="market-block-head"><b>〔组名〕</b><span>〔口径〕这个数怎么乘出来</span></div><div class="market-formula"><div class="market-factor"><div class="market-number"><span>〔A〕</span><i>万人</i></div><div class="market-factor-label">〔因子〕参与相乘的条件</div></div><div class="market-operator" aria-hidden="true">×</div><div class="market-factor"><div class="market-number"><span>〔B〕</span><i>%</i></div><div class="market-factor-label">〔因子〕参与相乘的条件</div></div><div class="market-operator" aria-hidden="true">×</div><div class="market-factor"><div class="market-number"><span>〔C〕</span><i>%</i></div><div class="market-factor-label">〔因子〕参与相乘的条件</div></div><div class="market-operator" aria-hidden="true">×</div><div class="market-factor"><div class="market-number"><span>〔D〕</span><i>次 / 年</i></div><div class="market-factor-label">〔因子〕参与相乘的条件</div></div><div class="market-operator" aria-hidden="true">=</div><div class="market-factor market-result"><div class="market-number"><span>〔结果〕</span><i>万次 / 年</i></div><div class="market-factor-label">〔含义〕同时成立时得到什么</div></div></div></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="lib" data-slide="01.c" id="lib-proof">
+          <header class="section-header">
+            <span class="section-header__no">01.c · 组件</span>
+            <div>
+              <h2 class="section-header__title">数据带</h2>
+              <p class="section-header__part">5 个数横排，只有数字+名</p>
+            </div>
+          </header>
+          <div class="page-module"><div class="market-block"><div class="market-block-head"><b>〔组名〕</b><span>〔口径〕存量或转化</span></div><div class="market-evidence"><div class="market-proof"><div class="market-number"><span>00</span><i>%</i></div><div class="market-factor-label">〔指标 1〕多少、多贵或多窄</div></div><div class="market-proof"><div class="market-number"><span>00</span><i>%</i></div><div class="market-factor-label">〔指标 2〕多少、多贵或多窄</div></div><div class="market-proof"><div class="market-number"><span>00</span><i>%</i></div><div class="market-factor-label">〔指标 3〕多少、多贵或多窄</div></div><div class="market-proof market-proof--accent"><div class="market-number"><span>00</span><i>%</i></div><div class="market-factor-label">〔指标 4〕多少、多贵或多窄</div></div><div class="market-proof market-proof--accent"><div class="market-number"><span>00</span><i>%</i></div><div class="market-factor-label">〔指标 5〕多少、多贵或多窄</div></div></div></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="lib" data-slide="01.d" id="lib-key">
+          <header class="section-header">
+            <span class="section-header__no">01.d · 组件</span>
+            <div>
+              <h2 class="section-header__title">关键数</h2>
+              <p class="section-header__part">4 格，数字+名+一句口径</p>
+            </div>
+          </header>
+          <div class="page-module"><div class="rail-key-grid"><article class="rail-key"><b>00</b><h3>〔指标名〕</h3><p>〔口径〕统计范围、时间、是否含例外。</p></article><article class="rail-key"><b>00</b><h3>〔指标名〕</h3><p>〔口径〕统计范围、时间、是否含例外。</p></article><article class="rail-key"><b>00</b><h3>〔指标名〕</h3><p>〔口径〕统计范围、时间、是否含例外。</p></article><article class="rail-key"><b>00</b><h3>〔指标名〕</h3><p>〔口径〕统计范围、时间、是否含例外。</p></article></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="lib" data-slide="01.e" id="lib-signal">
+          <header class="section-header">
+            <span class="section-header__no">01.e · 组件</span>
+            <div>
+              <h2 class="section-header__title">编号利益</h2>
+              <p class="section-header__part">大数字作序号，2 或 3 列</p>
+            </div>
+          </header>
+          <div class="page-module"><div class="air-signal-grid benefit-grid--two"><article class="air-signal"><strong class="air-signal-num">01</strong><h3>〔判断〕有主语、有动作</h3><p>〔条件〕只补这一句。</p></article><article class="air-signal"><strong class="air-signal-num">02</strong><h3>〔判断〕同一问下的第二句</h3><p>〔条件〕不要把邻句的材料写进来。</p></article></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="lib" data-slide="01.f" id="lib-feature">
+          <header class="section-header">
+            <span class="section-header__no">01.f · 组件</span>
+            <div>
+              <h2 class="section-header__title">编号要点</h2>
+              <p class="section-header__part">01 在左，2×2</p>
+            </div>
+          </header>
+          <div class="page-module"><div class="air-feature-grid"><article class="air-feature"><span class="air-feature-num">01</span><div><h3>〔判断〕并列的一条</h3><p>〔条件〕范围、限制、例外。</p></div></article><article class="air-feature"><span class="air-feature-num">02</span><div><h3>〔判断〕并列的一条</h3><p>〔条件〕范围、限制、例外。</p></div></article><article class="air-feature"><span class="air-feature-num">03</span><div><h3>〔判断〕并列的一条</h3><p>〔条件〕范围、限制、例外。</p></div></article><article class="air-feature"><span class="air-feature-num">04</span><div><h3>〔判断〕并列的一条</h3><p>〔条件〕范围、限制、例外。</p></div></article></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="lib" data-slide="01.g" id="lib-topic">
+          <header class="section-header">
+            <span class="section-header__no">01.g · 组件</span>
+            <div>
+              <h2 class="section-header__title">厚卡</h2>
+              <p class="section-header__part">编号+标题+导语+条目，条目留在卡内</p>
+            </div>
+          </header>
+          <div class="page-module"><div class="pain-text-list"><article class="pain-topic"><header class="pain-topic-head"><h3><span class="pain-topic-index">01</span>〔对象〕并列的一条痛点或主题</h3><p class="pain-topic-summary">〔导语〕这一条要带走什么。一句说完。</p></header><div class="pain-topic-body"><ul class="pain-detail-list"><li>〔证据〕数字或条件留在卡内，不要抬成新的一排。</li><li>〔证据〕范围、限制、例外。</li><li>〔证据〕材料撑不住就写进口径。</li></ul></div></article><article class="pain-topic"><header class="pain-topic-head"><h3><span class="pain-topic-index">02</span>〔对象〕并列的一条痛点或主题</h3><p class="pain-topic-summary">〔导语〕这一条要带走什么。一句说完。</p></header><div class="pain-topic-body"><ul class="pain-detail-list"><li>〔证据〕数字或条件留在卡内，不要抬成新的一排。</li><li>〔证据〕范围、限制、例外。</li><li>〔证据〕材料撑不住就写进口径。</li></ul></div></article><article class="pain-topic"><header class="pain-topic-head"><h3><span class="pain-topic-index">03</span>〔对象〕并列的一条痛点或主题</h3><p class="pain-topic-summary">〔导语〕这一条要带走什么。一句说完。</p></header><div class="pain-topic-body"><ul class="pain-detail-list"><li>〔证据〕数字或条件留在卡内，不要抬成新的一排。</li><li>〔证据〕范围、限制、例外。</li><li>〔证据〕材料撑不住就写进口径。</li></ul></div></article><article class="pain-topic"><header class="pain-topic-head"><h3><span class="pain-topic-index">04</span>〔对象〕并列的一条痛点或主题</h3><p class="pain-topic-summary">〔导语〕这一条要带走什么。一句说完。</p></header><div class="pain-topic-body"><ul class="pain-detail-list"><li>〔证据〕数字或条件留在卡内，不要抬成新的一排。</li><li>〔证据〕范围、限制、例外。</li><li>〔证据〕材料撑不住就写进口径。</li></ul></div></article></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="lib" data-slide="01.h" id="lib-plain">
+          <header class="section-header">
+            <span class="section-header__no">01.h · 组件</span>
+            <div>
+              <h2 class="section-header__title">无编号要点</h2>
+              <p class="section-header__part">四条优点或摩擦</p>
+            </div>
+          </header>
+          <div class="page-module"><div class="road-advantage-band"><article class="road-advantage"><b>〔对象〕</b><p>〔条件〕一句说完。</p></article><article class="road-advantage"><b>〔对象〕</b><p>〔条件〕一句说完。</p></article><article class="road-advantage"><b>〔对象〕</b><p>〔条件〕一句说完。</p></article><article class="road-advantage"><b>〔对象〕</b><p>〔条件〕一句说完。</p></article></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="lib" data-slide="01.i" id="lib-qa">
+          <header class="section-header">
+            <span class="section-header__no">01.i · 组件</span>
+            <div>
+              <h2 class="section-header__title">问答行</h2>
+              <p class="section-header__part">Q + 问 + 答，整栏叠</p>
+            </div>
+          </header>
+          <div class="page-module"><div class="hotel-qa-list"><article class="hotel-qa-item"><span>Q1</span><h4>〔问题〕要核对的那一句</h4><p>〔说明〕范围、限制、例外。</p></article><article class="hotel-qa-item"><span>Q2</span><h4>〔问题〕要核对的那一句</h4><p>〔说明〕范围、限制、例外。</p></article><article class="hotel-qa-item"><span>Q3</span><h4>〔问题〕要核对的那一句</h4><p>〔说明〕范围、限制、例外。</p></article><article class="hotel-qa-item"><span>Q4</span><h4>〔问题〕要核对的那一句</h4><p>〔说明〕范围、限制、例外。</p></article><article class="hotel-qa-item"><span>Q5</span><h4>〔问题〕要核对的那一句</h4><p>〔说明〕范围、限制、例外。</p></article><article class="hotel-qa-item"><span>Q6</span><h4>〔问题〕要核对的那一句</h4><p>〔说明〕范围、限制、例外。</p></article><article class="hotel-qa-item"><span>Q7</span><h4>〔问题〕要核对的那一句</h4><p>〔说明〕范围、限制、例外。</p></article></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="lib" data-slide="01.j" id="lib-rule">
+          <header class="section-header">
+            <span class="section-header__no">01.j · 组件</span>
+            <div>
+              <h2 class="section-header__title">规则行</h2>
+              <p class="section-header__part">标签 + 说明</p>
+            </div>
+          </header>
+          <div class="page-module"><article class="rail-rule"><span>〔字段〕</span><p>〔条件〕范围、限制、例外。</p></article><article class="rail-rule"><span>〔字段〕</span><p>〔条件〕范围、限制、例外。</p></article><article class="rail-rule"><span>〔字段〕</span><p>〔条件〕范围、限制、例外。</p></article><article class="rail-rule"><span>〔字段〕</span><p>〔条件〕范围、限制、例外。</p></article></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="lib" data-slide="01.k" id="lib-row">
+          <header class="section-header">
+            <span class="section-header__no">01.k · 组件</span>
+            <div>
+              <h2 class="section-header__title">机会行</h2>
+              <p class="section-header__part">编号 + 标题 + 一句</p>
+            </div>
+          </header>
+          <div class="page-module"><div class="opportunity-list"><article class="opportunity-row"><span class="opportunity-num">01</span><h3>〔对象〕</h3><p>〔判断〕这一条要带走什么。</p></article><article class="opportunity-row"><span class="opportunity-num">02</span><h3>〔对象〕</h3><p>〔判断〕这一条要带走什么。</p></article><article class="opportunity-row"><span class="opportunity-num">03</span><h3>〔对象〕</h3><p>〔判断〕这一条要带走什么。</p></article><article class="opportunity-row"><span class="opportunity-num">04</span><h3>〔对象〕</h3><p>〔判断〕这一条要带走什么。</p></article><article class="opportunity-row"><span class="opportunity-num">05</span><h3>〔对象〕</h3><p>〔判断〕这一条要带走什么。</p></article><article class="opportunity-row"><span class="opportunity-num">06</span><h3>〔对象〕</h3><p>〔判断〕这一条要带走什么。</p></article></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="lib" data-slide="01.l" id="lib-thesis">
+          <header class="section-header">
+            <span class="section-header__no">01.l · 组件</span>
+            <div>
+              <h2 class="section-header__title">观点条</h2>
+              <p class="section-header__part">kicker + 判断句</p>
+            </div>
+          </header>
+          <div class="page-module"><aside class="air-thesis"><span>观点判断</span><p>〔判断〕有主语、有动作，能单独成立。</p></aside></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="lib" data-slide="01.m" id="lib-table">
+          <header class="section-header">
+            <span class="section-header__no">01.m · 组件</span>
+            <div>
+              <h2 class="section-header__title">表</h2>
+              <p class="section-header__part">整表，行标题加粗</p>
+            </div>
+          </header>
+          <div class="page-module"><div class="plain-table-wrap"><table><thead><tr><th>〔对象〕</th><th>〔条件〕</th><th>〔判断〕</th></tr></thead><tbody><tr><th>〔对象 A〕</th><td>〔条件〕范围和例外</td><td><em>〔取舍〕</em></td></tr><tr><th>〔对象 B〕</th><td>〔条件〕范围和例外</td><td>〔取舍〕</td></tr><tr><th>〔对象 C〕</th><td>〔条件〕范围和例外</td><td><strong>〔强调〕</strong></td></tr><tr><th>〔对象 D〕</th><td>〔条件〕范围和例外</td><td>〔取舍〕</td></tr></tbody></table></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="lib" data-slide="01.n" id="lib-card">
+          <header class="section-header">
+            <span class="section-header__no">01.n · 组件</span>
+            <div>
+              <h2 class="section-header__title">运输卡</h2>
+              <p class="section-header__part">图库 + 说明 + 字段。缩略图切换主图</p>
+            </div>
+          </header>
+          <div class="page-module"><div class="transport-cards"><article class="transport-card" data-gallery><div class="gallery-stage"><img class="gallery-main" src="../states-demo/assets/cabin-01.jpg" alt="〔图〕主图"><div class="gallery-thumbs"><button class="gallery-thumb is-active" type="button" data-src="../states-demo/assets/cabin-01.jpg" data-alt="〔图〕主图"><img src="../states-demo/assets/cabin-01.jpg" alt="〔图 1〕"></button><button class="gallery-thumb" type="button" data-src="../states-demo/assets/cabin-02.jpg" data-alt="〔图〕主图"><img src="../states-demo/assets/cabin-02.jpg" alt="〔图 2〕"></button></div></div><div class="transport-card-copy"><h3>〔对象 A〕</h3><p>〔判断〕这一张要带走什么。费用、位置、限制写在字段里。</p><div class="transport-facts"><div class="transport-fact"><span>〔字段〕</span><strong>〔值〕</strong></div><div class="transport-fact"><span>〔字段〕</span><strong>〔值〕</strong></div><div class="transport-fact"><span>〔字段〕</span><strong>〔值〕</strong></div><div class="transport-fact"><span>〔字段〕</span><strong>〔值〕</strong></div></div></div></article></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="lib" data-slide="01.o" id="lib-shot">
+          <header class="section-header">
+            <span class="section-header__no">01.o · 组件</span>
+            <div>
+              <h2 class="section-header__title">截图卡</h2>
+              <p class="section-header__part">界面截图 + 图注</p>
+            </div>
+          </header>
+          <div class="page-module"><div class="provider-grid"><figure class="provider-card"><div class="shot-window"><img src="../states-demo/assets/pet-profile.png" alt="〔图〕截图"></div><figcaption><strong>〔界面〕</strong><span>〔核对〕这一屏要看清哪个字段</span></figcaption></figure><figure class="provider-card"><div class="shot-window"><img src="../states-demo/assets/pet-travel.png" alt="〔图〕截图"></div><figcaption><strong>〔界面〕</strong><span>〔核对〕这一屏要看清哪个字段</span></figcaption></figure><figure class="provider-card"><div class="shot-window"><img src="../states-demo/assets/pet-delivery.png" alt="〔图〕截图"></div><figcaption><strong>〔界面〕</strong><span>〔核对〕这一屏要看清哪个字段</span></figcaption></figure></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="lib" data-slide="01.p" id="lib-poster">
+          <header class="section-header">
+            <span class="section-header__no">01.p · 组件</span>
+            <div>
+              <h2 class="section-header__title">海报墙</h2>
+              <p class="section-header__part">4 张竖图</p>
+            </div>
+          </header>
+          <div class="page-module"><div class="value-gallery"><a class="value-gallery-item" href="../states-demo/assets/cabin-01.jpg"><img src="../states-demo/assets/cabin-01.jpg" alt="〔图〕海报"></a><a class="value-gallery-item" href="../states-demo/assets/cabin-01.jpg"><img src="../states-demo/assets/cabin-01.jpg" alt="〔图〕海报"></a><a class="value-gallery-item" href="../states-demo/assets/cabin-01.jpg"><img src="../states-demo/assets/cabin-01.jpg" alt="〔图〕海报"></a><a class="value-gallery-item" href="../states-demo/assets/cabin-01.jpg"><img src="../states-demo/assets/cabin-01.jpg" alt="〔图〕海报"></a></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="lib" data-slide="01.q" id="lib-venn">
+          <header class="section-header">
+            <span class="section-header__no">01.q · 组件</span>
+            <div>
+              <h2 class="section-header__title">韦恩图</h2>
+              <p class="section-header__part">三个集合，读图写在旁边</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="venn" data-circles="3"><svg class="venn__plot" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><defs><clipPath id="venn-3-a"><circle cx="150" cy="118" r="86"></circle></clipPath><clipPath id="venn-3-ab"><circle cx="150" cy="118" r="86"></circle></clipPath></defs><circle class="venn__circle" data-set="a" cx="150" cy="118" r="86"></circle><circle class="venn__circle" data-set="b" cx="250" cy="118" r="86"></circle><circle class="venn__circle" data-set="c" cx="200" cy="198" r="86"></circle><circle class="venn__overlap" cx="250" cy="118" r="86" clip-path="url(#venn-3-a)"></circle><circle class="venn__overlap" cx="200" cy="198" r="86" clip-path="url(#venn-3-ab)"></circle></svg><p class="venn__label" data-region="a">〔集合 A〕</p><p class="venn__label" data-region="b">〔集合 B〕</p><p class="venn__label" data-region="c">〔集合 C〕</p><p class="venn__label" data-region="ab">〔AB 交〕</p><p class="venn__label" data-region="abc">〔三交〕</p></div></article></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="lib" data-slide="01.r" id="lib-line">
+          <header class="section-header">
+            <span class="section-header__no">01.r · 组件</span>
+            <div>
+              <h2 class="section-header__title">折线</h2>
+              <p class="section-header__part">同一指标随时间</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><figure class="line-chart" data-series="1"><ul class="line-chart__legend"><li data-series="a">〔指标〕同一口径随时间</li></ul><svg class="line-chart__plot" viewBox="0 0 640 280" preserveAspectRatio="xMidYMid meet"></svg><ol class="line-chart__points"><li><span>〔期 1〕</span><b data-chart-series="a">18</b></li><li><span>〔期 2〕</span><b data-chart-series="a">41</b></li><li><span>〔期 3〕</span><b data-chart-series="a">27</b></li><li><span>〔期 4〕</span><b data-chart-series="a">33</b></li><li><span>〔期 5〕</span><b data-chart-series="a">38</b></li></ol></figure><p class="report-source" data-report-source>数据来源 <span data-source-name>〔出处〕口径写在数字下面</span></p></article></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="lib" data-slide="01.s" id="lib-bar">
+          <header class="section-header">
+            <span class="section-header__no">01.s · 组件</span>
+            <div>
+              <h2 class="section-header__title">Bar</h2>
+              <p class="section-header__part">同类量比较</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="bar-compare" data-item-count="8"><p class="bar-compare__title">〔组标题〕同一口径下比什么</p><div class="bar-compare__item"><div class="bar-compare__row"><span class="bar-compare__label">〔对象 A〕</span><div class="bar-compare__track"><div class="bar-compare__fill" style="width:24%"></div></div><strong class="bar-compare__value">24</strong></div><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><div class="bar-compare__row"><span class="bar-compare__label">〔对象 B〕</span><div class="bar-compare__track"><div class="bar-compare__fill" style="width:36%"></div></div><strong class="bar-compare__value">36</strong></div><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><div class="bar-compare__row"><span class="bar-compare__label">〔对象 C〕</span><div class="bar-compare__track"><div class="bar-compare__fill" style="width:48%"></div></div><strong class="bar-compare__value">48</strong></div><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><div class="bar-compare__row"><span class="bar-compare__label">〔对象 D〕</span><div class="bar-compare__track"><div class="bar-compare__fill" style="width:61%"></div></div><strong class="bar-compare__value">61</strong></div><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><div class="bar-compare__row"><span class="bar-compare__label">〔对象 E〕</span><div class="bar-compare__track"><div class="bar-compare__fill" style="width:70%"></div></div><strong class="bar-compare__value">70</strong></div><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><div class="bar-compare__row"><span class="bar-compare__label">〔对象 F〕</span><div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="width:82%"></div></div><strong class="bar-compare__value">82</strong></div><p class="bar-compare__note">〔差异〕需留意</p></div><div class="bar-compare__item"><div class="bar-compare__row"><span class="bar-compare__label">〔对象 G〕</span><div class="bar-compare__track"><div class="bar-compare__fill" data-tone="danger" style="width:88%"></div></div><strong class="bar-compare__value">88</strong></div><p class="bar-compare__note">〔差异〕风险高</p></div><div class="bar-compare__item"><div class="bar-compare__row"><span class="bar-compare__label">〔对象 H〕</span><div class="bar-compare__track"><div class="bar-compare__fill" style="width:92%"></div></div><strong class="bar-compare__value">92</strong></div><p class="bar-compare__note">〔差异〕短句</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>〔出处〕口径写在数字下面</span></p></article></div>
+        </section>
+        <section class="report-slide is-chapter-cover" data-chapter="combo" data-slide="02" id="combo">
+          <header class="chapter-cover">
+            <span class="chapter-cover__no">02</span>
+            <span class="chapter-cover__kicker">叠放</span>
+            <h2 class="chapter-cover__title">组合</h2>
+            
+            <p class="chapter-cover__lead">同一屏里把父组件叠起来。不要做成圆角大卡片壳。</p>
+            
+            
+          </header>
+        </section>
+        <section class="report-section report-slide" data-chapter="combo" data-slide="02.a" id="combo-market">
+          <header class="section-header">
+            <span class="section-header__no">02.a · 组合</span>
+            <div>
+              <h2 class="section-header__title">公式 + 数据带</h2>
+              <p class="section-header__part">同一节的上排和下排，不要另起判断句</p>
+            </div>
+          </header>
+          <div class="page-module"><div class="market-block"><div class="market-block-head"><b>〔组名〕</b><span>〔口径〕这个数怎么乘出来</span></div><div class="market-formula"><div class="market-factor"><div class="market-number"><span>〔A〕</span><i>万人</i></div><div class="market-factor-label">〔因子〕参与相乘的条件</div></div><div class="market-operator" aria-hidden="true">×</div><div class="market-factor"><div class="market-number"><span>〔B〕</span><i>%</i></div><div class="market-factor-label">〔因子〕参与相乘的条件</div></div><div class="market-operator" aria-hidden="true">×</div><div class="market-factor"><div class="market-number"><span>〔C〕</span><i>%</i></div><div class="market-factor-label">〔因子〕参与相乘的条件</div></div><div class="market-operator" aria-hidden="true">×</div><div class="market-factor"><div class="market-number"><span>〔D〕</span><i>次 / 年</i></div><div class="market-factor-label">〔因子〕参与相乘的条件</div></div><div class="market-operator" aria-hidden="true">=</div><div class="market-factor market-result"><div class="market-number"><span>〔结果〕</span><i>万次 / 年</i></div><div class="market-factor-label">〔含义〕同时成立时得到什么</div></div></div></div><div class="market-block"><div class="market-block-head"><b>〔组名〕</b><span>〔口径〕存量或转化</span></div><div class="market-evidence"><div class="market-proof"><div class="market-number"><span>00</span><i>%</i></div><div class="market-factor-label">〔指标 1〕多少、多贵或多窄</div></div><div class="market-proof"><div class="market-number"><span>00</span><i>%</i></div><div class="market-factor-label">〔指标 2〕多少、多贵或多窄</div></div><div class="market-proof"><div class="market-number"><span>00</span><i>%</i></div><div class="market-factor-label">〔指标 3〕多少、多贵或多窄</div></div><div class="market-proof market-proof--accent"><div class="market-number"><span>00</span><i>%</i></div><div class="market-factor-label">〔指标 4〕多少、多贵或多窄</div></div><div class="market-proof market-proof--accent"><div class="market-number"><span>00</span><i>%</i></div><div class="market-factor-label">〔指标 5〕多少、多贵或多窄</div></div></div></div><p class="source-note">来源：〔出处〕文件名、官网或抽样口径</p></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="combo" data-slide="02.b" id="combo-topic">
+          <header class="section-header">
+            <span class="section-header__no">02.b · 组合</span>
+            <div>
+              <h2 class="section-header__title">四张厚卡</h2>
+              <p class="section-header__part">2×2，条目留在卡内</p>
+            </div>
+          </header>
+          <div class="page-module"><div class="pain-text-list"><article class="pain-topic"><header class="pain-topic-head"><h3><span class="pain-topic-index">01</span>〔对象〕并列的一条痛点或主题</h3><p class="pain-topic-summary">〔导语〕这一条要带走什么。一句说完。</p></header><div class="pain-topic-body"><ul class="pain-detail-list"><li>〔证据〕数字或条件留在卡内，不要抬成新的一排。</li><li>〔证据〕范围、限制、例外。</li><li>〔证据〕材料撑不住就写进口径。</li></ul></div></article><article class="pain-topic"><header class="pain-topic-head"><h3><span class="pain-topic-index">02</span>〔对象〕并列的一条痛点或主题</h3><p class="pain-topic-summary">〔导语〕这一条要带走什么。一句说完。</p></header><div class="pain-topic-body"><ul class="pain-detail-list"><li>〔证据〕数字或条件留在卡内，不要抬成新的一排。</li><li>〔证据〕范围、限制、例外。</li><li>〔证据〕材料撑不住就写进口径。</li></ul></div></article><article class="pain-topic"><header class="pain-topic-head"><h3><span class="pain-topic-index">03</span>〔对象〕并列的一条痛点或主题</h3><p class="pain-topic-summary">〔导语〕这一条要带走什么。一句说完。</p></header><div class="pain-topic-body"><ul class="pain-detail-list"><li>〔证据〕数字或条件留在卡内，不要抬成新的一排。</li><li>〔证据〕范围、限制、例外。</li><li>〔证据〕材料撑不住就写进口径。</li></ul></div></article><article class="pain-topic"><header class="pain-topic-head"><h3><span class="pain-topic-index">04</span>〔对象〕并列的一条痛点或主题</h3><p class="pain-topic-summary">〔导语〕这一条要带走什么。一句说完。</p></header><div class="pain-topic-body"><ul class="pain-detail-list"><li>〔证据〕数字或条件留在卡内，不要抬成新的一排。</li><li>〔证据〕范围、限制、例外。</li><li>〔证据〕材料撑不住就写进口径。</li></ul></div></article></div><p class="source-note">来源：〔出处〕</p></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="combo" data-slide="02.c" id="combo-transport">
+          <header class="section-header">
+            <span class="section-header__no">02.c · 组合</span>
+            <div>
+              <h2 class="section-header__title">四张运输卡</h2>
+              <p class="section-header__part">并排比较四种方式</p>
+            </div>
+          </header>
+          <div class="page-module"><header class="research-subhead"><div class="research-subhead-no">01 · 〔题域〕</div><div><h3>〔判断〕跨城目前有几条路</h3><p>〔范围〕差异集中在位置、价格、材料和覆盖。</p></div></header><div class="transport-cards"><article class="transport-card" data-gallery><div class="gallery-stage"><img class="gallery-main" src="../states-demo/assets/cabin-01.jpg" alt="〔图〕"><div class="gallery-thumbs"><button class="gallery-thumb is-active" type="button" data-src="../states-demo/assets/cabin-01.jpg" data-alt="〔图〕"><img src="../states-demo/assets/cabin-01.jpg" alt="〔图 1〕"></button><button class="gallery-thumb" type="button" data-src="../states-demo/assets/cabin-02.jpg" data-alt="〔图〕"><img src="../states-demo/assets/cabin-02.jpg" alt="〔图 2〕"></button></div></div><div class="transport-card-copy"><h3>〔对象 A〕</h3><p>〔判断〕这一张要带走什么。费用、位置、限制写在字段里。</p><div class="transport-facts"><div class="transport-fact"><span>〔字段〕</span><strong>〔值〕</strong></div><div class="transport-fact"><span>〔字段〕</span><strong>〔值〕</strong></div><div class="transport-fact"><span>〔字段〕</span><strong>〔值〕</strong></div><div class="transport-fact"><span>〔字段〕</span><strong>〔值〕</strong></div></div></div></article><article class="transport-card" data-gallery><div class="gallery-stage"><img class="gallery-main" src="../states-demo/assets/air-cargo-01.jpg" alt="〔图〕"><div class="gallery-thumbs"><button class="gallery-thumb is-active" type="button" data-src="../states-demo/assets/air-cargo-01.jpg" data-alt="〔图〕"><img src="../states-demo/assets/air-cargo-01.jpg" alt="〔图 1〕"></button><button class="gallery-thumb" type="button" data-src="../states-demo/assets/air-cargo-02.jpg" data-alt="〔图〕"><img src="../states-demo/assets/air-cargo-02.jpg" alt="〔图 2〕"></button></div></div><div class="transport-card-copy"><h3>〔对象 B〕</h3><p>〔判断〕这一张要带走什么。费用、位置、限制写在字段里。</p><div class="transport-facts"><div class="transport-fact"><span>〔字段〕</span><strong>〔值〕</strong></div><div class="transport-fact"><span>〔字段〕</span><strong>〔值〕</strong></div><div class="transport-fact"><span>〔字段〕</span><strong>〔值〕</strong></div><div class="transport-fact"><span>〔字段〕</span><strong>〔值〕</strong></div></div></div></article><article class="transport-card" data-gallery><div class="gallery-stage"><img class="gallery-main" src="../states-demo/assets/rail-05.jpg" alt="〔图〕"><div class="gallery-thumbs"><button class="gallery-thumb is-active" type="button" data-src="../states-demo/assets/rail-05.jpg" data-alt="〔图〕"><img src="../states-demo/assets/rail-05.jpg" alt="〔图 1〕"></button><button class="gallery-thumb" type="button" data-src="../states-demo/assets/rail-01.jpg" data-alt="〔图〕"><img src="../states-demo/assets/rail-01.jpg" alt="〔图 2〕"></button></div></div><div class="transport-card-copy"><h3>〔对象 C〕</h3><p>〔判断〕这一张要带走什么。费用、位置、限制写在字段里。</p><div class="transport-facts"><div class="transport-fact"><span>〔字段〕</span><strong>〔值〕</strong></div><div class="transport-fact"><span>〔字段〕</span><strong>〔值〕</strong></div><div class="transport-fact"><span>〔字段〕</span><strong>〔值〕</strong></div><div class="transport-fact"><span>〔字段〕</span><strong>〔值〕</strong></div></div></div></article><article class="transport-card" data-gallery><div class="gallery-stage"><img class="gallery-main" src="../states-demo/assets/road-01.jpg" alt="〔图〕"><div class="gallery-thumbs"><button class="gallery-thumb is-active" type="button" data-src="../states-demo/assets/road-01.jpg" data-alt="〔图〕"><img src="../states-demo/assets/road-01.jpg" alt="〔图 1〕"></button><button class="gallery-thumb" type="button" data-src="../states-demo/assets/road-03.jpg" data-alt="〔图〕"><img src="../states-demo/assets/road-03.jpg" alt="〔图 2〕"></button></div></div><div class="transport-card-copy"><h3>〔对象 D〕</h3><p>〔判断〕这一张要带走什么。费用、位置、限制写在字段里。</p><div class="transport-facts"><div class="transport-fact"><span>〔字段〕</span><strong>〔值〕</strong></div><div class="transport-fact"><span>〔字段〕</span><strong>〔值〕</strong></div><div class="transport-fact"><span>〔字段〕</span><strong>〔值〕</strong></div><div class="transport-fact"><span>〔字段〕</span><strong>〔值〕</strong></div></div></div></article></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="combo" data-slide="02.d" id="combo-qa">
+          <header class="section-header">
+            <span class="section-header__no">02.d · 组合</span>
+            <div>
+              <h2 class="section-header__title">问答 + 观点</h2>
+              <p class="section-header__part">七问叠完，再用观点条收</p>
+            </div>
+          </header>
+          <div class="page-module"><div class="hotel-qa-list"><article class="hotel-qa-item"><span>Q1</span><h4>〔问题〕</h4><p>〔说明〕</p></article><article class="hotel-qa-item"><span>Q2</span><h4>〔问题〕</h4><p>〔说明〕</p></article><article class="hotel-qa-item"><span>Q3</span><h4>〔问题〕</h4><p>〔说明〕</p></article><article class="hotel-qa-item"><span>Q4</span><h4>〔问题〕</h4><p>〔说明〕</p></article><article class="hotel-qa-item"><span>Q5</span><h4>〔问题〕</h4><p>〔说明〕</p></article><article class="hotel-qa-item"><span>Q6</span><h4>〔问题〕</h4><p>〔说明〕</p></article><article class="hotel-qa-item"><span>Q7</span><h4>〔问题〕</h4><p>〔说明〕</p></article></div><div class="hotel-qa-verdict"><article><b>〔前半〕决定能不能做</b><p>〔条件〕任何一项不满足就停下。</p></article><article><b>〔后半〕决定做得好不好</b><p>〔条件〕进得去之后还要核对什么。</p></article></div></div>
+        </section>
+        <section class="report-slide is-chapter-cover" data-chapter="grid1" data-slide="03" id="grid1">
+          <header class="chapter-cover">
+            <span class="chapter-cover__no">03</span>
+            <span class="chapter-cover__kicker">格子</span>
+            <h2 class="chapter-cover__title">分页</h2>
+            
+            <p class="chapter-cover__lead">报告仍用 Grid 翻页。一个 Grid 只放一种 Content。</p>
+            
+            
+          </header>
+        </section>
+        <section class="report-section report-slide" data-chapter="grid1" data-slide="03.a" id="g1-copy">
+          <header class="section-header">
+            <span class="section-header__no">03.a · Grid 1</span>
+            <div>
+              <h2 class="section-header__title">纯文字</h2>
+              <p class="section-header__part">Grid 1</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="content" data-content="copy"><h3 class="content__title">〔范围〕背景、边界或材料撑不住什么</h3><p class="content__body">〔正文〕写成完整段落。先回答这一屏的问句，再写条件和例外，最后写材料撑不住什么。不要拆成列表，也不要写成判断句。<br><br>〔续段〕需要第二段时换行接着写。没有第二段就删掉这段。</p></div></article></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="grid1" data-slide="03.b" id="g1-point">
+          <header class="section-header">
+            <span class="section-header__no">03.b · Grid 1</span>
+            <div>
+              <h2 class="section-header__title">观点</h2>
+              <p class="section-header__part">Grid 1</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="content" data-content="point"><h3 class="content__title">〔判断〕有主语、有动作，能讲出口</h3><p class="content__body">〔条件〕这句在什么范围成立，有何例外。一句说完，不另开一问。</p></div></article></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="grid1" data-slide="03.c" id="g1-stat">
+          <header class="section-header">
+            <span class="section-header__no">03.c · Grid 1</span>
+            <div>
+              <h2 class="section-header__title">数据</h2>
+              <p class="section-header__part">Grid 1</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="content" data-content="stat"><b class="stat-value">00</b><h3 class="content__title">〔指标名〕多少、多贵或多窄</h3><p class="content__body">〔口径〕统计范围、时间、是否含例外。</p></div><p class="report-source" data-report-source>数据来源 <span data-source-name>〔出处〕口径写在数字下面</span></p></article></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="grid1" data-slide="03.d" id="g1-table">
+          <header class="section-header">
+            <span class="section-header__no">03.d · Grid 1</span>
+            <div>
+              <h2 class="section-header__title">表格</h2>
+              <p class="section-header__part">Grid 1</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="content" data-content="table"><div class="content-cols" style="--table-cols:10;--table-rows:11"><div class="content-col"><strong>〔对象〕</strong><span>〔A〕</span><span>〔B〕</span><span>〔C〕</span><span>〔D〕</span><span>〔E〕</span><span>〔F〕</span><span>〔G〕</span><span>〔H〕</span><span>〔I〕</span><span>〔J〕</span></div><div class="content-col"><strong>〔属性〕</strong><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span></div><div class="content-col"><strong>〔条件〕</strong><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span></div><div class="content-col"><strong>〔时效〕</strong><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span></div><div class="content-col"><strong>〔范围〕</strong><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span></div><div class="content-col"><strong>〔例外〕</strong><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span></div><div class="content-col"><strong>〔状态〕</strong><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span></div><div class="content-col"><strong>〔成本〕</strong><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span></div><div class="content-col"><strong>〔风险〕</strong><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span><span>〔值〕</span></div><div class="content-col"><strong>〔判断〕</strong><span><em>〔取舍〕</em></span><span>〔取舍〕</span><span><strong>〔强调〕</strong></span><span>〔取舍〕</span><span>〔取舍〕</span><span>〔取舍〕</span><span><em>〔取舍〕</em></span><span>〔取舍〕</span><span>〔取舍〕</span><span>〔取舍〕</span></div></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>〔出处〕公开文件或官网名称</span></p></article></div>
+        </section>
+        <section class="report-slide is-chapter-cover" data-chapter="grid2" data-slide="03.e" id="grid2">
+          <header class="chapter-cover">
+            <span class="chapter-cover__no">03.e</span>
+            <span class="chapter-cover__kicker">两格</span>
+            <h2 class="chapter-cover__title">Grid 2</h2>
+            
+            <p class="chapter-cover__lead">并排两格，同一种 Content。</p>
+            
+            
+          </header>
+        </section>
+        <section class="report-section report-slide" data-chapter="grid2" data-slide="03.f" id="g2-signal">
+          <header class="section-header">
+            <span class="section-header__no">03.f · Grid 2</span>
+            <div>
+              <h2 class="section-header__title">带序号观点</h2>
+              <p class="section-header__part">两格</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="2"><article class="grid-cell"><div class="content" data-content="signal"><span class="content__kicker">SIGNAL 01</span><h3 class="content__title">〔判断〕有主语、有动作，能单独成立</h3><p class="content__body">〔条件〕只补这一句。一格一句。</p></div></article><article class="grid-cell"><div class="content" data-content="signal"><span class="content__kicker">SIGNAL 02</span><h3 class="content__title">〔判断〕同一问下的第二句</h3><p class="content__body">〔条件〕不要把邻句的材料写进来。</p></div></article></div>
+        </section>
+        <section class="report-slide is-chapter-cover" data-chapter="grid3" data-slide="03.g" id="grid3">
+          <header class="chapter-cover">
+            <span class="chapter-cover__no">03.g</span>
+            <span class="chapter-cover__kicker">三格</span>
+            <h2 class="chapter-cover__title">Grid 3</h2>
+            
+            <p class="chapter-cover__lead">编号列表用纵向。</p>
+            
+            
+          </header>
+        </section>
+        <section class="report-section report-slide" data-chapter="grid3" data-slide="03.h" id="g3-step">
+          <header class="section-header">
+            <span class="section-header__no">03.h · Grid 3</span>
+            <div>
+              <h2 class="section-header__title">编号列表</h2>
+              <p class="section-header__part">三格 · 纵向</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="3"><article class="grid-cell"><div class="content" data-content="step-stack"><div class="content__lead"><span class="content__index">01</span><h3 class="content__title">〔这一步做什么〕</h3></div><p class="content__body">〔完成标准〕做到什么才进入下一步。</p></div></article><article class="grid-cell"><div class="content" data-content="step-stack"><div class="content__lead"><span class="content__index">02</span><h3 class="content__title">〔这一步做什么〕</h3></div><p class="content__body">〔完成标准〕输入是什么，输出是什么。</p></div></article><article class="grid-cell"><div class="content" data-content="step-stack"><div class="content__lead"><span class="content__index">03</span><h3 class="content__title">〔这一步做什么〕</h3></div><p class="content__body">〔完成标准〕谁来做，做到什么算过。</p></div></article></div>
+        </section>
+        <section class="report-slide is-chapter-cover" data-chapter="grid4" data-slide="03.i" id="grid4">
+          <header class="chapter-cover">
+            <span class="chapter-cover__no">03.i</span>
+            <span class="chapter-cover__kicker">四格</span>
+            <h2 class="chapter-cover__title">Grid 4</h2>
+            
+            <p class="chapter-cover__lead">2×2。</p>
+            
+            
+          </header>
+        </section>
+        <section class="report-section report-slide" data-chapter="grid4" data-slide="03.j" id="g4-stat">
+          <header class="section-header">
+            <span class="section-header__no">03.j · Grid 4</span>
+            <div>
+              <h2 class="section-header__title">数据</h2>
+              <p class="section-header__part">四格 · 2×2</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="4"><article class="grid-cell"><div class="content" data-content="stat"><b class="stat-value">00</b><h3 class="content__title">〔指标名〕多少、多贵或多窄</h3><p class="content__body">〔口径〕统计范围、时间、是否含例外。</p></div><p class="report-source" data-report-source>数据来源 <span data-source-name>〔出处〕口径写在数字下面</span></p></article><article class="grid-cell"><div class="content" data-content="stat"><b class="stat-value">0.0×</b><h3 class="content__title">〔倍率名〕相对什么</h3><p class="content__body">〔口径〕对比的基准写清楚。</p></div><p class="report-source" data-report-source>数据来源 <span data-source-name>〔出处〕口径写在数字下面</span></p></article><article class="grid-cell"><div class="content" data-content="stat"><b class="stat-value">N</b><h3 class="content__title">〔计数名〕有多少个</h3><p class="content__body">〔口径〕含什么、不含什么。</p></div><p class="report-source" data-report-source>数据来源 <span data-source-name>〔出处〕口径写在数字下面</span></p></article><article class="grid-cell"><div class="content" data-content="stat"><b class="stat-value">—</b><h3 class="content__title">〔尚无数据〕</h3><p class="content__body">〔口径〕材料撑不住就写破折号，不要编数字。</p></div><p class="report-source" data-report-source>数据来源 <span data-source-name>〔出处〕口径写在数字下面</span></p></article></div>
+        </section>
+        <section class="report-slide is-chapter-cover" data-chapter="evidence" data-slide="03.k" id="evidence">
+          <header class="chapter-cover">
+            <span class="chapter-cover__no">03.k</span>
+            <span class="chapter-cover__kicker">图</span>
+            <h2 class="chapter-cover__title">Evidence</h2>
+            
+            <p class="chapter-cover__lead">现场图、截图、条带、Media Switch。不进 Grid 格。</p>
+            
+            
+          </header>
+        </section>
+        <section class="report-section report-slide" data-chapter="evidence" data-slide="03.l" id="ev-photo">
+          <header class="section-header">
+            <span class="section-header__no">03.l · Evidence</span>
+            <div>
+              <h2 class="section-header__title">Evidence</h2>
+              <p class="section-header__part">图 + 图注</p>
+            </div>
+          </header>
+          <div class="page-regions" data-regions="1" data-align="center"><div class="page-region" data-size="fill" data-align="center"><div class="image-grid evidence-gallery" data-image-ratio="3:4" data-image-fit="fill" data-item-count="3"><figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fill"><div class="evidence-window"><img src="../states-demo/assets/cabin-01.jpg" alt="〔图〕现场"></div><figcaption><b>〔对象 A〕</b><span>〔证明〕这张图证明什么</span></figcaption></figure><figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fill"><div class="evidence-window"><img src="../states-demo/assets/rail-01.jpg" alt="〔图〕现场"></div><figcaption><b>〔对象 B〕</b><span>〔证明〕这张图证明什么</span></figcaption></figure><figure class="evidence-figure" data-image-ratio="3:4" data-image-fit="fill"><div class="evidence-window"><img src="../states-demo/assets/road-01.jpg" alt="〔图〕现场"></div><figcaption><b>〔对象 C〕</b><span>〔证明〕这张图证明什么</span></figcaption></figure></div></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="evidence" data-slide="03.m" id="ev-shot">
+          <header class="section-header">
+            <span class="section-header__no">03.m · Evidence</span>
+            <div>
+              <h2 class="section-header__title">Evidence 截图</h2>
+              <p class="section-header__part">0.46:1 Fit</p>
+            </div>
+          </header>
+          <div class="page-regions" data-regions="1" data-align="center"><div class="page-region" data-size="fill" data-align="center"><div class="image-grid evidence-gallery" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit" data-item-count="3"><figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit"><div class="evidence-window"><img src="../states-demo/assets/pet-profile.png" alt="〔图〕截图"></div><figcaption><b>〔界面 A〕</b><span>〔核对〕这一屏要看清哪个字段</span></figcaption></figure><figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit"><div class="evidence-window"><img src="../states-demo/assets/pet-travel.png" alt="〔图〕截图"></div><figcaption><b>〔界面 B〕</b><span>〔核对〕这一屏要看清哪个字段</span></figcaption></figure><figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit"><div class="evidence-window"><img src="../states-demo/assets/pet-delivery.png" alt="〔图〕截图"></div><figcaption><b>〔界面 C〕</b><span>〔核对〕这一屏要看清哪个字段</span></figcaption></figure></div></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="evidence" data-slide="03.n" id="ev-strip">
+          <header class="section-header">
+            <span class="section-header__no">03.n · Evidence</span>
+            <div>
+              <h2 class="section-header__title">Evidence 条带</h2>
+              <p class="section-header__part">宽图</p>
+            </div>
+          </header>
+          <div class="page-regions" data-regions="1" data-align="center"><div class="page-region" data-size="fill" data-align="center"><div class="image-grid evidence-gallery" data-image-kind="strip" data-item-count="1"><figure class="evidence-figure" data-image-kind="strip"><div class="evidence-window"><img src="../states-demo/assets/rail-ota-flow.jpg" alt="〔图〕条带"></div><figcaption><b>〔流程〕</b><span>〔证明〕这一条带证明哪几步按什么顺序</span></figcaption></figure></div></div></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="evidence" data-slide="03.o" id="ev-switch">
+          <header class="section-header">
+            <span class="section-header__no">03.o · Evidence</span>
+            <div>
+              <h2 class="section-header__title">Media Switch</h2>
+              <p class="section-header__part">封面卡，缩略图换主图</p>
+            </div>
+          </header>
+          <div class="page-regions" data-regions="1" data-align="center"><div class="page-region" data-size="fill" data-align="center"><div class="image-grid evidence-gallery" data-image-ratio="9:16" data-image-fit="fill" data-item-count="4"><figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill"><div class="evidence-window"><img data-media-main src="../states-demo/assets/cabin-01.jpg" alt="〔图〕主图"><div class="media-switch__thumbs" aria-label="切换〔对象 A〕图片"><button class="media-switch__thumb is-active" type="button" data-src="../states-demo/assets/cabin-01.jpg" data-alt="〔图〕主图"><img src="../states-demo/assets/cabin-01.jpg" alt="〔图 1〕"></button><button class="media-switch__thumb" type="button" data-src="../states-demo/assets/cabin-02.jpg" data-alt="〔图〕主图"><img src="../states-demo/assets/cabin-02.jpg" alt="〔图 2〕"></button></div><div class="media-switch__panel"><h3>〔对象 A〕</h3><p>〔判断〕这一张要带走什么</p><div class="list-block"><div class="list-row"><span class="list-row__label">〔字段〕</span><p class="list-row__text">〔值〕</p></div><div class="list-row"><span class="list-row__label">〔字段〕</span><p class="list-row__text">〔值〕</p></div></div></div></div><button class="media-switch__label" type="button">〔对象 A〕</button></figure><figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill"><div class="evidence-window"><img data-media-main src="../states-demo/assets/air-cargo-01.jpg" alt="〔图〕主图"><div class="media-switch__thumbs" aria-label="切换〔对象 B〕图片"><button class="media-switch__thumb is-active" type="button" data-src="../states-demo/assets/air-cargo-01.jpg" data-alt="〔图〕主图"><img src="../states-demo/assets/air-cargo-01.jpg" alt="〔图 1〕"></button><button class="media-switch__thumb" type="button" data-src="../states-demo/assets/air-cargo-02.jpg" data-alt="〔图〕主图"><img src="../states-demo/assets/air-cargo-02.jpg" alt="〔图 2〕"></button><button class="media-switch__thumb" type="button" data-src="../states-demo/assets/air-cargo-03.jpg" data-alt="〔图〕主图"><img src="../states-demo/assets/air-cargo-03.jpg" alt="〔图 3〕"></button></div><div class="media-switch__panel"><h3>〔对象 B〕</h3><p>〔判断〕这一张要带走什么</p><div class="list-block"><div class="list-row"><span class="list-row__label">〔字段〕</span><p class="list-row__text">〔值〕</p></div><div class="list-row"><span class="list-row__label">〔字段〕</span><p class="list-row__text">〔值〕</p></div></div></div></div><button class="media-switch__label" type="button">〔对象 B〕</button></figure><figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill"><div class="evidence-window"><img data-media-main src="../states-demo/assets/rail-05.jpg" alt="〔图〕主图"><div class="media-switch__thumbs" aria-label="切换〔对象 C〕图片"><button class="media-switch__thumb is-active" type="button" data-src="../states-demo/assets/rail-05.jpg" data-alt="〔图〕主图"><img src="../states-demo/assets/rail-05.jpg" alt="〔图 1〕"></button><button class="media-switch__thumb" type="button" data-src="../states-demo/assets/rail-01.jpg" data-alt="〔图〕主图"><img src="../states-demo/assets/rail-01.jpg" alt="〔图 2〕"></button></div><div class="media-switch__panel"><h3>〔对象 C〕</h3><p>〔判断〕这一张要带走什么</p><div class="list-block"><div class="list-row"><span class="list-row__label">〔字段〕</span><p class="list-row__text">〔值〕</p></div><div class="list-row"><span class="list-row__label">〔字段〕</span><p class="list-row__text">〔值〕</p></div></div></div></div><button class="media-switch__label" type="button">〔对象 C〕</button></figure><figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill"><div class="evidence-window"><img data-media-main src="../states-demo/assets/road-01.jpg" alt="〔图〕主图"><div class="media-switch__thumbs" aria-label="切换〔对象 D〕图片"><button class="media-switch__thumb is-active" type="button" data-src="../states-demo/assets/road-01.jpg" data-alt="〔图〕主图"><img src="../states-demo/assets/road-01.jpg" alt="〔图 1〕"></button><button class="media-switch__thumb" type="button" data-src="../states-demo/assets/road-03.jpg" data-alt="〔图〕主图"><img src="../states-demo/assets/road-03.jpg" alt="〔图 2〕"></button></div><div class="media-switch__panel"><h3>〔对象 D〕</h3><p>〔判断〕这一张要带走什么</p><div class="list-block"><div class="list-row"><span class="list-row__label">〔字段〕</span><p class="list-row__text">〔值〕</p></div><div class="list-row"><span class="list-row__label">〔字段〕</span><p class="list-row__text">〔值〕</p></div></div></div></div><button class="media-switch__label" type="button">〔对象 D〕</button></figure></div></div></div>
+        </section>
+        <section class="report-slide" data-chapter="notes" data-slide="04" id="notes">
+          <footer class="report-notes">
+            <h2>怎么用</h2>
+            <ol>
+              <li>组件从源稿可复用模块拆出。之后同类块必须用这些 class，不要另起皮肤，也不要发明一次性名字。</li>
+              <li>格子里带〔〕的是占位。整句换成调研原文；〔〕不要带进报告。</li>
+              <li>厚卡、问答行、机会行：条目留在该模块里，不要抬成新的一排。</li>
+              <li>运输卡用底部缩略图换主图。城市通航交互网络、视频播放器不是组件，压成图或文字小结。</li>
+              <li>报告翻页仍用 Grid 1–4 / Evidence / 全屏。一个 Grid 只放一种 Content。</li>
+              <li>来源写一次。源格没有口径句，就不要补。</li>
+              <li>这是分屏模板。流式是另一套：templates/editorial-flow/。两套不能互切。</li>
+            </ol>
+          </footer>
+        </section>
+      </div>
+    </div>
+
+    <div class="report-pager" data-report-pager>
+      <button class="button subtle" type="button" data-slide-prev>上一屏</button>
+      <span class="report-pager__label" data-slide-label aria-live="polite">00</span>
+      <button class="button subtle" type="button" data-slide-next>下一屏</button>
+    </div>
+  </div>
+
+  <link rel="stylesheet" href="../../editor/seed-edit.css">
+  <script src="../shared/design-data.js"></script>
+  <script src="../shared/theme-runtime.js"></script>
+  <script src="../../editor/seed-edit.js"></script>
+  <script src="assets/template.js"></script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate editorial-default/index.html: 分屏目录。Grid 1 / 2 / 3 / 4 / More Grids.
+"""Generate editorial-page/index.html: 分屏目录。Grid 1 / 2 / 3 / 4 / More Grids.
 
 流式是另一套模板 templates/editorial-flow/，不要在这里加切换。
 
