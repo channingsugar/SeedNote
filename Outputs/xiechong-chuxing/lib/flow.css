@@ -1,5 +1,5 @@
-/* Flow reading: same deck markup, document column.
-   Toggle .report-shell.is-deck → .is-flow. Do not change Grid or Content class names. */
+/* Flow template: document column. Shell is .report-shell.is-flow from the start.
+   Do not toggle to .is-deck. Do not change Grid or Content class names. */
 
 html:has(.report-shell.is-flow) {
   height: auto;

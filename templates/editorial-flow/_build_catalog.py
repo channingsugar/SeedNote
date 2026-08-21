@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Generate editorial-default/index.html: 分屏目录。Grid 1 / 2 / 3 / 4 / More Grids.
+"""Generate editorial-flow/index.html: 流式目录。Grid 1 / 2 / 3 / 4 / More Grids.
 
-流式是另一套模板 templates/editorial-flow/，不要在这里加切换。
+分屏是另一套模板 templates/editorial-default/，不要在这里加切换。
 
 格子里的字是占位，不是成品，也不是用法说明。
 写法：〔槽名〕填法。整句替换；〔〕不要带进报告。
@@ -471,6 +471,7 @@ def evidence_switch_c():
 
 
 CHAPTER_LABEL = {
+    "flow": "流式",
     "grid1": "Grid 1",
     "grid2": "Grid 2",
     "grid3": "Grid 3",
@@ -544,9 +545,10 @@ parts.append("""<!doctype html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>知识汇报模板 · 分屏</title>
+  <title>知识汇报模板 · 流式</title>
   <link rel="stylesheet" href="../shared/components.css">
   <link rel="stylesheet" href="assets/template.css">
+  <link rel="stylesheet" href="assets/flow.css">
 </head>
 <body>
   <div class="theme-control" id="themeControl" aria-label="主题控制">
@@ -561,11 +563,12 @@ parts.append("""<!doctype html>
     <div class="theme-control__toast" data-theme-toast role="status" aria-live="polite"></div>
   </div>
 
-  <div class="report-shell is-deck" data-catalog>
+  <div class="report-shell is-flow" data-catalog>
     <nav class="document-nav nav-underline is-sticky" data-component-id="navigation" aria-label="文档章节">
       <div class="document-nav__brand"><span class="document-nav__mark" aria-hidden="true"></span><strong>SEED</strong></div>
       <div class="document-nav__links">
         <a href="#cover" class="is-active">封面</a>
+        <a href="#flow">流式</a>
         <a href="#grid1">Grid 1</a>
         <a href="#grid2">Grid 2</a>
         <a href="#grid3">Grid 3</a>
@@ -578,14 +581,6 @@ parts.append("""<!doctype html>
     </nav>
 
     <div class="report-stage" data-report-stage>
-      <header class="section-header report-deck-head" data-deck-head>
-        <div class="report-deck-head__copy">
-          <h2 class="section-header__title" data-deck-title></h2>
-          <p class="section-header__part" data-deck-part hidden></p>
-        </div>
-        <span class="section-header__no" data-deck-no></span>
-      </header>
-
       <div class="report-slides" data-report-slides>
 """)
 
@@ -601,8 +596,57 @@ parts.append(cover(
     author="〔作者〕",
     date="〔日期〕",
     cta="开始阅读",
-    cta_href="#grid1",
+    cta_href="#flow",
 ))
+
+FLOW_SHELL = (
+    "这是流式模板，不是把分屏竖着叠。壳从一开始就是文档栏："
+    "栏宽约 1160 居中，导航 52px 吸顶，模块高度跟内容走。"
+    "<br><br>"
+    "封面仍整页。其余章封面收成文档大标题。目录里每个组合上方有一行菜谱，"
+    "方便核对一行几个、变窄怎么掉列。报告不要带 data-catalog，那时这行菜谱不会出现。"
+)
+FLOW_HEADING = (
+    "目录：章封面当 h2，每一组合的组件名当 h3，方便对稿。"
+    "报告：一章一句判断（data-flow-title，没有就用导航名），"
+    "多格、图、表不再重复屏标题；只有 1 格 copy / point 留下开口句。"
+    "<br><br>"
+    "章题要用主张句，不要只用导航两个字。不要加分屏切换，也不要抄 editorial-default 的翻页壳。"
+)
+FLOW_TABLE = table_from(
+    ["分屏", "流式宽屏（约 1160）", "变窄", "备注"],
+    [
+        ["1 格 copy / point", "1 栏，正文宽 880", "1", "开口句作判断"],
+        ["1 格 table / formula / 图", "栏内拉满，高随内容", "1", "不锁分屏高度"],
+        ["2 格 signal / list / step", "2 列", "≤820 → 1", "对等并排"],
+        ["3 格 signal / stat / step-stack", "3 列", "≤900 → 1", "对标客舱信号"],
+        ["4 格 stat / signal / step", "一排 4", "≤900 → 2 · ≤620 → 1", "对标高铁四指标"],
+        ["4 格 list", "行表：标签 + 说明", "≤820 标签改上", "对标住宿七问"],
+        ["5 格 stat", "一排 5", "≤980 → 3 · ≤620 → 2", "对标市场五个数"],
+        ["6–9 格", "3 列折行", "≤900 → 2 · ≤620 → 1", "一次铺开"],
+        ["10+ 格", "折行 3 列", "≤900 → 2 · ≤620 → 1", "不要横滑"],
+        ["Evidence 多张竖图", "按栏宽能排几列排几列", "折行", "不横滑"],
+        ["Evidence 条带", "竖着叠，宽 100%", "1", "高随图"],
+        ["Media Switch 四类", "一排 4", "≤900 → 2 · ≤620 → 1", "高随 9:16"],
+    ],
+)
+
+parts.append(cover(
+    "flow", "", "flow", "文档栏", "流式适配",
+    "文档栏。Grid 1 起是全量组合，看栏宽、吸顶、掉列和高度。",
+    number=False,
+))
+parts.append(slide("flow", "F.a", "flow-shell", "壳", "栏宽 · 导航 · 高度", cells(
+    '<div class="content" data-content="copy"><h3 class="content__title">文档栏，不是把分屏竖着叠</h3>'
+    f'<p class="content__body">{FLOW_SHELL}</p></div>',
+    src=False,
+)))
+parts.append(slide("flow", "F.b", "flow-title", "标题", "章判断 · 小节 · 开口句", cells(
+    '<div class="content" data-content="copy"><h3 class="content__title">目录对稿留标题，报告只留章判断</h3>'
+    f'<p class="content__body">{FLOW_HEADING}</p></div>',
+    src=False,
+)))
+parts.append(slide("flow", "F.c", "flow-grid", "格子菜谱", "分屏 × 流式列数", cells(FLOW_TABLE, src=False)))
 
 parts.append(cover("grid1", "01", "grid1", "一格", "Grid 1", "整块 Content 占一格。数据来源在白卡里。"))
 
@@ -662,14 +706,14 @@ g4 = [
 for no, sid, title, part, body in g4:
     parts.append(slide("grid4", no, sid, title, part, body))
 
-parts.append(cover("more", "05", "more", "更多格子", "More Grids", "5–9 一次铺开；超过 9 格再用横滑。"))
+parts.append(cover("more", "05", "more", "更多格子", "More Grids", "5–9 一次铺开；超过 9 格折行 3 列，不要横滑。"))
 g5 = [
     ("05.a", "g5-signal", "带序号观点", "五格 · 3+2", many(signal_c, 5, 5)),
     ("05.b", "g5-stat", "数据", "六格 · 3×2", many(stat_c, 6, 6, src=SOURCE_OPS)),
     ("05.c", "g5-list", "列表", "九格 · 3×3", many(list_c, 9, 9)),
     ("05.d", "g5-step", "编号列表", "五格 · 纵向", many(step_stack_c, 5, 5)),
     ("05.e", "g5-table", "表格", "六格 · 3×2", cells(*[table_c("cmp") for _ in range(6)], n=6, src=SOURCE_DOC)),
-    ("05.f", "g5-bar", "Bar", "10+ · 横滑", cells(*[bar_v() for _ in range(10)], n=10, src=SOURCE_OPS)),
+    ("05.f", "g5-bar", "Bar", "10+ · 折行", cells(*[bar_v() for _ in range(10)], n=10, src=SOURCE_OPS)),
 ]
 for no, sid, title, part, body in g5:
     parts.append(slide("more", no, sid, title, part, body))
@@ -707,23 +751,17 @@ parts.append("""        <section class="report-slide" data-chapter="notes" data-
               <li>〔〕里是槽名，后面是填法。页眉组件名（纯文字、观点、Grid 1）是目录，不要改。</li>
               <li>封面填：题域、主判断、开场、副题、章数、稿件类型、作者、日期。</li>
               <li>先定 Content，再选 Grid。一个 Grid 只放一种 Content。</li>
-              <li>Grid 1 / 2 / 3 / 4 / 5–9 / 10+。列表和步骤一条就是一格。Grid 3 / 5–9 / 10+ 的编号列表用纵向。5–9 一次铺开，超过 9 格才横滑。</li>
+              <li>Grid 1 / 2 / 3 / 4 / 5–9 / 10+。列表和步骤一条就是一格。Grid 3 / 5–9 / 10+ 的编号列表用纵向。5–9 一次铺开，超过 9 格折行，不要横滑。</li>
               <li>表和条整块占一格，宽度铺满，行间有分割线。可以上下滚动，不显示滚动条。有出处才写「数据来源」并挂链接；没有出处这一行不出现。字号 Caption（12），放在白卡内容区，居中。</li>
               <li>单元格里 <strong>加粗</strong> 用 strong，<em>强调</em> 用 em（强调色 + 加粗）。同一张表里示意即可，不要另开强调组件。</li>
               <li>Evidence 单独成章：现场图、截图、横屏、条带、Media Switch。不进 Grid 格。封面默认并排多张。</li>
               <li>全屏单独成章：有图、无图，或只有图。永远 1 块。</li>
-              <li>视觉由设计 Token 驱动。主题栏固定在左下角。右键文字编辑、右键图片替换。翻页用键盘或顶栏。</li>
-              <li>这是分屏模板。流式是另一套：templates/editorial-flow/。两套不能互切，也不要加「流式阅读」按钮。</li>
+              <li>视觉由设计 Token 驱动。主题栏固定在左下角。右键文字编辑、右键图片替换。用导航和滚动阅读。</li>
+              <li>这是流式模板。分屏是另一套：templates/editorial-default/。两套不能互切。报告不要抄 data-catalog；章判断写在第一屏的 data-flow-title。10+ 格折行 3 列，不要横滑。</li>
             </ol>
           </footer>
         </section>
       </div>
-    </div>
-
-    <div class="report-pager" data-report-pager>
-      <button class="button subtle" type="button" data-slide-prev>上一屏</button>
-      <span class="report-pager__label" data-slide-label aria-live="polite">00</span>
-      <button class="button subtle" type="button" data-slide-next>下一屏</button>
     </div>
   </div>
 

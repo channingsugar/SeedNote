@@ -1,8 +1,6 @@
 (() => {
   window.ThemeRuntime?.mountThemeControl(document.querySelector('#themeControl'));
 
-  const isFlowReading = () => Boolean(document.querySelector('.report-shell.is-flow'));
-
   const applyMediaThumb = (thumb) => {
     const figure = thumb.closest('.media-switch');
     if (!figure) return;
@@ -131,26 +129,12 @@
     return items?.[0]?.querySelector('figcaption')?.offsetHeight || 0;
   };
 
-  const flowEvidenceFrame = (node) => {
-    const parent = node?.parentElement;
-    const width = Math.max(
-      evidenceInnerBox(node).w,
-      parent ? evidenceInnerBox(parent).w : 0,
-      node?.clientWidth || 0,
-      Math.min(1160, window.innerWidth - 48),
-    );
-    return {
-      w: Math.max(240, width),
-      h: 0,
-    };
-  };
-
   const layoutEvidenceStandalone = (node) => {
     if (!node || node.getAttribute('data-image-kind') === 'strip' || node.closest('.evidence-gallery')) return;
     if (node.closest('[data-media-page] [data-slot="media"]')) {
       node.style.removeProperty('width');
       node.style.removeProperty('--evidence-item-width');
-      node.style.height = isFlowReading() ? 'auto' : '100%';
+      node.style.height = '100%';
       return;
     }
     const ratio = parseEvidenceRatio(node);
@@ -164,14 +148,6 @@
     }
     node.dataset.evidenceLayout = 'center';
     const region = node.closest('.page-region');
-    const flow = isFlowReading();
-    if (flow) {
-      node.style.removeProperty('width');
-      node.style.removeProperty('--evidence-item-width');
-      node.style.height = 'auto';
-      node.style.maxWidth = '100%';
-      return;
-    }
     if (region) {
       const box = evidenceInnerBox(node.clientHeight >= 8 ? node : region);
       const boxH = box.h || evidenceInnerBox(region).h;
@@ -220,15 +196,6 @@
       item.matches('.evidence-figure, .media-switch, .media-card')
       && !item.classList.contains('is-component-item-hidden')
     ));
-    const flow = isFlowReading();
-    if (flow) {
-      gallery.style.removeProperty('height');
-      gallery.style.removeProperty('max-height');
-      gallery.style.removeProperty('overflow');
-      items.forEach(resetEvidenceBoxStyles);
-      gallery.classList.remove('is-scrollable', 'is-scroll-end');
-      return;
-    }
     let box = evidenceInnerBox(gallery);
     if (box.w < 8 || box.h < 8) return;
     items.forEach((item) => {
@@ -276,38 +243,16 @@
       && !item.classList.contains('is-component-item-hidden')
     ));
     if (!items.length) return;
-    const flow = isFlowReading();
     const box = evidenceInnerBox(gallery);
     const parentBox = evidenceInnerBox(gallery.parentElement || gallery);
-    const frame = flow ? flowEvidenceFrame(gallery) : null;
-    const galleryW = box.w || parentBox.w || frame?.w || 0;
-    const galleryH = flow ? 0 : (box.h || parentBox.h);
+    const galleryW = box.w || parentBox.w || 0;
+    const galleryH = box.h || parentBox.h;
     const ratio = parseEvidenceRatio(gallery);
     const ratioCssValue = `${ratio.w} / ${ratio.h}`;
     gallery.style.setProperty('--image-ratio', ratioCssValue);
     const captionH = evidenceCaptionPx(gallery, items);
     const gap = evidenceGapPx(gallery);
     const count = items.length;
-    if (flow) {
-      gallery.style.removeProperty('height');
-      gallery.style.removeProperty('max-height');
-      gallery.style.removeProperty('overflow');
-      items.forEach(resetEvidenceBoxStyles);
-      if (galleryW < 8) return;
-      if (gallery.getAttribute('data-image-ratio') === '9:16') {
-        gallery.dataset.evidenceLayout = 'even';
-        gallery.style.removeProperty('--evidence-item-width');
-        gallery.classList.remove('is-scrollable', 'is-scroll-end');
-        return;
-      }
-      const minItem = ratio.w / ratio.h < 0.55 ? 148 : ratio.w / ratio.h > 1.2 ? 300 : 220;
-      const nCols = Math.max(1, Math.min(count, Math.floor((galleryW + gap) / (minItem + gap))));
-      const ratioW = Math.max(120, (galleryW - gap * (nCols - 1)) / nCols);
-      gallery.dataset.evidenceLayout = count === 1 ? 'center' : 'even';
-      gallery.style.setProperty('--evidence-item-width', `${ratioW}px`);
-      gallery.classList.remove('is-scrollable', 'is-scroll-end');
-      return;
-    }
     if (galleryH < 8 || galleryW < 8) return;
     const ratioW = Math.max(1, galleryH - captionH) * (ratio.w / ratio.h);
     const nFull = Math.max(1, Math.floor((galleryW + gap) / (ratioW + gap)));
@@ -339,7 +284,6 @@
       if (windowNode.dataset.stripWheel) return;
       windowNode.dataset.stripWheel = '1';
       windowNode.addEventListener('wheel', (event) => {
-        if (isFlowReading()) return;
         const max = windowNode.scrollWidth - windowNode.clientWidth;
         if (max <= 1) return;
         const delta = event.deltaY + event.deltaX;
@@ -356,7 +300,6 @@
       gallery.dataset.galleryScroll = '1';
       gallery.addEventListener('scroll', () => syncEvidenceScrollFade(gallery), { passive: true });
       gallery.addEventListener('wheel', (event) => {
-        if (isFlowReading()) return;
         if (!gallery.classList.contains('is-scrollable')) return;
         const max = gallery.scrollWidth - gallery.clientWidth;
         if (max <= 1) return;
@@ -398,14 +341,6 @@
       if (toast) document.body.appendChild(toast);
       chrome.appendChild(theme);
     }
-    if (!chrome.querySelector('[data-reading-mode]')) {
-      const btn = document.createElement('button');
-      btn.className = 'button subtle';
-      btn.type = 'button';
-      btn.dataset.readingMode = '';
-      btn.textContent = '流式阅读';
-      chrome.appendChild(btn);
-    }
     if (!document.querySelector('.report-chrome-hotspot')) {
       const spot = document.createElement('button');
       spot.type = 'button';
@@ -421,9 +356,6 @@
     if (!shell || !stage) return false;
 
     assembleChrome();
-
-    const readingBtn = document.querySelector('[data-reading-mode]');
-    const isFlow = () => shell.classList.contains('is-flow');
 
     const slidesRoot = stage.querySelector('[data-report-slides]') || stage;
     const slides = [...slidesRoot.querySelectorAll(':scope > .report-slide')];
@@ -541,15 +473,6 @@
       const clamped = Math.max(0, Math.min(slides.length - 1, next));
       const from = slides[index];
       const to = slides[clamped];
-      if (isFlow()) {
-        index = clamped;
-        slides.forEach((slide) => slide.classList.toggle('is-active', slide === to));
-        activateNav(to.dataset.chapter);
-        if (hash && to.id) history.replaceState(null, '', `#${to.id}`);
-        to.scrollIntoView({ behavior: motion === 'none' ? 'auto' : 'smooth', block: 'start' });
-        document.dispatchEvent(new CustomEvent('seed:slidechange'));
-        return;
-      }
       if (clamped === index && to.classList.contains('is-active')) {
         syncChrome(to);
         return;
@@ -601,7 +524,7 @@
     };
 
     const go = (delta) => {
-      if (!delta || locked || isFlow()) return;
+      if (!delta || locked) return;
       const next = index + delta;
       if (next < 0 || next >= slides.length) return;
       locked = true;
@@ -662,7 +585,7 @@
     });
 
     stage.addEventListener('click', (event) => {
-      if (isFlow() || lightboxOpen()) return;
+      if (lightboxOpen()) return;
       if (!isBlankClick(event)) return;
       go(1);
     });
@@ -679,7 +602,6 @@
     document.querySelectorAll('.page-grid[data-slots="10"]').forEach((grid) => {
       grid.addEventListener('wheel', (event) => {
         if (grid.scrollWidth <= grid.clientWidth + 1) return;
-        if (isFlow() && Math.abs(event.deltaY) >= Math.abs(event.deltaX)) return;
         const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
         if (!delta) return;
         const max = grid.scrollWidth - grid.clientWidth;
@@ -692,7 +614,7 @@
     });
 
     document.addEventListener('keydown', (event) => {
-      if (isFlow() || lightboxOpen()) return;
+      if (lightboxOpen()) return;
       const tag = event.target?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || event.target?.isContentEditable) return;
       const strip = document.querySelector('.report-slide.is-active .page-grid[data-slots="10"]');
@@ -736,134 +658,6 @@
         show(slides.length - 1, { motion: 'chapter' });
       }
     });
-
-    const visibleSlideIndex = () => {
-      const navH = nav?.getBoundingClientRect().height || 88;
-      let best = index;
-      let bestDist = Infinity;
-      slides.forEach((slide, i) => {
-        if (getComputedStyle(slide).display === 'none') return;
-        const dist = Math.abs(slide.getBoundingClientRect().top - navH);
-        if (dist < bestDist) {
-          bestDist = dist;
-          best = i;
-        }
-      });
-      return best;
-    };
-
-    const relayout = () => {
-      requestAnimationFrame(() => {
-        layoutAllEvidence();
-        drawLineCharts();
-        syncTableTracks();
-      });
-    };
-
-    const syncFlowHeadings = () => {
-      const flow = isFlow();
-      const catalog = shell.hasAttribute('data-catalog');
-      let prev = '';
-      slides.forEach((slide) => {
-        slide.classList.remove('is-flow-chapter-start', 'is-flow-keep-title');
-        slide.removeAttribute('data-flow-chapter-title');
-        if (!flow) return;
-        if (slide.classList.contains('is-chapter-cover') || slide.dataset.chapter === 'cover') return;
-        if (catalog) {
-          slide.classList.add('is-flow-keep-title');
-          return;
-        }
-        const chapter = slide.dataset.chapter || '';
-        if (chapter && chapter !== prev) {
-          prev = chapter;
-          if (!slide.querySelector(':scope > .report-notes > h2')) {
-            const thesis = (slide.getAttribute('data-flow-title') || '').trim();
-            const label = thesis || (nav?.querySelector(`a[href="#${chapter}"]`)?.textContent || '').trim();
-            if (label) {
-              slide.classList.add('is-flow-chapter-start');
-              slide.setAttribute('data-flow-chapter-title', label);
-            }
-          }
-        }
-        const keep = Boolean(slide.querySelector(
-          '.page-grid[data-slots="1"] .content[data-content="copy"], .page-grid[data-slots="1"] .content[data-content="point"]'
-        ));
-        slide.classList.toggle('is-flow-keep-title', keep);
-      });
-    };
-
-    const enterFlow = () => {
-      window.clearTimeout(animTimer);
-      locked = false;
-      slides.forEach((slide) => {
-        clearMotion(slide);
-        slide.removeAttribute('inert');
-        slide.setAttribute('aria-hidden', 'false');
-      });
-      shell.classList.remove('is-deck');
-      shell.classList.add('is-flow');
-      stage.classList.remove('has-deck-head');
-      if (readingBtn) readingBtn.textContent = '分屏演示';
-      syncFlowHeadings();
-      relayout();
-      requestAnimationFrame(() => {
-        slides[index]?.scrollIntoView({ block: 'start' });
-        relayout();
-      });
-    };
-
-    const exitFlow = () => {
-      const next = visibleSlideIndex();
-      window.scrollTo(0, 0);
-      shell.classList.remove('is-flow');
-      shell.classList.add('is-deck');
-      syncFlowHeadings();
-      if (readingBtn) readingBtn.textContent = '流式阅读';
-      index = next;
-      slides.forEach((slide, i) => {
-        const on = i === next;
-        clearMotion(slide);
-        slide.classList.toggle('is-active', on);
-        if (on) {
-          slide.removeAttribute('inert');
-          slide.setAttribute('aria-hidden', 'false');
-        } else {
-          slide.setAttribute('inert', '');
-          slide.setAttribute('aria-hidden', 'true');
-        }
-      });
-      syncChrome(slides[next]);
-      if (slides[next]?.id) history.replaceState(null, '', `#${slides[next].id}`);
-      document.dispatchEvent(new CustomEvent('seed:slidechange'));
-      relayout();
-    };
-
-    readingBtn?.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (isFlow()) exitFlow();
-      else enterFlow();
-      readingBtn.blur();
-    });
-
-    const flowObserver = new IntersectionObserver((entries) => {
-      if (!isFlow()) return;
-      const visible = entries
-        .filter((entry) => entry.isIntersecting)
-        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-      if (!visible) return;
-      const slide = visible.target;
-      const i = slides.indexOf(slide);
-      if (i < 0 || i === index) return;
-      index = i;
-      slides.forEach((item) => item.classList.toggle('is-active', item === slide));
-      activateNav(slide.dataset.chapter);
-      if (slide.id) history.replaceState(null, '', `#${slide.id}`);
-    }, {
-      rootMargin: '-18% 0px -62% 0px',
-      threshold: [0.12, 0.35, 0.6],
-    });
-    slides.forEach((slide) => flowObserver.observe(slide));
 
     window.addEventListener('hashchange', () => {
       show(slideIndexForHash(location.hash), { hash: false, motion: 'none' });

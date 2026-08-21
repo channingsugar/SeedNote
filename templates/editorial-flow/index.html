@@ -3,9 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>知识汇报模板 · 分屏</title>
+  <title>知识汇报模板 · 流式</title>
   <link rel="stylesheet" href="../shared/components.css">
   <link rel="stylesheet" href="assets/template.css">
+  <link rel="stylesheet" href="assets/flow.css">
 </head>
 <body>
   <div class="theme-control" id="themeControl" aria-label="主题控制">
@@ -20,11 +21,12 @@
     <div class="theme-control__toast" data-theme-toast role="status" aria-live="polite"></div>
   </div>
 
-  <div class="report-shell is-deck" data-catalog>
+  <div class="report-shell is-flow" data-catalog>
     <nav class="document-nav nav-underline is-sticky" data-component-id="navigation" aria-label="文档章节">
       <div class="document-nav__brand"><span class="document-nav__mark" aria-hidden="true"></span><strong>SEED</strong></div>
       <div class="document-nav__links">
         <a href="#cover" class="is-active">封面</a>
+        <a href="#flow">流式</a>
         <a href="#grid1">Grid 1</a>
         <a href="#grid2">Grid 2</a>
         <a href="#grid3">Grid 3</a>
@@ -37,14 +39,6 @@
     </nav>
 
     <div class="report-stage" data-report-stage>
-      <header class="section-header report-deck-head" data-deck-head>
-        <div class="report-deck-head__copy">
-          <h2 class="section-header__title" data-deck-title></h2>
-          <p class="section-header__part" data-deck-part hidden></p>
-        </div>
-        <span class="section-header__no" data-deck-no></span>
-      </header>
-
       <div class="report-slides" data-report-slides>
         <section class="report-slide is-chapter-cover is-active" data-chapter="cover" data-slide="00" id="cover">
           <header class="chapter-cover" data-cover="image">
@@ -54,8 +48,49 @@
             <p class="chapter-cover__subtitle">〔副题〕没有就删</p>
             <p class="chapter-cover__lead">〔开场〕这件事是什么，凭什么成立，出去之后先做什么。</p>
             <p class="chapter-cover__byline"><span class="chapter-cover__scope">N 章</span><span class="chapter-cover__kind">〔稿件类型〕</span><span class="chapter-cover__author">〔作者〕</span><span class="chapter-cover__date">〔日期〕</span></p>
-            <div class="chapter-cover__actions"><a class="button inverse" href="#grid1">开始阅读</a></div>
+            <div class="chapter-cover__actions"><a class="button inverse" href="#flow">开始阅读</a></div>
           </header>
+        </section>
+        <section class="report-slide is-chapter-cover" data-chapter="flow" data-slide="" id="flow">
+          <header class="chapter-cover">
+            
+            <span class="chapter-cover__kicker">文档栏</span>
+            <h2 class="chapter-cover__title">流式适配</h2>
+            
+            <p class="chapter-cover__lead">文档栏。Grid 1 起是全量组合，看栏宽、吸顶、掉列和高度。</p>
+            
+            
+          </header>
+        </section>
+        <section class="report-section report-slide" data-chapter="flow" data-slide="F.a" id="flow-shell">
+          <header class="section-header">
+            <span class="section-header__no">F.a · 流式</span>
+            <div>
+              <h2 class="section-header__title">壳</h2>
+              <p class="section-header__part">栏宽 · 导航 · 高度</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="content" data-content="copy"><h3 class="content__title">文档栏，不是把分屏竖着叠</h3><p class="content__body">这是流式模板，不是把分屏竖着叠。壳从一开始就是文档栏：栏宽约 1160 居中，导航 52px 吸顶，模块高度跟内容走。<br><br>封面仍整页。其余章封面收成文档大标题。目录里每个组合上方有一行菜谱，方便核对一行几个、变窄怎么掉列。报告不要带 data-catalog，那时这行菜谱不会出现。</p></div></article></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="flow" data-slide="F.b" id="flow-title">
+          <header class="section-header">
+            <span class="section-header__no">F.b · 流式</span>
+            <div>
+              <h2 class="section-header__title">标题</h2>
+              <p class="section-header__part">章判断 · 小节 · 开口句</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="content" data-content="copy"><h3 class="content__title">目录对稿留标题，报告只留章判断</h3><p class="content__body">目录：章封面当 h2，每一组合的组件名当 h3，方便对稿。报告：一章一句判断（data-flow-title，没有就用导航名），多格、图、表不再重复屏标题；只有 1 格 copy / point 留下开口句。<br><br>章题要用主张句，不要只用导航两个字。不要加分屏切换，也不要抄 editorial-default 的翻页壳。</p></div></article></div>
+        </section>
+        <section class="report-section report-slide" data-chapter="flow" data-slide="F.c" id="flow-grid">
+          <header class="section-header">
+            <span class="section-header__no">F.c · 流式</span>
+            <div>
+              <h2 class="section-header__title">格子菜谱</h2>
+              <p class="section-header__part">分屏 × 流式列数</p>
+            </div>
+          </header>
+          <div class="page-grid" data-slots="1"><article class="grid-cell"><div class="content" data-content="table"><div class="content-cols" style="--table-cols:4;--table-rows:13"><div class="content-col"><strong>分屏</strong><span>1 格 copy / point</span><span>1 格 table / formula / 图</span><span>2 格 signal / list / step</span><span>3 格 signal / stat / step-stack</span><span>4 格 stat / signal / step</span><span>4 格 list</span><span>5 格 stat</span><span>6–9 格</span><span>10+ 格</span><span>Evidence 多张竖图</span><span>Evidence 条带</span><span>Media Switch 四类</span></div><div class="content-col"><strong>流式宽屏（约 1160）</strong><span>1 栏，正文宽 880</span><span>栏内拉满，高随内容</span><span>2 列</span><span>3 列</span><span>一排 4</span><span>行表：标签 + 说明</span><span>一排 5</span><span>3 列折行</span><span>折行 3 列</span><span>按栏宽能排几列排几列</span><span>竖着叠，宽 100%</span><span>一排 4</span></div><div class="content-col"><strong>变窄</strong><span>1</span><span>1</span><span>≤820 → 1</span><span>≤900 → 1</span><span>≤900 → 2 · ≤620 → 1</span><span>≤820 标签改上</span><span>≤980 → 3 · ≤620 → 2</span><span>≤900 → 2 · ≤620 → 1</span><span>≤900 → 2 · ≤620 → 1</span><span>折行</span><span>1</span><span>≤900 → 2 · ≤620 → 1</span></div><div class="content-col"><strong>备注</strong><span>开口句作判断</span><span>不锁分屏高度</span><span>对等并排</span><span>对标客舱信号</span><span>对标高铁四指标</span><span>对标住宿七问</span><span>对标市场五个数</span><span>一次铺开</span><span>不要横滑</span><span>不横滑</span><span>高随图</span><span>高随 9:16</span></div></div></div></article></div>
         </section>
         <section class="report-slide is-chapter-cover" data-chapter="grid1" data-slide="01" id="grid1">
           <header class="chapter-cover">
@@ -437,7 +472,7 @@
             <span class="chapter-cover__kicker">更多格子</span>
             <h2 class="chapter-cover__title">More Grids</h2>
             
-            <p class="chapter-cover__lead">5–9 一次铺开；超过 9 格再用横滑。</p>
+            <p class="chapter-cover__lead">5–9 一次铺开；超过 9 格折行 3 列，不要横滑。</p>
             
             
           </header>
@@ -497,7 +532,7 @@
             <span class="section-header__no">05.f · More</span>
             <div>
               <h2 class="section-header__title">Bar</h2>
-              <p class="section-header__part">10+ · 横滑</p>
+              <p class="section-header__part">10+ · 折行</p>
             </div>
           </header>
           <div class="page-grid" data-slots="10"><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">〔组标题〕同一口径下比什么</p><div class="bar-compare__item"><strong class="bar-compare__value">24</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:24%"></div></div><span class="bar-compare__label">〔对象 A〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">〔对象 B〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">〔对象 C〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">〔对象 D〕</span><p class="bar-compare__note">〔差异〕短句</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>〔出处〕口径写在数字下面</span></p></article><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">〔组标题〕同一口径下比什么</p><div class="bar-compare__item"><strong class="bar-compare__value">24</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:24%"></div></div><span class="bar-compare__label">〔对象 A〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">〔对象 B〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">〔对象 C〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">〔对象 D〕</span><p class="bar-compare__note">〔差异〕短句</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>〔出处〕口径写在数字下面</span></p></article><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">〔组标题〕同一口径下比什么</p><div class="bar-compare__item"><strong class="bar-compare__value">24</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:24%"></div></div><span class="bar-compare__label">〔对象 A〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">〔对象 B〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">〔对象 C〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">〔对象 D〕</span><p class="bar-compare__note">〔差异〕短句</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>〔出处〕口径写在数字下面</span></p></article><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">〔组标题〕同一口径下比什么</p><div class="bar-compare__item"><strong class="bar-compare__value">24</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:24%"></div></div><span class="bar-compare__label">〔对象 A〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">〔对象 B〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">〔对象 C〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">〔对象 D〕</span><p class="bar-compare__note">〔差异〕短句</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>〔出处〕口径写在数字下面</span></p></article><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">〔组标题〕同一口径下比什么</p><div class="bar-compare__item"><strong class="bar-compare__value">24</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:24%"></div></div><span class="bar-compare__label">〔对象 A〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">〔对象 B〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">〔对象 C〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">〔对象 D〕</span><p class="bar-compare__note">〔差异〕短句</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>〔出处〕口径写在数字下面</span></p></article><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">〔组标题〕同一口径下比什么</p><div class="bar-compare__item"><strong class="bar-compare__value">24</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:24%"></div></div><span class="bar-compare__label">〔对象 A〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">〔对象 B〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">〔对象 C〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">〔对象 D〕</span><p class="bar-compare__note">〔差异〕短句</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>〔出处〕口径写在数字下面</span></p></article><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">〔组标题〕同一口径下比什么</p><div class="bar-compare__item"><strong class="bar-compare__value">24</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:24%"></div></div><span class="bar-compare__label">〔对象 A〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">〔对象 B〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">〔对象 C〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">〔对象 D〕</span><p class="bar-compare__note">〔差异〕短句</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>〔出处〕口径写在数字下面</span></p></article><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">〔组标题〕同一口径下比什么</p><div class="bar-compare__item"><strong class="bar-compare__value">24</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:24%"></div></div><span class="bar-compare__label">〔对象 A〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">〔对象 B〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">〔对象 C〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">〔对象 D〕</span><p class="bar-compare__note">〔差异〕短句</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>〔出处〕口径写在数字下面</span></p></article><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">〔组标题〕同一口径下比什么</p><div class="bar-compare__item"><strong class="bar-compare__value">24</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:24%"></div></div><span class="bar-compare__label">〔对象 A〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">〔对象 B〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">〔对象 C〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">〔对象 D〕</span><p class="bar-compare__note">〔差异〕短句</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>〔出处〕口径写在数字下面</span></p></article><article class="grid-cell"><div class="bar-compare is-vertical" data-item-count="4"><p class="bar-compare__title">〔组标题〕同一口径下比什么</p><div class="bar-compare__item"><strong class="bar-compare__value">24</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:24%"></div></div><span class="bar-compare__label">〔对象 A〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">36</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:36%"></div></div><span class="bar-compare__label">〔对象 B〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">48</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:48%"></div></div><span class="bar-compare__label">〔对象 C〕</span><p class="bar-compare__note">〔差异〕短句</p></div><div class="bar-compare__item"><strong class="bar-compare__value">61</strong><div class="bar-compare__track"><div class="bar-compare__fill" style="--bar-size:61%"></div></div><span class="bar-compare__label">〔对象 D〕</span><p class="bar-compare__note">〔差异〕短句</p></div></div><p class="report-source" data-report-source>数据来源 <span data-source-name>〔出处〕口径写在数字下面</span></p></article></div>
@@ -612,23 +647,17 @@
               <li>〔〕里是槽名，后面是填法。页眉组件名（纯文字、观点、Grid 1）是目录，不要改。</li>
               <li>封面填：题域、主判断、开场、副题、章数、稿件类型、作者、日期。</li>
               <li>先定 Content，再选 Grid。一个 Grid 只放一种 Content。</li>
-              <li>Grid 1 / 2 / 3 / 4 / 5–9 / 10+。列表和步骤一条就是一格。Grid 3 / 5–9 / 10+ 的编号列表用纵向。5–9 一次铺开，超过 9 格才横滑。</li>
+              <li>Grid 1 / 2 / 3 / 4 / 5–9 / 10+。列表和步骤一条就是一格。Grid 3 / 5–9 / 10+ 的编号列表用纵向。5–9 一次铺开，超过 9 格折行，不要横滑。</li>
               <li>表和条整块占一格，宽度铺满，行间有分割线。可以上下滚动，不显示滚动条。有出处才写「数据来源」并挂链接；没有出处这一行不出现。字号 Caption（12），放在白卡内容区，居中。</li>
               <li>单元格里 <strong>加粗</strong> 用 strong，<em>强调</em> 用 em（强调色 + 加粗）。同一张表里示意即可，不要另开强调组件。</li>
               <li>Evidence 单独成章：现场图、截图、横屏、条带、Media Switch。不进 Grid 格。封面默认并排多张。</li>
               <li>全屏单独成章：有图、无图，或只有图。永远 1 块。</li>
-              <li>视觉由设计 Token 驱动。主题栏固定在左下角。右键文字编辑、右键图片替换。翻页用键盘或顶栏。</li>
-              <li>这是分屏模板。流式是另一套：templates/editorial-flow/。两套不能互切，也不要加「流式阅读」按钮。</li>
+              <li>视觉由设计 Token 驱动。主题栏固定在左下角。右键文字编辑、右键图片替换。用导航和滚动阅读。</li>
+              <li>这是流式模板。分屏是另一套：templates/editorial-default/。两套不能互切。报告不要抄 data-catalog；章判断写在第一屏的 data-flow-title。10+ 格折行 3 列，不要横滑。</li>
             </ol>
           </footer>
         </section>
       </div>
-    </div>
-
-    <div class="report-pager" data-report-pager>
-      <button class="button subtle" type="button" data-slide-prev>上一屏</button>
-      <span class="report-pager__label" data-slide-label aria-live="polite">00</span>
-      <button class="button subtle" type="button" data-slide-next>下一屏</button>
     </div>
   </div>
 
