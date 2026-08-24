@@ -152,6 +152,10 @@
 .report-shell.is-flow .progress {
   display: none !important;
 }
+.report-shell.is-flow[data-catalog] .flow-lab .topbar,
+.report-shell.is-flow[data-catalog] .flow-lab .progress {
+  display: block !important;
+}
 
 .report-shell.is-flow .report-notes {
   width: min(var(--flow-column), calc(100% - 2 * var(--flow-gutter)));

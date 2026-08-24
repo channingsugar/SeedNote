@@ -154,6 +154,31 @@
   opacity: .85;
 }
 
+.seed-edit-handle-h {
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  z-index: 83;
+  width: 56px;
+  height: 14px;
+  margin-left: -28px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--seed-edit-accent);
+  cursor: ns-resize;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--seed-edit-ink) 18%, transparent);
+}
+.seed-edit-handle-h::after {
+  content: "";
+  position: absolute;
+  inset: 5px 12px;
+  border-top: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  opacity: .85;
+}
+.seed-edit-handle[hidden],
+.seed-edit-handle-h[hidden] { display: none !important; }
+
 [data-seed-editing-media] { outline: 1px dashed color-mix(in srgb, var(--seed-edit-accent) 55%, transparent); }
 [data-align="center"] { margin-left: auto; margin-right: auto; }
 [data-align="right"] { margin-left: auto; margin-right: 0; }

@@ -109,7 +109,6 @@
       const mainImage = activeGallery.querySelector('.gallery-main');
       const thumbnails = activeGallery.querySelectorAll('.gallery-thumb');
       mainImage.src = item.src;
-      mainImage.alt = item.alt;
       thumbnails.forEach((thumbnail, thumbnailIndex) => {
         thumbnail.classList.toggle('is-active', thumbnailIndex === activeIndex);
       });
@@ -153,7 +152,6 @@
     thumbnails.forEach((thumbnail) => {
       thumbnail.addEventListener('click', () => {
         mainImage.src = thumbnail.dataset.src;
-        mainImage.alt = thumbnail.dataset.alt;
         thumbnails.forEach((item) => item.classList.remove('is-active'));
         thumbnail.classList.add('is-active');
       });

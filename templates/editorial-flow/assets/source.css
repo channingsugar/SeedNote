@@ -188,14 +188,14 @@ button { font-family: inherit; }
   scrollbar-width: none;
   -ms-overflow-style: none;
   scroll-behavior: smooth;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 20px), transparent 100%);
-          mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 20px), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 24px), transparent 100%);
+          mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 24px), transparent 100%);
 }
 .toc::-webkit-scrollbar { display: none; }
 .toc a {
   padding: 6px 10px;
   font-size: 13px;
-  color: var(--c-text-3);
+  color: var(--c-text-2);
   border-radius: var(--r-pill);
   white-space: nowrap;
   flex: 0 0 auto;
@@ -2304,7 +2304,18 @@ button:focus-visible, a:focus-visible {
 .ansoff-cell.accent {
   background: var(--grad-tint);
   color: var(--c-text);
+  box-shadow: inset 0 0 0 2px var(--c-accent);
 }
+.ansoff-cell.is-hatch {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--c-bg-subtle),
+    var(--c-bg-subtle) 7px,
+    var(--c-bg) 7px,
+    var(--c-bg) 14px
+  );
+}
+.ansoff-cell.is-quiet { background: var(--c-bg-subtle); }
 /* 重点格的药丸用白底黑字，与其余白底格的「灰底灰字」形成反差，
    在不靠黑底的前提下保持“这一格是机会”的识别度 */
 .ansoff-cell.accent .cell-tag {
@@ -3447,7 +3458,8 @@ button:focus-visible, a:focus-visible {
   position: relative;
   display: grid;
   grid-template-columns: 240px minmax(300px, 1fr) 270px;
-  min-height: 980px;
+  align-items: stretch;
+  min-height: 0;
   overflow: hidden;
 }
 .hotel-city-network .city-column { position: relative; z-index: 2; padding: 16px; background: rgba(255,255,255,.88); }
@@ -3470,6 +3482,8 @@ button:focus-visible, a:focus-visible {
 }
 .hotel-city-network .city-button:hover { background: var(--network-warm-bg); }
 .hotel-city-network .city-button.active { border-color: var(--network-blue); color: var(--network-blue); background: var(--c-accent-soft); font-weight: 700; }
+.hotel-city-network .city-button.is-empty { opacity: .42; }
+.hotel-city-network .city-button.is-empty small { color: var(--network-faint); }
 .hotel-city-network .city-button strong { font-size: 15px; }
 .hotel-city-network .city-button small { color: var(--network-faint); font-size: 11px; }
 .hotel-city-network .destination-row {

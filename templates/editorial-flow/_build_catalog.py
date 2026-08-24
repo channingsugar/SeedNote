@@ -153,17 +153,294 @@ def plain_grid(*cards, cols=None, surface=None):
     return f'<div class="plain-grid"{attr}>{"".join(cards)}</div>'
 
 
-def tokens():
-    rows = [
-        ("间隔", "--s-in 16 · --s-stack 40 · --s-chapter 96"),
-        ("字号", "--t-h1 章题 · --t-h2 20 · --t-num 数据 · --t-no / --t-no-lg 编号 · --t-body 16 · --t-aux 12"),
-        ("颜色", "--c-text / -2 / -3 / -4 · --c-line · --c-accent · --c-pos / --c-neg 表数据栏"),
-        ("线", ".rule 强 2px · .rule.is-soft 弱 1px · 主标题下必有强线"),
-    ]
-    cells = "".join(
-        f'<article class="plain"><b>{k}</b><p>{v}</p></article>' for k, v in rows
+def token_item(var, label, value, kind="size", sample=None):
+    swatch = ""
+    if kind == "color":
+        swatch = f'<span class="token-swatch" style="background:{value}"></span>'
+    elif kind == "size":
+        w = value if str(value).endswith("px") else f"{value}px"
+        swatch = f'<span class="token-swatch" style="width:{w}"></span>'
+    else:
+        swatch = '<span class="token-swatch"></span>'
+    extra = f'<span class="token-sample" style="font-size:{value}">{sample}</span>' if sample else ""
+    return (
+        f'<article class="token" data-css-var="{var}" data-token-kind="{kind}">'
+        f"{swatch}<div class=\"token-meta\"><b>{var}</b><span>{label}</span></div>"
+        f'<span class="token-value">{value}</span>{extra}</article>'
     )
-    return f'<div class="plain-grid" data-cols="4" data-surface="line">{cells}</div>'
+
+
+def token_col(title, items):
+    return f'<div class="token-board__col"><h3>{title}</h3>{"".join(items)}</div>'
+
+
+def tokens():
+    spacing = token_col("间隔", [
+        token_item("--s-in", "区内", "16"),
+        token_item("--s-stack", "换排", "40"),
+        token_item("--s-chapter", "换章", "96"),
+    ])
+    type_ = token_col("字号", [
+        token_item("--t-h1", "章题", "clamp(28px, 3.4vw, 40px)", "type", "章题"),
+        token_item("--t-h2", "小节", "20px", "type", "小节"),
+        token_item("--t-num", "数据", "clamp(36px, 4vw, 56px)", "type", "56"),
+        token_item("--t-no", "编号", "12px", "type", "01"),
+        token_item("--t-no-lg", "大编号", "clamp(28px, 3.2vw, 40px)", "type", "01"),
+        token_item("--t-body", "正文", "16px", "type", "正文"),
+        token_item("--t-aux", "辅助", "12px", "type", "辅助"),
+    ])
+    color = token_col("颜色", [
+        token_item("--c-text", "正文", "#1D1D1F", "color"),
+        token_item("--c-text-2", "次级", "#424245", "color"),
+        token_item("--c-text-3", "三级", "#6E6E73", "color"),
+        token_item("--c-text-4", "四级", "#86868B", "color"),
+        token_item("--c-line", "线", "#E5E5EA", "color"),
+        token_item("--c-accent", "强调", "#0071E3", "color"),
+        token_item("--c-pos", "表正向", "#00875A", "color"),
+        token_item("--c-neg", "表负向", "#C81E1E", "color"),
+    ])
+    line = (
+        '<div class="token-board__col"><h3>线</h3>'
+        '<div class="token-line"><hr class="rule"><small>.rule 强 2px · 主标题下必有强线</small></div>'
+        '<div class="token-line"><hr class="rule is-soft"><small>.rule.is-soft 弱 1px</small></div>'
+        "</div>"
+    )
+    return f'<div class="token-board">{spacing}{type_}{color}{line}</div>'
+
+
+def topbar():
+    return """<header class="topbar" aria-label="文档导航">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1.2 12.8 7 7 12.8 1.2 7Z" fill="currentColor"/></svg>
+        </span>
+        <span class="brand-text">携宠出行服务 <span class="muted">· Pet-friendly Travel</span></span>
+      </div>
+      <nav class="toc" aria-label="章节目录">
+        <a href="#cover">封面</a>
+        <a href="#market">市场</a>
+        <a href="#pain">痛点</a>
+        <a href="#transport">运输全景</a>
+        <a href="#air-scale">航空规模</a>
+        <a href="#air-solution">飞机建议</a>
+        <a href="#rail">高铁</a>
+        <a href="#rail-solution">高铁建议</a>
+        <a href="#land">陆运</a>
+        <a href="#land-solution">陆运建议</a>
+        <a href="#granularity">资质</a>
+        <a href="#hotel-questions">住宿七问</a>
+        <a href="#hotel-survey">top10酒店</a>
+        <a href="#hotel-findings">调研小结</a>
+        <a href="#supply-close">竞品调研</a>
+        <a href="#hotel-solution">酒店</a>
+      </nav>
+      <div class="tools" role="group" aria-label="工具">
+        <span class="counter">8 / 22</span>
+        <button class="tool ghost" type="button" aria-label="打印">
+          <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 8V3h10v5"/><rect x="5" y="11" width="14" height="8" rx="1.5"/><path d="M7 19v3h10v-3"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="progress" aria-hidden="true"><span style="width:36%"></span></div>
+  </header>"""
+
+
+def rail_chart():
+    return """<figure class="rail-growth-chart" aria-label="2025 年 4 月至 2026 年 7 月，高铁宠物托运覆盖站点与可办车次增长趋势">
+          <div class="rail-growth-chart-scroll">
+            <svg viewBox="0 0 1160 230" role="img">
+              <line class="chart-grid" x1="68" y1="178" x2="1120" y2="178" />
+              <line class="chart-grid" x1="68" y1="141.5" x2="1120" y2="141.5" />
+              <line class="chart-grid" x1="68" y1="105" x2="1120" y2="105" />
+              <line class="chart-grid" x1="68" y1="68.5" x2="1120" y2="68.5" />
+              <line class="chart-grid" x1="68" y1="32" x2="1120" y2="32" />
+              <line class="chart-axis" x1="68" y1="32" x2="68" y2="178" />
+              <text class="chart-tick" x="56" y="182" text-anchor="end">0</text>
+              <text class="chart-tick" x="56" y="145.5" text-anchor="end">100</text>
+              <text class="chart-tick" x="56" y="109" text-anchor="end">200</text>
+              <text class="chart-tick" x="56" y="72.5" text-anchor="end">300</text>
+              <text class="chart-tick" x="56" y="36" text-anchor="end">400</text>
+              <text class="chart-axis-label" x="17" y="112" text-anchor="middle" transform="rotate(-90 17 112)">数量（站 / 趟）</text>
+              <line class="chart-line chart-line--stations" x1="90" y1="176.2" x2="430" y2="168.9" />
+              <line class="chart-line chart-line--stations" x1="430" y1="168.9" x2="770" y2="133.8" />
+              <line class="chart-line chart-line--stations" x1="770" y1="133.8" x2="1110" y2="118.5" />
+              <line class="chart-line chart-line--trains" x1="90" y1="174.4" x2="430" y2="164.1" />
+              <line class="chart-line chart-line--trains" x1="430" y1="164.1" x2="770" y2="94.8" />
+              <line class="chart-line chart-line--trains" x1="770" y1="94.8" x2="1110" y2="45.1" />
+              <g aria-label="覆盖站点">
+                <circle class="chart-point chart-point--stations" cx="90" cy="176.2" r="4" />
+                <circle class="chart-point chart-point--stations" cx="430" cy="168.9" r="4" />
+                <circle class="chart-point chart-point--stations" cx="770" cy="133.8" r="4" />
+                <circle class="chart-point chart-point--stations" cx="1110" cy="118.5" r="4" />
+                <text class="chart-value chart-value--stations" x="90" y="195" text-anchor="middle">5 站</text>
+                <text class="chart-value chart-value--stations" x="430" y="188" text-anchor="middle">25 站</text>
+                <text class="chart-value chart-value--stations" x="770" y="153" text-anchor="middle">121 站</text>
+                <text class="chart-value chart-value--stations" x="1110" y="138" text-anchor="end">163 站</text>
+              </g>
+              <g aria-label="可办车次">
+                <circle class="chart-point chart-point--trains" cx="90" cy="174.4" r="4" />
+                <circle class="chart-point chart-point--trains" cx="430" cy="164.1" r="4" />
+                <circle class="chart-point chart-point--trains" cx="770" cy="94.8" r="4" />
+                <circle class="chart-point chart-point--trains" cx="1110" cy="45.1" r="4" />
+                <text class="chart-value" x="90" y="158" text-anchor="middle">10 趟</text>
+                <text class="chart-value" x="430" y="148" text-anchor="middle">38 趟</text>
+                <text class="chart-value" x="770" y="79" text-anchor="middle">228 趟</text>
+                <text class="chart-value" x="1110" y="30" text-anchor="end">364 趟</text>
+              </g>
+              <text class="chart-date" x="90" y="218" text-anchor="middle">2025.04</text>
+              <text class="chart-date" x="430" y="218" text-anchor="middle">2025.06</text>
+              <text class="chart-date" x="770" y="218" text-anchor="middle">2026.04</text>
+              <text class="chart-date" x="1110" y="218" text-anchor="end">2026.07</text>
+              <line class="chart-line chart-line--trains" x1="820" y1="18" x2="852" y2="18" />
+              <text class="chart-legend" x="860" y="22">可办车次</text>
+              <line class="chart-line chart-line--stations" x1="960" y1="18" x2="992" y2="18" />
+              <text class="chart-legend" x="1000" y="22">覆盖站点</text>
+            </svg>
+          </div>
+        </figure>"""
+
+
+def ansoff():
+    def cell(tag, title, body, hint, extra="", cls=""):
+        return (
+            f'<div class="ansoff-cell{cls}"><span class="cell-tag">{tag}</span>'
+            f"<h4>{title}</h4><p>{body}</p>"
+            f'<p class="cell-hint">{hint}</p>{extra}</div>'
+        )
+    return f"""<div class="ansoff-wrap">
+    <div class="ansoff-grid" aria-label="安索夫矩阵：规模化 × 服务空白">
+      <div class="ansoff-corner"></div>
+      <div class="ansoff-col-head"><span class="ansoff-kicker">服务空白度 · 低</span><span class="ansoff-title">市场渗透</span></div>
+      <div class="ansoff-col-head"><span class="ansoff-kicker accent">服务空白度 · 高</span><span class="ansoff-title">产品开发</span></div>
+      <div class="ansoff-row-head"><span class="ansoff-kicker">规模化 · 高</span></div>
+      {cell("风险等级 I", "垂直品类服务", "代办、专车与单点深耕。", "规模化高 / 服务空白低。既有供给相对充分，增长来自渗透率提升。")}
+      {cell("风险等级 II", "一站式服务（代理）", "整合资质、运输、住宿与目的地链路。", "规模化高 / 服务空白高。", extra='<p class="cell-hint">最契合当前市场需求，且服务空白、潜力高。</p>', cls=" accent")}
+      <div class="ansoff-row-head"><span class="ansoff-kicker">规模化 · 低</span></div>
+      {cell("风险等级 II", "拓展机会市场", "将既有垂直能力复制到新客群 / 新场景。", "规模化低 / 服务空白低。需求较分散，增长依赖区域与客群拓展。", cls=" is-hatch")}
+      {cell("风险等级 IV", "自助型服务（DIY）", "面向新市场建立全新的自助服务形态。", "规模化低 / 服务空白高。用户更小众，市场与服务能力需同步教育。", cls=" is-quiet")}
+    </div>
+  </div>"""
+
+
+def city_network():
+    return """<div class="hotel-city-network">
+        <span id="sampleDateText" hidden></span>
+        <div class="section-head">
+          <div><p>点击左侧出发城市，再点击右侧目的地查看航班或车次。</p></div>
+          <div class="legend"><span><i></i>✈ 飞机客舱</span><span class="train"><i></i>🚆 高铁托运</span></div>
+        </div>
+        <section class="network-shell" aria-label="出发城市与目的地连线">
+          <div class="network-toolbar">
+            <b>显示方式</b>
+            <div class="mode-filter" role="group" aria-label="交通方式筛选">
+              <button class="active" data-mode="all" type="button">全部</button>
+              <button data-mode="flight" type="button">飞机</button>
+              <button data-mode="rail" type="button">高铁</button>
+            </div>
+            <span class="network-status" id="networkStatus">读取数据中</span>
+          </div>
+          <div class="network-stage" id="networkStage">
+            <aside class="city-column origins">
+              <p class="column-label">出发城市</p>
+              <div class="city-list" id="originList"></div>
+            </aside>
+            <div class="connection-area" id="connectionArea">
+              <svg id="networkSvg" aria-hidden="true"></svg>
+              <div class="connection-empty" id="connectionEmpty">选择左侧城市<br>查看已经核到的出行通路</div>
+              <div class="origin-summary" id="originSummary"></div>
+              <div class="route-detail" id="routeDetail" hidden></div>
+            </div>
+            <aside class="city-column destinations">
+              <p class="column-label">旅行目的地候选</p>
+              <div id="destinationList"></div>
+            </aside>
+          </div>
+        </section>
+        <div class="section-head top20-head">
+          <div><h2>Top 20 城市表</h2><p>通达数按本轮已核验结果统计，适合与酒店需求和供给一起判断。</p></div>
+        </div>
+        <div class="table-tools">
+          <input id="citySearch" type="search" placeholder="搜索城市、类型或需求信号" aria-label="搜索目的地">
+          <select id="cityType" aria-label="筛选目的地类型"><option value="all">全部类型</option></select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>目的地</th><th>类型</th><th>需求信号</th><th>已核出发城市</th><th>方式</th></tr></thead>
+            <tbody id="top20Rows"></tbody>
+          </table>
+        </div>
+      </div>"""
+
+
+def hotel_ranking():
+    rows = [
+        (1, "杭州桐庐康莱德酒店", "豪华型", "99.20", "54", "2,116", "7,703", "9,166"),
+        (2, "杭州富春芳草地臻品之选度假酒店", "豪华型", "93.43", "38", "823", "9,918", "12,173"),
+        (3, "朴宿·所在民宿(新安江店)", "豪华型", "91.48", "38", "1,297", "2,982", "5,043"),
+        (4, "桐庐语山水·叙旧民宿", "高档型", "87.05", "37", "500", "1,806", "3,330"),
+        (5, "杭州西溪花间堂", "豪华型", "86.92", "37", "294", "3,394", "4,046"),
+        (6, "杭州开元森泊度假乐园", "豪华型", "80.71", "18", "336", "5,755", "4,858"),
+        (7, "千岛湖绿城蓝湾度假酒店", "高档型", "75.79", "15", "259", "2,243", "3,164"),
+        (8, "杭州天域开元观堂", "豪华型", "75.10", "16", "172", "2,773", "1,912"),
+        (9, "大乐之野(桐庐店)", "高档型", "70.73", "11", "748", "428", "672"),
+        (10, "建德云漫松间温泉美宿", "高档型", "68.81", "8", "177", "3,601", "2,430"),
+        (11, "杭州临安青山湖科技城万丽酒店", "豪华型", "68.21", "14", "178", "221", "870"),
+        (12, "草塗·温泉建筑美宿(桐庐店)", "高档型", "64.48", "5", "193", "3,496", "2,514"),
+    ]
+    body = "".join(
+        f'<tr><td class="rank">{r[0]}</td><td class="hotel-name">{r[1]}</td>'
+        f'<td class="hotel-tier-cell"><span class="hotel-tier {"tier-luxury" if r[2]=="豪华型" else "tier-upscale"}">{r[2]}</span></td>'
+        f'<td class="score total">{r[3]}</td><td class="score">{r[4]}</td><td class="score">{r[5]}</td>'
+        f'<td class="score">{r[6]}</td><td class="score">{r[7]}</td></tr>'
+        for r in rows
+    )
+    return f"""<section class="hotel-ranking-block">
+          <div class="hotel-ranking-head">
+            <div>
+              <h4>杭州宠物友好酒店热度榜</h4>
+              <p>按综合分降序排列。目录展示前 12 名；报告里窗口可滚动查看全部。</p>
+            </div>
+            <span class="hotel-ranking-count">12 / 161 家</span>
+          </div>
+          <div class="plain-table-wrap hotel-ranking-scroll" tabindex="0">
+            <table class="poi-table hotel-ranking-table">
+              <thead><tr><th>排名</th><th>酒店名称</th><th>档位</th><th>综合分</th><th>笔记数</th><th>评论数</th><th>收藏数</th><th>点赞数</th></tr></thead>
+              <tbody>{body}</tbody>
+            </table>
+          </div>
+        </section>"""
+
+
+def funnel_chart():
+    return """<figure class="hotel-funnel-chart" aria-label="杭州酒店筛选路径">
+          <div class="hotel-funnel-chart-scroll">
+            <svg viewBox="0 0 1200 300" xmlns="http://www.w3.org/2000/svg" role="img">
+              <path class="funnel-line" d="M110 34 L600 94 L1090 154"/>
+              <path class="funnel-line is-muted" d="M110 34 L410 190"/>
+              <g transform="translate(110 34)">
+                <circle class="funnel-node" r="7"/>
+                <text class="funnel-value" x="0" y="48" text-anchor="middle">6326家</text>
+                <text class="funnel-label" x="0" y="74" text-anchor="middle">飞猪宠物友好酒店</text>
+              </g>
+              <g transform="translate(600 94)">
+                <circle class="funnel-node" r="7"/>
+                <text class="funnel-value" x="0" y="48" text-anchor="middle">161家</text>
+                <text class="funnel-label" x="0" y="74" text-anchor="middle">小红书真实入住经验</text>
+              </g>
+              <g transform="translate(1090 154)">
+                <circle class="funnel-node" r="7"/>
+                <text class="funnel-value" x="0" y="48" text-anchor="middle">100家</text>
+                <text class="funnel-label" x="0" y="74" text-anchor="middle">审核优选TOP</text>
+              </g>
+              <g transform="translate(410 190)">
+                <circle class="funnel-node is-muted" r="7"/>
+                <text class="funnel-value is-muted" x="0" y="48" text-anchor="middle">300家</text>
+                <text class="funnel-label is-muted" x="0" y="74" text-anchor="middle">电话skill长尾</text>
+              </g>
+            </svg>
+          </div>
+        </figure>"""
 
 
 def point(kicker, title, soft=False):
@@ -179,10 +456,11 @@ def shot(src, alt, title, cap, kind="photo", group="demo"):
     if cap:
         bits.append(f"<span>{cap}</span>")
     cap_html = f"<figcaption>{''.join(bits)}</figcaption>" if bits else ""
+    img_alt = "" if bits else alt
     return (
         f'<figure class="shot" data-kind="{kind}" data-lightbox-src="{src}" '
         f'data-lightbox-alt="{alt}" data-lightbox-group="{group}">'
-        f'<div class="shot__frame"><img src="{src}" alt="{alt}" tabindex="0"></div>'
+        f'<div class="shot__frame"><img src="{src}" alt="{img_alt}" tabindex="0"></div>'
         f'<button class="gallery-open" type="button" aria-label="放大查看">↗</button>'
         f"{cap_html}</figure>"
     )
@@ -196,14 +474,14 @@ def transport_card(title, lead, facts, thumbs):
             f'<button class="gallery-thumb{active}" type="button" data-src="{src}" data-alt="{alt}">'
             f'<img src="{src}" alt="{alt}"></button>'
         )
-    src0, alt0 = thumbs[0]
+    src0, _ = thumbs[0]
     fact_html = "".join(
         f'<div class="transport-fact"><span>{k}</span><strong>{v}</strong></div>'
         for k, v in facts
     )
     return (
         f'<article class="transport-card" data-gallery>'
-        f'<div class="gallery-stage"><img class="gallery-main" src="{src0}" alt="{alt0}" tabindex="0">'
+        f'<div class="gallery-stage"><img class="gallery-main" src="{src0}" alt="" tabindex="0">'
         f'<button class="gallery-open" type="button" aria-label="查看大图">↗</button>'
         f'<div class="gallery-thumbs">{"".join(thumb_html)}</div></div>'
         f'<div class="transport-card-copy"><h3>{title}</h3><p>{lead}</p>'
@@ -211,15 +489,52 @@ def transport_card(title, lead, facts, thumbs):
     )
 
 
-PAIN_CARD = pain(
-    "01", "手续麻烦",
-    "证件流程复杂、有效期长短不一、出入境要求不一致。",
-    [
-        "高铁用户中，<strong>38.1%</strong> 认为办理《动物检疫合格证明》手续麻烦。",
-        "飞机用户中，<strong>54.6%</strong> 被检疫证明、航空箱和提前申请等复杂手续困扰。",
-        "开放题中，“手续简化 / 代办”被提及约 <strong>40 次</strong>，是频次最高的主题。",
-        "不同地区、交通方式和往返程要求不一致，用户必须重新核对材料与有效期。",
-    ],
+PAIN_LIST = (
+    '<div class="pain-text-list">'
+    + pain(
+        "01", "手续麻烦",
+        "证件流程复杂、有效期长短不一、出入境要求不一致。",
+        [
+            "高铁用户中，<strong>38.1%</strong> 认为办理《动物检疫合格证明》手续麻烦。",
+            "飞机用户中，<strong>54.6%</strong> 被检疫证明、航空箱和提前申请等复杂手续困扰。",
+            "开放题中，“手续简化 / 代办”被提及约 <strong>40 次</strong>，是频次最高的主题。",
+            "不同地区、交通方式和往返程要求不一致，用户必须重新核对材料与有效期。",
+        ],
+    )
+    + pain("02", "政策复杂", "用户必须逐一确认自己的宠物是否匹配航司要求与酒店政策。", [
+        "重量：不设固定 kg、能放进箱即可（南航）；含箱 ≤ 7kg（海航）；不占座 ≤ 10kg、占座 ≤ 18kg（东航）。",
+        "尺寸：不占座箱包 40 × 38 × 25cm；占座箱包 60 × 40 × 35cm。",
+        "年龄：满 8 周（南航）；满 2 个月（东航）。",
+        "数量：最多 1 只（南航、东航）；最多 2 只（海航）。",
+    ])
+    + pain("03", "价格模糊", "无法判断应该选择哪种运输和住宿方式，价格不可比导致选择困难。", [
+        "航空：每家航司的进客舱、同机托运价格不同，还要叠加箱包、保障费和保险。",
+        "酒店：29.5% 认为清洁费、押金不透明。",
+        "清洁费：可能按每只每晚、每间每晚、每只每间、一次性或免费计收。",
+    ])
+    + pain("04", "不确定性", "既担心运输途中宠物出事，也担心抵达酒店后被拒。", [
+        "高铁：61.6% 担心全程看不到、不能探视。",
+        "飞机：69.7% 担心货舱温度、加压和意外。",
+        "36.0% 担心到店被拒、酒店临时变卦。",
+    ])
+    + "</div>"
+)
+
+TRANSPORT_CARDS = (
+    '<div class="transport-cards">'
+    + transport_card("飞机进客舱", "软包随主人进客舱。陪伴感最好，费用通常最高。",
+                     [("费用", "约 ¥1,288–1,430"), ("位置", "客舱软包"), ("主人", "必须同行")],
+                     [(CABIN, "软包"), (CABIN2, "陪伴")])
+    + transport_card("飞机托运", "有氧货舱航空箱，可同机或单独飞。两端都要交接。",
+                     [("费用", "同机约 ¥548"), ("位置", "有氧货舱"), ("主人", "可同行或不同行")],
+                     [(CARGO, "交运"), (CARGO2, "装卸"), (CARGO3, "货舱")])
+    + transport_card("高铁托运", "行李车厢恒温监控运输箱，主人通常同车。",
+                     [("费用", "约 ¥500 / 只"), ("位置", "行李车厢"), ("主人", "通常同一车次")],
+                     [(RAIL, "运输箱"), (RAIL5, "办理区"), (MON, "监控")])
+    + transport_card("陆运", "班线、拼车、专车和人宠同行。通常少办一份检疫证明。",
+                     [("费用", "约 ¥450–1,280"), ("位置", "笼位或同行"), ("主人", "可同行或不同行")],
+                     [(ROAD, "车内"), (VAN, "专业车"), (RIDE, "同行")])
+    + "</div>"
 )
 
 VENN = """<div class="venn-wrap">
@@ -294,6 +609,7 @@ LIGHTBOX = """
 
 lib = "".join([
     lab("基础 token", tokens()),
+    lab("导航栏", topbar()),
     lab("章头", head("01 · 市场", "携宠旅行是一个每年超5000万次的潜在旅行市场。")),
     lab("章头 · 副标题", head(
         "CONCEPT FILM",
@@ -355,6 +671,15 @@ lib = "".join([
         info("01", "宠物档案", "录入品种、体重、芯片、疫苗、性情等结构化信息，自动筛选匹配其体型与政策的可用服务。"),
         info("CAT", "准备猫三联等免疫记录", "部分航司申请时要求猫三联证明；申报点也可能核验其他有效免疫记录。"),
     )),
+    lab("提问", info_grid("row",
+        info("Q1", "带宠物能否入住？", "犬种、体重、数量限制，以及是否需要入住材料。OTA 展示的信息经常与酒店实际政策不符。"),
+        info("Q2", "额外费用是多少？", "清洁费与保证金，其中清洁费还分“按晚收”和“按次收”。"),
+        info("Q3", "是否有房型限制？", "部分酒店只有指定房型可携宠，最低价房型往往不在可携宠范围内。"),
+        info("Q4", "宠物在酒店的活动范围有多大？", "只能待在客房，还是可以去公区、餐厅、户外场地或草坪，以及能否单独留房。"),
+        info("Q5", "有哪些宠物设施？", "是否提供宠物餐食，以及宠物厕所、玩具、睡窝、食盆和水盆等用品。"),
+        info("Q6", "造成损坏怎么赔偿？", "宠物弄脏沙发或床、抓坏家具等物品时，赔偿标准和押金扣除规则是什么。"),
+        info("Q7", "如何确认留痕，确保到店不会被拒？", "下单时是否需要备注或提前告知前台；口头确认后，如何保障到店不被拒。"),
+    )),
     lab("编号信息 · 标签", info_grid("label",
         info("运输方式", "专用运输箱", "铁路提供 54×43×40cm 专用运输箱，每箱 1 只，放置在列车指定行李车厢；运输途中不能探视。"),
         info("预约时间", "至少提前 1 天", "当天 12:00 前可约次日，12:00 后最早约第三日。"),
@@ -370,7 +695,7 @@ lib = "".join([
     )),
     lab("观点", point("观点判断", "供给不是问题，而是如何寻找合适的航司进行流程简化和服务能力突破。")),
     lab("观点 · 浅底", point("", "<strong>合作顺序建议：</strong>首选南航，用最大覆盖建立基础供给；第二家选择海航，补足两宠、大箱包和临近出发申请。", soft=True)),
-    lab("痛点卡", PAIN_CARD),
+    lab("痛点卡", PAIN_LIST),
     lab("发现", """<article class="finding">
         <h3>信息失真严重：既有“信息缺失”，更有“信息有误”</h3>
         <p>现状下用户需要靠“打电话”才能完成决策。</p>
@@ -398,16 +723,22 @@ lib = "".join([
           <tr><td>基础价格</td><td>&lt;2000km ¥1299</td><td>¥1430</td><td class="best">¥1288</td></tr>
         </tbody>
       </table></div>"""),
+    lab("折线图", rail_chart()),
+    lab("安索夫矩阵", ansoff()),
+    lab("漏斗图", funnel_chart()),
+    lab("城市通航网络", city_network()),
+    lab("酒店热度榜", hotel_ranking()),
     lab("图", '<div class="shot-grid" data-cols="2">'
         + shot(PROFILE, "滴滴宠物档案", "宠物档案 · 类型更广", "可选狗、猫、鸟类、鱼类和其他合规宠物")
         + shot(METHODS, "动物检疫合格证明示例", "《动物检疫合格证明》示例", "运输方式和行程信息需按实际承运填写。", kind="crop", group="cert")
         + "</div>"),
     lab("图 · 滚动", shot(DELIVER, "玩小伴小程序", "玩小伴 · 微信小程序", "酒店以套餐为主，基本都有平台专属清洁费优惠。", kind="scroll", group="app")),
-    lab("图 · 宽", shot(FLOW, "12306 爱宠行链路", "", "进入宠物托运、查询仓位、选择对应人票、锁定仓位并提交订单。", kind="wide")),
-    lab("图 · 方案", (
-        '<article class="shot-plan"><div class="shot-plan__label"><span>方案</span><h4>飞机</h4></div>'
-        + shot(FLOW, "飞机下单链路", "", "串联托运方式说明、检疫代办、航班与服务选择、下单和订单详情。", kind="wide")
-        + "</article>"
+    lab("图 · 宽", (
+        '<div class="shot-stack">'
+        + shot(FLOW, "12306 爱宠行链路", "12306 爱宠行链路", "进入宠物托运、查询仓位、选择对应人票、锁定仓位并提交订单。", kind="wide")
+        + '<article class="shot-plan"><div class="shot-plan__label"><span>方案</span><h4>飞机</h4></div>'
+        + shot(FLOW, "飞机下单链路", "飞机下单链路", "串联托运方式说明、检疫代办、航班与服务选择、下单和订单详情。", kind="wide")
+        + "</article></div>"
     )),
     lab("海报墙", '<div class="shot-grid" data-cols="4">'
         + shot(POSTER, "手续帮你办", "", "", kind="poster", group="poster")
@@ -415,113 +746,8 @@ lib = "".join([
         + shot(PROFILE, "带宠放心住", "", "", kind="poster", group="poster")
         + shot(DELIVER, "一站下单全搞定", "", "", kind="poster", group="poster")
         + "</div>"),
-    lab("运输卡", transport_card(
-        "飞机进客舱",
-        "宠物装入符合要求的软包，随主人进入客舱。陪伴感最好，费用通常最高。",
-        [("宠物费用", "约 ¥1,288–1,430 / 只"), ("宠物位置", "客舱座椅下方软包"), ("主人", "必须同行"), ("主要限制", "机场白名单、名额、体重与软包要求")],
-        [(CABIN, "软包进客舱"), (CABIN2, "客舱内陪伴"), (METHODS, "费用清单")],
-    )),
+    lab("运输卡", TRANSPORT_CARDS),
     lab("韦恩图", VENN),
-])
-
-combo_market = "".join([
-    head("01 · 市场", "携宠旅行是一个每年超5000万次的潜在旅行市场。"),
-    rule(),
-    formula(),
-    stat_row(
-        stat_cell("1.26", "亿只", "城镇犬猫总量"),
-        stat_cell("18.7", "%", "年度付费渗透率"),
-        stat_cell("1,458", "万人", "年度活跃人群"),
-        stat_cell("+30", "%", "携宠住宿客单", accent=True),
-        stat_cell("+76", "%", "航空托运溢价", accent=True),
-        cols=5,
-    ),
-    source_note("《2026年中国宠物行业白皮书》", "《携宠出行意愿调研报告》", "《携程酒店数据》"),
-])
-
-combo_pain = "".join([
-    head("02 · 痛点", "手续麻烦、政策复杂、价格模糊、不确定性，是阻碍用户出行的4个核心痛点。"),
-    rule(),
-    '<div class="research-lead"><p>信息是真是假、价格是否透明、规则是否适用、下单之后能否履约，全要用户逐一确认——带宠出门，比人出门麻烦多了。</p></div>',
-    '<div class="pain-text-list">',
-    PAIN_CARD,
-    pain("02", "政策复杂", "用户必须逐一确认自己的宠物是否匹配航司要求与酒店政策。", [
-        "重量：不设固定 kg、能放进箱即可（南航）；含箱 ≤ 7kg（海航）；不占座 ≤ 10kg、占座 ≤ 18kg（东航）。",
-        "尺寸：不占座箱包 40 × 38 × 25cm；占座箱包 60 × 40 × 35cm。",
-        "年龄：满 8 周（南航）；满 2 个月（东航）。",
-        "数量：最多 1 只（南航、东航）；最多 2 只（海航）。",
-    ]),
-    pain("03", "价格模糊", "无法判断应该选择哪种运输和住宿方式，价格不可比导致选择困难。", [
-        "航空：每家航司的进客舱、同机托运价格不同，还要叠加箱包、保障费和保险。",
-        "酒店：29.5% 认为清洁费、押金不透明。",
-        "清洁费：可能按每只每晚、每间每晚、每只每间、一次性或免费计收。",
-    ]),
-    pain("04", "不确定性", "既担心运输途中宠物出事，也担心抵达酒店后被拒。", [
-        "高铁：61.6% 担心全程看不到、不能探视。",
-        "飞机：69.7% 担心货舱温度、加压和意外。",
-        "36.0% 担心到店被拒、酒店临时变卦。",
-    ]),
-    "</div>",
-])
-
-combo_transport = "".join([
-    head("06 · 运输全景", "跨城带宠，目前有四条路可走。"),
-    rule(),
-    '<div class="research-lead"><p>问题不是“有没有运输方式”，而是准入、位置、价格、材料和交接高度非标。平台更有价值的是把四种方式做成可比较、可校验、可下单的结构化信息。</p></div>',
-    '<div class="transport-cards">',
-    transport_card("飞机进客舱", "软包随主人进客舱。陪伴感最好，费用通常最高。",
-                   [("费用", "约 ¥1,288–1,430"), ("位置", "客舱软包"), ("主人", "必须同行")],
-                   [(CABIN, "软包"), (CABIN2, "陪伴")]),
-    transport_card("飞机托运", "有氧货舱航空箱，可同机或单独飞。两端都要交接。",
-                   [("费用", "同机约 ¥548"), ("位置", "有氧货舱"), ("主人", "可同行或不同行")],
-                   [(CARGO, "交运"), (CARGO2, "装卸"), (CARGO3, "货舱")]),
-    transport_card("高铁托运", "行李车厢恒温监控运输箱，主人通常同车。",
-                   [("费用", "约 ¥500 / 只"), ("位置", "行李车厢"), ("主人", "通常同一车次")],
-                   [(RAIL, "运输箱"), (RAIL5, "办理区"), (MON, "监控")]),
-    transport_card("陆运", "班线、拼车、专车和人宠同行。通常少办一份检疫证明。",
-                   [("费用", "约 ¥450–1,280"), ("位置", "笼位或同行"), ("主人", "可同行或不同行")],
-                   [(ROAD, "车内"), (VAN, "专业车"), (RIDE, "同行")]),
-    "</div>",
-])
-
-combo_air = "".join([
-    head("07 · 航空规模", "航空供给已经形成规模：有氧舱托运是主流能力，宠物进客舱正在从少数试点扩展为航司付费增值产品。"),
-    rule(),
-    stat_grid(
-        stat_card("34 / 52", "航司支持有氧舱托运", "约 65% 国内常态化客运航司具备政策基础。"),
-        stat_card("17 / 52", "航司试点宠物进客舱", "约 33% 航司已开放付费产品。"),
-        stat_card("1,100–1,350", "估算进客舱航线池", "约占全国国内单向直达航线的 25%–30%。"),
-    ),
-    point("观点判断", "供给不是问题，而是如何寻找合适的航司进行流程简化和服务能力突破。"),
-])
-
-combo_hotel = "".join([
-    head("15 · 住宿七问", "把“宠物友好”从一个标签，拆成可比较、可计算、可确认的结构化信息"),
-    rule(),
-    '<div class="research-lead"><p>携宠入住的问题不是“有没有宠物友好酒店”，而是标签背后的规则高度非标。</p></div>',
-    info_grid("row",
-        info("Q1", "带宠物能否入住？", "犬种、体重、数量限制，以及是否需要入住材料。"),
-        info("Q2", "额外费用是多少？", "清洁费与保证金，其中清洁费还分“按晚收”和“按次收”。"),
-        info("Q3", "是否有房型限制？", "部分酒店只有指定房型可携宠，最低价房型往往不在可携宠范围内。"),
-        info("Q4", "活动范围有多大？", "只能待在客房，还是可以去公区、餐厅、户外场地或草坪。"),
-    ),
-    plain_grid(
-        plain("Q1–Q3 决定能不能入住", "准入条件与费用。任何一项不满足，结果是入住失败。"),
-        plain("Q4–Q7 决定是不是住得好", "自由度、房间条件、赔偿规则与确认凭证。"),
-        cols=2,
-        surface="tint",
-    ),
-])
-
-combo_papers = "".join([
-    head("14 · 资质", "三个圈是三类出行场景，正中的交集才是所有场景共同依赖的最小颗粒度。"),
-    rule(),
-    VENN,
-    point("产品含义", "疫苗是唯一的公共分母，应作为宠物档案的<em>必填底座</em>；其余证件按出行方式<em>动态叠加</em>。"),
-    info_grid("2",
-        info("DOG", "重点检查狂犬疫苗记录", "确认接种已满 21 天且仍在有效期内。"),
-        info("CAT", "准备猫三联等免疫记录", "部分航司申请时要求猫三联证明。"),
-    ),
 ])
 
 html = f"""<!doctype html>
@@ -555,7 +781,6 @@ html = f"""<!doctype html>
       <div class="document-nav__brand"><span class="document-nav__mark" aria-hidden="true"></span><strong>SEED</strong></div>
       <div class="document-nav__links"><a href="#cover" class="is-active">封面</a>
         <a href="#lib">组件</a>
-        <a href="#combo-market">组合</a>
         <a href="#notes">口径</a>
       </div>
     </nav>
@@ -566,48 +791,30 @@ html = f"""<!doctype html>
           <header class="chapter-cover">
             <span class="chapter-cover__kicker">流式 v2</span>
             <h2 class="chapter-cover__title">源稿组件库</h2>
-            <p class="chapter-cover__lead">从独立版 HTML 拆出的可复用块。结构和作用接近的收成一套父组件，用 data-* / is-* 切换变体。组合是上下叠，不要做成圆角卡片壳，也不要再收成 flow-block。</p>
-            <p class="chapter-cover__byline"><span class="chapter-cover__scope">组件 + 组合</span><span class="chapter-cover__kind">editorial-flow</span></p>
+            <p class="chapter-cover__lead">从独立版 HTML 拆出的可复用块。结构和作用接近的收成一套父组件，用 data-* / is-* 切换变体。每个组件只陈列内容：不要把章头、分割线和导语画进痛点卡、运输卡、公式、韦恩图或提问。</p>
+            <p class="chapter-cover__byline"><span class="chapter-cover__scope">组件</span><span class="chapter-cover__kind">editorial-flow</span></p>
             <div class="chapter-cover__actions"><a class="button primary" href="#lib">开始阅读</a></div>
           </header>
         </section>
         <section class="report-section report-slide" data-chapter="lib" data-slide="01" id="lib">
           <div class="flow-stack">{lib}</div>
         </section>
-        <section class="report-section report-slide" data-chapter="combo" data-slide="02.a" id="combo-market">
-          <div class="flow-stack">{combo_market}</div>
-        </section>
-        <section class="report-section report-slide" data-chapter="combo" data-slide="02.b" id="combo-pain">
-          <div class="flow-stack">{combo_pain}</div>
-        </section>
-        <section class="report-section report-slide" data-chapter="combo" data-slide="02.c" id="combo-transport">
-          <div class="flow-stack">{combo_transport}</div>
-        </section>
-        <section class="report-section report-slide" data-chapter="combo" data-slide="02.d" id="combo-air">
-          <div class="flow-stack">{combo_air}</div>
-        </section>
-        <section class="report-section report-slide" data-chapter="combo" data-slide="02.e" id="combo-papers">
-          <div class="flow-stack">{combo_papers}</div>
-        </section>
-        <section class="report-section report-slide" data-chapter="combo" data-slide="02.f" id="combo-hotel">
-          <div class="flow-stack">{combo_hotel}</div>
-        </section>
-        <section class="report-slide" data-chapter="notes" data-slide="03" id="notes">
+        <section class="report-slide" data-chapter="notes" data-slide="02" id="notes">
           <footer class="report-notes">
             <h2>怎么用</h2>
             <ol>
               <li>这是流式模板。壳是文档栏：report-shell.is-flow、吸顶导航、flow-stack 上下叠。</li>
               <li>合并后的父组件：<code>.stat-row</code> 横排数字；<code>.stat-card</code> 数字信息（<code>.is-pair</code> 成对）；<code>.info</code> 编号信息（<code>data-layout</code>：2 / stack / row / label / cols；<code>.is-lg</code> / <code>data-no="lg"</code> 大编号）；<code>.plain</code> 无编号信息（<code>data-surface</code>：tint / line）；<code>.point</code> 观点（<code>.is-soft</code> 浅底）；<code>.shot</code> 图（<code>data-kind</code>：photo / crop / scroll / wide / poster）。</li>
               <li>组件库必须带基础 token：间隔 <code>--s-in</code> / <code>--s-stack</code> / <code>--s-chapter</code>；字号 <code>--t-h1</code> / <code>--t-num</code> / <code>--t-no-lg</code> / <code>--t-body</code> / <code>--t-aux</code>；颜色 <code>--c-text</code> 档、<code>--c-line</code>、<code>--c-accent</code>、表数据栏 <code>--c-pos</code> / <code>--c-neg</code>；分割线 <code>.rule</code> / <code>.rule.is-soft</code>。</li>
-              <li>仍独立：公式、痛点卡、发现、运输卡、韦恩图、导语、来源、章头、分割线。</li>
+              <li>仍独立：公式、痛点卡 <code>.pain-text-list</code> / <code>.pain-topic</code>、发现、运输卡 <code>.transport-cards</code> / <code>.transport-card</code>、韦恩图、导语、来源、章头、分割线、导航栏 <code>.topbar</code>、折线图 <code>.rail-growth-chart</code>、安索夫矩阵 <code>.ansoff-grid</code>、漏斗图 <code>.hotel-funnel-chart</code>、城市通航网络 <code>.hotel-city-network</code>、酒店热度榜 <code>.hotel-ranking-block</code>。</li>
               <li>同类块用父组件 + 变体，不要另起皮肤，也不要再收成 flow-block。</li>
-              <li>组合变体是同一栏里上下叠。不要把组合做成圆角卡片壳，也不要做成一屏一问。</li>
-              <li>每个主标题（<code>.slide-head</code>）下方必须紧跟一条可见的<strong>强线</strong> <code>.rule</code>，不得省略，不得用下一块顶线替代，CSS 不得把这条线 <code>display:none</code>。小节标题下必须有弱线。其余块之间不加线，只靠间距。表 / list / 卡内部只用 1px 弱线。</li>
+              <li>公式、韦恩图、提问、痛点卡、运输卡只保留内容。章头 <code>.slide-head</code>、分割线 <code>.rule</code>、导语 <code>.research-lead</code> 是独立组件，不要画进这些块。报告里章头下方仍必须紧跟强线，那是排版规则，不是组件自带的。</li>
+              <li>报告中每个主标题（<code>.slide-head</code>）下方必须紧跟一条可见的<strong>强线</strong> <code>.rule</code>，不得省略，不得用下一块顶线替代，CSS 不得把这条线 <code>display:none</code>。小节标题下必须有弱线。其余块之间不加线，只靠间距。表 / list / 卡内部只用 1px 弱线。</li>
               <li>间距分三档。区内 <code>--s-in</code>（16，含章头→强线）；章内换排 <code>--s-stack</code>（40，含强线→第一块）；换章 <code>--s-chapter</code>（96）。来源贴在所属证据块下面，不要和换章同一档。</li>
               <li>格内条目留在该卡里。例如痛点卡的百分比、运输卡的费用行，不要抬成新的一排。</li>
               <li>来源写一次。源格没有口径句，就不要补。</li>
-              <li>分屏是另一套：templates/editorial-page/。旧稿在 templates/draft/。报告不要抄 data-catalog。</li>
-              <li>未进库：城市通航交互网络、酒店热度榜动态表、高铁扩容折线图。需要时压成宽图或静态表。</li>
+              <li>分屏是另一套：templates/editorial-page/。旧稿在 templates/draft/。报告不要抄 data-catalog。报告导航用 <code>.topbar</code>，不要用目录壳的 <code>.document-nav</code>。</li>
+              <li>图上问题：两张截图卡已是同一父组件 <code>.shot</code>，<code>photo</code> / <code>crop</code> 变体，不另合；图区坏图时不把 alt 再写一层，标题只留在 figcaption。宽图和方案图也是同一父组件：<code>.shot[data-kind=wide]</code>，方案只是 <code>.shot-plan</code> 标签槽，目录收在「图 · 宽」，不另开「图 · 方案」。提问是 <code>.info-grid[data-layout=row]</code> 的问答内容，不是新父组件；底下浅蓝格是无编号信息，不要画进提问。城市通航网络舞台高度跟左右列表走，不要写死 min-height。图 / 表 / 折线右键「调整」可拖宽高；折线拖高后绘图区跟着拉高，改数字后纵轴刻度自适应。韦恩图陆运圈保留，「无额外证件」就是该场景的判断。公式和韦恩图只在组件区出现一次。航空规模标题是判断句，数字卡在付账，不改标题。市场公式与横排数字不是同一组件：公式是算法，横排是支撑数字。安索夫源稿是静图，目录用代码版 <code>.ansoff-grid</code>。基础 token 已图形化，右键改数值会写回 CSS 变量。痛点四格是同一父组件 <code>.pain-topic</code> 铺进 <code>.pain-text-list</code>，目录名「痛点卡」；01–04 主题不同，不把正文并成一块。运输四卡是同一父组件 <code>.transport-card</code> 横排进 <code>.transport-cards</code>，目录名「运输卡」；导语不画进卡。图廊主图不另写当前图名，缩略图才是切换槽，不是第二个组件。</li>
             </ol>
           </footer>
         </section>
@@ -621,6 +828,7 @@ html = f"""<!doctype html>
   <script src="../../editor/seed-edit.js"></script>
   <script src="assets/template.js"></script>
   <script src="assets/source.js"></script>
+  <script src="assets/network.js"></script>
 </body>
 </html>
 """

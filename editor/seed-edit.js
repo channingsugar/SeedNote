@@ -2,7 +2,7 @@
   const CHROME = [
     '.theme-control', '.report-chrome', '.report-chrome-hotspot', '.document-nav',
     '.report-pager',     '.seed-edit-menu', '.seed-edit-done', '.seed-edit-svg-input',
-    '.seed-edit-media', '.seed-edit-handle',
+    '.seed-edit-media', '.seed-edit-handle', '.seed-edit-handle-h',
     '.topbar', 'nav.toc', '.tools',
   ].join(', ');
 
@@ -152,15 +152,30 @@
     return null;
   };
 
+  const RESIZE_SEL = [
+    '.shot', '.brand-concept-film', 'figure.shot', '.gallery-stage',
+    '.plain-table-wrap', '.table-wrap', '.hotel-ranking-scroll',
+    '.rail-growth-chart', '.venn-wrap', '.ansoff-wrap', '.ansoff-grid', '.hotel-funnel-chart',
+  ].join(', ');
+
   const mediaBoxOf = (el) => {
     if (!el) return null;
     return el.closest('.shot, .brand-concept-film, figure, .gallery-stage') || el.parentElement;
   };
 
+  const resizeBoxOf = (el) => {
+    if (!el || el.nodeType === 3) el = el?.parentElement;
+    if (!el || isChrome(el)) return null;
+    return el.closest(RESIZE_SEL);
+  };
+
+  const isMediaBox = (box) => !!(box && box.querySelector('img, video, svg') && !box.matches('.plain-table-wrap, .table-wrap, .hotel-ranking-scroll'));
+
   const readLayout = (box) => ({
     align: box?.dataset.align || 'left',
     fit: box?.dataset.fit || 'fit',
     width: box?.style.width ? parseFloat(box.style.width) : null,
+    height: box?.style.height ? parseFloat(box.style.height) : null,
   });
 
   const writeLayout = (box, layout = {}) => {
@@ -176,12 +191,23 @@
       box.style.removeProperty('width');
     }
     const frame = box.querySelector('.shot__frame') || box;
-    if (fit === 'fill') {
+    if (layout.height) {
+      const h = Math.round(layout.height);
+      box.style.height = `${h}px`;
+      if (frame !== box) frame.style.height = `${h}px`;
+      if (!isMediaBox(box)) box.style.overflow = 'auto';
+    } else {
+      box.style.removeProperty('height');
+      if (frame !== box) frame.style.removeProperty('height');
+      if (!isMediaBox(box)) box.style.removeProperty('overflow');
+    }
+    if (fit === 'fill' && !layout.height) {
       const ratio = box.dataset.seedRatio;
       if (ratio) frame.style.aspectRatio = ratio;
     } else {
       frame.style.removeProperty('aspect-ratio');
     }
+    layoutChartHeight(box);
   };
 
   const readMarkup = (node) => (isSvgText(node) ? node.textContent : node.innerHTML);
@@ -356,48 +382,206 @@
     return scale.y0 - ((value - scale.v0) / span) * (scale.y0 - scale.yMax);
   };
 
-  const syncChartValue = (textEl) => {
-    if (!textEl?.classList?.contains('chart-value')) return;
-    const svg = textEl.closest('svg');
+  const niceMax = (value) => {
+    const v = Math.max(0, Number(value) || 0);
+    if (v === 0) return 100;
+    const padded = v * 1.12;
+    const mag = 10 ** Math.floor(Math.log10(padded));
+    const n = padded / mag;
+    const nice = n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10;
+    return nice * mag;
+  };
+
+  const formatTick = (n) => {
+    if (n >= 1000 && n % 1000 === 0) return String(n);
+    if (n >= 100 && n % 1 === 0) return String(Math.round(n));
+    return String(n);
+  };
+
+  const remapChart = (svg) => {
     if (!svg) return;
-    const scale = readChartScale(svg);
-    const value = parseChartNumber(textEl.textContent);
-    if (!scale || value == null) return;
-    const group = textEl.closest('g') || svg;
-    const texts = [...group.querySelectorAll('.chart-value')];
-    const circles = [...group.querySelectorAll('circle.chart-point')];
-    const x = +textEl.getAttribute('x');
-    const circle = circles.find((c) => nearEq(+c.getAttribute('cx'), x)) || circles[texts.indexOf(textEl)];
-    if (!circle) return;
-    const oldX = +circle.getAttribute('cx');
-    const oldY = +circle.getAttribute('cy');
-    const nextY = valueToY(scale, value);
-    circle.setAttribute('cy', nextY.toFixed(1));
-    const labelOffset = (+textEl.getAttribute('y') || oldY) - oldY;
-    textEl.setAttribute('y', (nextY + labelOffset).toFixed(1));
-    svg.querySelectorAll('line.chart-line').forEach((line) => {
-      if (nearEq(+line.getAttribute('x1'), oldX) && nearEq(+line.getAttribute('y1'), oldY)) {
-        line.setAttribute('y1', nextY.toFixed(1));
-      }
-      if (nearEq(+line.getAttribute('x2'), oldX) && nearEq(+line.getAttribute('y2'), oldY)) {
-        line.setAttribute('y2', nextY.toFixed(1));
-      }
+    const grids = [...svg.querySelectorAll('.chart-grid')]
+      .map((el) => +el.getAttribute('y1'))
+      .filter((y) => Number.isFinite(y))
+      .sort((a, b) => b - a);
+    const ticks = [...svg.querySelectorAll('.chart-tick')]
+      .sort((a, b) => (+b.getAttribute('y') || 0) - (+a.getAttribute('y') || 0));
+    const values = [...svg.querySelectorAll('.chart-value')]
+      .map((el) => parseChartNumber(el.textContent))
+      .filter((n) => n != null);
+    if (grids.length < 2 || !values.length) {
+      syncChartValueLegacy(svg);
+      return;
+    }
+    const y0 = grids[0];
+    const yMax = grids[grids.length - 1];
+    const maxV = niceMax(Math.max(...values, 0));
+    const scale = { y0, yMax, v0: 0, vMax: maxV };
+    ticks.forEach((el, i) => {
+      const t = ticks.length === 1 ? 1 : i / (ticks.length - 1);
+      el.textContent = formatTick(maxV * t);
+    });
+    const series = [
+      { point: '.chart-point--trains', value: '.chart-value:not(.chart-value--stations)', line: '.chart-line--trains' },
+      { point: '.chart-point--stations', value: '.chart-value--stations', line: '.chart-line--stations' },
+    ];
+    series.forEach((spec) => {
+      const circles = [...svg.querySelectorAll(spec.point)]
+        .sort((a, b) => (+a.getAttribute('cx') || 0) - (+b.getAttribute('cx') || 0));
+      const texts = [...svg.querySelectorAll(spec.value)]
+        .sort((a, b) => (+a.getAttribute('x') || 0) - (+b.getAttribute('x') || 0));
+      if (!circles.length) return;
+      circles.forEach((circle, i) => {
+        const textEl = texts[i];
+        const value = parseChartNumber(textEl?.textContent);
+        if (value == null) return;
+        const nextY = valueToY(scale, value);
+        const oldY = +circle.getAttribute('cy');
+        if (!textEl.dataset.seedDy) {
+          textEl.dataset.seedDy = String((+textEl.getAttribute('y') || oldY) - oldY);
+        }
+        circle.setAttribute('cy', nextY.toFixed(1));
+        textEl.setAttribute('y', (nextY + Number(textEl.dataset.seedDy)).toFixed(1));
+      });
+      const lines = [...svg.querySelectorAll(spec.line)].filter((el) => el.tagName === 'line');
+      lines.forEach((line, i) => {
+        const a = circles[i];
+        const b = circles[i + 1];
+        if (!a || !b) return;
+        line.setAttribute('x1', a.getAttribute('cx'));
+        line.setAttribute('y1', a.getAttribute('cy'));
+        line.setAttribute('x2', b.getAttribute('cx'));
+        line.setAttribute('y2', b.getAttribute('cy'));
+      });
     });
     svg.querySelectorAll('polyline').forEach((el) => {
       const nums = (el.getAttribute('points') || '').trim().split(/[\s,]+/).map(Number);
       if (nums.length < 4) return;
-      let changed = false;
-      for (let i = 0; i + 1 < nums.length; i += 2) {
-        if (nearEq(nums[i], oldX) && nearEq(nums[i + 1], oldY)) {
-          nums[i + 1] = +nextY.toFixed(1);
-          changed = true;
-        }
-      }
-      if (!changed) return;
       const pts = [];
-      for (let i = 0; i + 1 < nums.length; i += 2) pts.push(`${nums[i]},${nums[i + 1]}`);
+      for (let i = 0; i + 1 < nums.length; i += 2) {
+        const x = nums[i];
+        const circle = [...svg.querySelectorAll('circle.chart-point')]
+          .find((c) => nearEq(+c.getAttribute('cx'), x));
+        pts.push(`${x},${circle ? circle.getAttribute('cy') : nums[i + 1]}`);
+      }
       el.setAttribute('points', pts.join(' '));
     });
+  };
+
+  const layoutChartHeight = (box) => {
+    if (!box?.matches?.('.rail-growth-chart')) return;
+    const svg = box.querySelector('svg');
+    if (!svg) return;
+    if (!svg.dataset.seedVbH) {
+      const vb = svg.viewBox.baseVal;
+      svg.dataset.seedVbW = String(vb.width || 1160);
+      svg.dataset.seedVbH = String(vb.height || 230);
+      const grids = [...svg.querySelectorAll('.chart-grid')]
+        .map((el) => +el.getAttribute('y1'))
+        .filter((y) => Number.isFinite(y));
+      svg.dataset.seedYMax = String(Math.min(...grids, 32));
+      svg.dataset.seedY0 = String(Math.max(...grids, 178));
+    }
+    const vbW = +svg.dataset.seedVbW;
+    const origH = +svg.dataset.seedVbH;
+    const padTop = +svg.dataset.seedYMax;
+    const padBot = origH - +svg.dataset.seedY0;
+    const cssH = box.clientHeight || origH;
+    const cssW = box.clientWidth || vbW;
+    const vbH = box.style.height
+      ? Math.max(origH, vbW * (cssH / Math.max(cssW, 1)))
+      : origH;
+    svg.setAttribute('viewBox', `0 0 ${vbW} ${vbH}`);
+    const yMax = padTop;
+    const y0 = vbH - padBot;
+    const grids = [...svg.querySelectorAll('.chart-grid')]
+      .sort((a, b) => (+b.getAttribute('y1') || 0) - (+a.getAttribute('y1') || 0));
+    const ticks = [...svg.querySelectorAll('.chart-tick')]
+      .sort((a, b) => (+b.getAttribute('y') || 0) - (+a.getAttribute('y') || 0));
+    grids.forEach((el, i) => {
+      const t = grids.length === 1 ? 1 : i / (grids.length - 1);
+      const y = (y0 - t * (y0 - yMax)).toFixed(1);
+      el.setAttribute('y1', y);
+      el.setAttribute('y2', y);
+    });
+    ticks.forEach((el, i) => {
+      const t = ticks.length === 1 ? 1 : i / (ticks.length - 1);
+      el.setAttribute('y', (y0 - t * (y0 - yMax) + 4).toFixed(1));
+    });
+    const axis = svg.querySelector('.chart-axis');
+    if (axis) {
+      axis.setAttribute('y1', yMax.toFixed(1));
+      axis.setAttribute('y2', y0.toFixed(1));
+    }
+    const mid = (y0 + yMax) / 2;
+    const axisLabel = svg.querySelector('.chart-axis-label');
+    if (axisLabel) {
+      const x = +axisLabel.getAttribute('x') || 17;
+      axisLabel.setAttribute('y', mid.toFixed(1));
+      axisLabel.setAttribute('transform', `rotate(-90 ${x} ${mid.toFixed(1)})`);
+    }
+    svg.querySelectorAll('.chart-date').forEach((el) => {
+      el.setAttribute('y', (vbH - 12).toFixed(1));
+    });
+    remapChart(svg);
+  };
+
+  const syncChartValueLegacy = (svg) => {
+    const scale = readChartScale(svg);
+    if (!scale) return;
+    svg.querySelectorAll('.chart-value').forEach((textEl) => {
+      const value = parseChartNumber(textEl.textContent);
+      if (value == null) return;
+      const group = textEl.closest('g') || svg;
+      const texts = [...group.querySelectorAll('.chart-value')];
+      const circles = [...group.querySelectorAll('circle.chart-point')];
+      const x = +textEl.getAttribute('x');
+      const circle = circles.find((c) => nearEq(+c.getAttribute('cx'), x)) || circles[texts.indexOf(textEl)];
+      if (!circle) return;
+      const oldX = +circle.getAttribute('cx');
+      const oldY = +circle.getAttribute('cy');
+      const nextY = valueToY(scale, value);
+      circle.setAttribute('cy', nextY.toFixed(1));
+      const labelOffset = (+textEl.getAttribute('y') || oldY) - oldY;
+      textEl.setAttribute('y', (nextY + labelOffset).toFixed(1));
+      svg.querySelectorAll('line.chart-line').forEach((line) => {
+        if (nearEq(+line.getAttribute('x1'), oldX) && nearEq(+line.getAttribute('y1'), oldY)) {
+          line.setAttribute('y1', nextY.toFixed(1));
+        }
+        if (nearEq(+line.getAttribute('x2'), oldX) && nearEq(+line.getAttribute('y2'), oldY)) {
+          line.setAttribute('y2', nextY.toFixed(1));
+        }
+      });
+    });
+  };
+
+  const syncChartValue = (textEl) => {
+    const svg = textEl?.closest?.('svg') || (textEl?.classList?.contains('chart-value') ? textEl.closest('svg') : null);
+    if (svg) remapChart(svg);
+  };
+
+  const applyTokenValue = (node) => {
+    const host = node?.closest?.('[data-css-var]') || (node?.dataset?.cssVar ? node : null);
+    const token = host?.dataset?.cssVar;
+    if (!token) return;
+    const valueEl = node?.classList?.contains('token-value')
+      ? node
+      : (host.querySelector('.token-value') || node);
+    const raw = (valueEl.textContent || '').trim();
+    if (!raw) return;
+    const kind = host.dataset.tokenKind || (raw.startsWith('#') || raw.startsWith('rgb') ? 'color' : 'size');
+    const value = kind === 'color' || /clamp\(|^[a-z#]|[a-z%)]$/i.test(raw)
+      ? raw
+      : `${parseFloat(raw) || 0}px`;
+    document.documentElement.style.setProperty(token, value);
+    const swatch = host.querySelector('.token-swatch');
+    if (!swatch) return;
+    if (kind === 'color') swatch.style.background = value;
+    if (kind === 'size') {
+      const px = `${parseFloat(value) || parseFloat(raw) || 16}px`;
+      swatch.style.width = px;
+      swatch.style.height = Math.min(parseFloat(px) || 16, 40) + 'px';
+    }
   };
 
   const mount = () => {
@@ -431,19 +615,20 @@
     let menuText = null;
     let menuMedia = null;
     let menuVariant = null;
+    let menuResize = null;
 
     const mediaBar = document.createElement('div');
     mediaBar.className = 'seed-edit-media';
     mediaBar.hidden = true;
     mediaBar.innerHTML = [
-      '<div class="seed-edit-media__row"><span>对齐</span><div class="seed-edit-media__btns">',
+      '<div class="seed-edit-media__row" data-media-only><span>对齐</span><div class="seed-edit-media__btns">',
       '<button type="button" data-align="left">左</button>',
       '<button type="button" data-align="center">中</button>',
       '<button type="button" data-align="right">右</button></div></div>',
-      '<div class="seed-edit-media__row"><span>填充</span><div class="seed-edit-media__btns">',
+      '<div class="seed-edit-media__row" data-media-only><span>填充</span><div class="seed-edit-media__btns">',
       '<button type="button" data-fit="fit">适应</button>',
       '<button type="button" data-fit="fill">铺满</button></div></div>',
-      '<p class="seed-edit-media__hint">拖右边手柄改宽度，等比缩放</p>',
+      '<p class="seed-edit-media__hint">拖右边改宽，拖下边改高</p>',
     ].join('');
     document.body.appendChild(mediaBar);
     const handle = document.createElement('button');
@@ -452,6 +637,12 @@
     handle.hidden = true;
     handle.setAttribute('aria-label', '拖拽调整宽度');
     document.body.appendChild(handle);
+    const handleH = document.createElement('button');
+    handleH.className = 'seed-edit-handle-h';
+    handleH.type = 'button';
+    handleH.hidden = true;
+    handleH.setAttribute('aria-label', '拖拽调整高度');
+    document.body.appendChild(handleH);
     let activeBox = null;
 
     const doneBtn = document.createElement('button');
@@ -466,6 +657,7 @@
       menuText = null;
       menuMedia = null;
       menuVariant = null;
+      menuResize = null;
     };
 
     const paintVariantMenu = (host) => {
@@ -487,13 +679,14 @@
       });
     };
 
-    const showMenu = (event, { text, media, variant }) => {
+    const showMenu = (event, { text, media, variant, resize }) => {
       menuText = text || null;
       menuMedia = media || null;
       menuVariant = variant || null;
+      menuResize = resize || null;
       textBtn.hidden = !menuText;
       imageBtn.hidden = !menuMedia;
-      layoutBtn.hidden = !menuMedia;
+      layoutBtn.hidden = !(menuMedia || menuResize);
       paintVariantMenu(menuVariant);
       if (textBtn.hidden && imageBtn.hidden && layoutBtn.hidden && !menuVariant) return;
       menu.hidden = false;
@@ -555,6 +748,7 @@
       if (originals.texts[key] === value) delete state.texts[key];
       else state.texts[key] = value;
       syncChartValue(node);
+      applyTokenValue(node);
     };
 
     const ensureKey = (node, kind) => {
@@ -602,6 +796,7 @@
         if (key) {
           writeMarkup(node, previous);
           syncChartValue(node);
+          applyTokenValue(node);
         }
         return;
       }
@@ -609,6 +804,7 @@
       if (originals.texts[key] === value) delete state.texts[key];
       else state.texts[key] = value;
       syncChartValue(node);
+      applyTokenValue(node);
       if (previous !== value) {
         record({
           undo: () => writeTextState(key, previous),
@@ -841,6 +1037,11 @@
       const box = activeBox.getBoundingClientRect();
       mediaBar.hidden = false;
       handle.hidden = false;
+      handleH.hidden = false;
+      const showMedia = isMediaBox(activeBox);
+      mediaBar.querySelectorAll('[data-media-only]').forEach((row) => {
+        row.hidden = !showMedia;
+      });
       const bar = mediaBar.getBoundingClientRect();
       let left = box.left;
       let top = box.top - bar.height - 8;
@@ -851,6 +1052,10 @@
       handle.style.left = `${box.right - 7}px`;
       handle.style.top = `${box.top + box.height / 2 - 28}px`;
       handle.style.margin = '0';
+      handleH.style.position = 'fixed';
+      handleH.style.left = `${box.left + box.width / 2 - 28}px`;
+      handleH.style.top = `${box.bottom - 7}px`;
+      handleH.style.margin = '0';
       mediaBar.querySelectorAll('[data-align]').forEach((btn) => {
         btn.classList.toggle('is-on', btn.dataset.align === (activeBox.dataset.align || 'left'));
       });
@@ -903,7 +1108,7 @@
             const node = nodeByKey(key);
             const host = mediaBoxOf(node) || node;
             if (!host) return;
-            writeLayout(host, prev || { align: 'left', fit: 'fit', width: null });
+            writeLayout(host, prev || { align: 'left', fit: 'fit', width: null, height: null });
             const cur = state.media[key] || {};
             cur.layout = prev;
             state.media[key] = cur;
@@ -929,11 +1134,12 @@
       activeBox = null;
       mediaBar.hidden = true;
       handle.hidden = true;
+      handleH.hidden = true;
       document.documentElement.classList.remove('is-inline-editing');
     };
 
     const startMediaAdjust = (el) => {
-      const box = mediaBoxOf(el);
+      const box = resizeBoxOf(el) || mediaBoxOf(el);
       if (!box) return;
       if (activeBox && activeBox !== box) stopMediaAdjust();
       const key = ensureKey(box, 'media');
@@ -958,30 +1164,35 @@
       placeMediaChrome();
     });
 
-    handle.addEventListener('pointerdown', (event) => {
-      if (!activeBox) return;
-      event.preventDefault();
-      const startX = event.clientX;
-      const startW = activeBox.getBoundingClientRect().width;
-      const ratio = parseFloat(activeBox.dataset.seedRatio || '1');
-      const parentW = activeBox.parentElement?.getBoundingClientRect().width || window.innerWidth;
-      const onMove = (move) => {
-        const next = Math.max(120, Math.min(parentW, startW + (move.clientX - startX)));
-        writeLayout(activeBox, { ...readLayout(activeBox), width: next });
-        if ((activeBox.dataset.fit || 'fit') === 'fill') {
-          const frame = activeBox.querySelector('.shot__frame') || activeBox;
-          frame.style.height = `${Math.round(next / ratio)}px`;
-        }
-        placeMediaChrome();
-      };
-      const onUp = () => {
-        document.removeEventListener('pointermove', onMove);
-        document.removeEventListener('pointerup', onUp);
-        persistLayout(activeBox);
-      };
-      document.addEventListener('pointermove', onMove);
-      document.addEventListener('pointerup', onUp);
-    });
+    const bindResizeHandle = (el, axis) => {
+      el.addEventListener('pointerdown', (event) => {
+        if (!activeBox) return;
+        event.preventDefault();
+        const startX = event.clientX;
+        const startY = event.clientY;
+        const startBox = activeBox.getBoundingClientRect();
+        const parentW = activeBox.parentElement?.getBoundingClientRect().width || window.innerWidth;
+        const onMove = (move) => {
+          const nextW = axis === 'x'
+            ? Math.max(120, Math.min(parentW, startBox.width + (move.clientX - startX)))
+            : startBox.width;
+          const nextH = axis === 'y'
+            ? Math.max(80, startBox.height + (move.clientY - startY))
+            : startBox.height;
+          writeLayout(activeBox, { ...readLayout(activeBox), width: nextW, height: nextH });
+          placeMediaChrome();
+        };
+        const onUp = () => {
+          document.removeEventListener('pointermove', onMove);
+          document.removeEventListener('pointerup', onUp);
+          persistLayout(activeBox);
+        };
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+      });
+    };
+    bindResizeHandle(handle, 'x');
+    bindResizeHandle(handleH, 'y');
 
     const applyStateToDom = async () => {
       for (const [key, rec] of Object.entries(state.variants || {})) {
@@ -1001,6 +1212,7 @@
         }
       }
       document.querySelectorAll('.chart-value').forEach((el) => syncChartValue(el));
+      document.querySelectorAll('.token-value').forEach((el) => applyTokenValue(el));
       for (const [key, rec] of Object.entries(state.media || {})) {
         const path = key.split('::').slice(2).join('::');
         let node = fromPath(path);
@@ -1025,14 +1237,16 @@
       const text = onGraphic && !node.closest('text, tspan') ? null : textTargetOf(raw.nodeType === 3 ? raw : node);
       const media = mediaTargetOf(node);
       const variant = variantHostOf(node);
+      const resize = resizeBoxOf(node);
       const both = text && media && isSvgText(text);
-      if (!text && !media && !variant) return;
+      if (!text && !media && !variant && !resize) return;
       event.preventDefault();
       event.stopPropagation();
       showMenu(event, {
         text,
         media: both || !text ? media : null,
         variant,
+        resize: media ? null : resize,
       });
     }, true);
 
@@ -1041,7 +1255,9 @@
       if (variantId && menuVariant) applyVariant(menuVariant, variantId);
       if (event.target.closest('[data-edit-text-action]') && menuText) startTextEdit(menuText);
       if (event.target.closest('[data-edit-image-action]') && menuMedia) pickMedia(menuMedia);
-      if (event.target.closest('[data-edit-layout-action]') && menuMedia) startMediaAdjust(menuMedia);
+      if (event.target.closest('[data-edit-layout-action]') && (menuMedia || menuResize)) {
+        startMediaAdjust(menuMedia || menuResize);
+      }
       hideMenu();
     });
 
@@ -1053,7 +1269,7 @@
 
     document.addEventListener('pointerdown', (event) => {
       if (!menu.hidden && !event.target.closest('.seed-edit-menu')) hideMenu();
-      if (activeBox && !event.target.closest('.seed-edit-media, .seed-edit-handle, [data-seed-editing-media]')) {
+      if (activeBox && !event.target.closest('.seed-edit-media, .seed-edit-handle, .seed-edit-handle-h, [data-seed-editing-media]')) {
         stopMediaAdjust();
       }
     }, true);
