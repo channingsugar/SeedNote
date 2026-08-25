@@ -54,7 +54,7 @@ BARS = [
     ("〔对象 H〕", 92, None, "〔差异〕短句"),
 ]
 
-CABIN = "../states-demo/assets/cabin-01.jpg"
+CABIN = "assets/demo/cabin-01.jpg"
 
 
 def source(name=None, href=None):
@@ -339,7 +339,7 @@ def venn3_c():
     )
 
 
-ASSET = "../states-demo/assets"
+ASSET = "assets/demo"
 
 
 def region(inner):
@@ -471,6 +471,7 @@ def evidence_switch_c():
 
 
 CHAPTER_LABEL = {
+    "tokens": "设计语言",
     "grid1": "Grid 1",
     "grid2": "Grid 2",
     "grid3": "Grid 3",
@@ -478,6 +479,53 @@ CHAPTER_LABEL = {
     "more": "More",
     "evidence": "Evidence",
 }
+
+
+def tokens_board():
+    colors = [
+        ("paper", "页面底色"),
+        ("surface", "内容表面"),
+        ("surface-soft", "次级表面"),
+        ("ink", "主要文字"),
+        ("muted", "辅助文字"),
+        ("faint", "弱化文字"),
+        ("accent", "强调色"),
+        ("line", "分割线"),
+    ]
+    types = [
+        ("display", "Display"),
+        ("h1", "Heading 1"),
+        ("h2", "Heading 2"),
+        ("h3", "Heading 3"),
+        ("body", "Body"),
+        ("small", "Small"),
+        ("caption", "Caption"),
+    ]
+    spaces = [
+        ("1", 4), ("2", 8), ("3", 12), ("4", 14), ("5", 20),
+        ("gap", 24), ("6", 28), ("7", 48), ("8", 72),
+    ]
+    color_html = "".join(
+        f'<article class="page-token"><span class="page-token__swatch" style="background:var(--{vid})"></span>'
+        f'<div><b>--{vid}</b><span>{name}</span></div></article>'
+        for vid, name in colors
+    )
+    type_html = "".join(
+        f'<p class="page-token-type" style="font-size:var(--text-{tid})">{name}</p>'
+        for tid, name in types
+    )
+    space_html = "".join(
+        f'<article class="page-token-space"><i style="width:{px}px"></i>'
+        f'<div><b>--space-{sid}</b><span>{px}</span></div></article>'
+        for sid, px in spaces
+    )
+    return (
+        '<div class="page-tokens">'
+        f'<div><h3>颜色</h3><div class="page-token-list">{color_html}</div></div>'
+        f'<div><h3>字号</h3>{type_html}</div>'
+        f'<div><h3>间距</h3>{space_html}</div>'
+        "</div>"
+    )
 
 
 def slide(chapter, no, sid, title, part, body, source=False):
@@ -545,19 +593,20 @@ parts.append("""<!doctype html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>知识汇报模板 · 分屏</title>
-  <link rel="stylesheet" href="../shared/components.css">
+  <link rel="stylesheet" href="design-system/components.css">
   <link rel="stylesheet" href="assets/template.css">
 </head>
 <body>
   <div class="theme-control" id="themeControl" aria-label="主题控制">
     <div class="theme-control__label">
       <span>THEME</span>
-      <strong data-theme-name>Editorial 默认</strong>
+      <strong data-theme-name>Minimal Mono</strong>
     </div>
     <select data-theme-select aria-label="切换主题"></select>
     <button type="button" data-theme-import-trigger>导入主题</button>
+    <button type="button" data-theme-export>导出主题</button>
     <input data-theme-import type="file" accept="application/json,.json" hidden>
-    <p class="theme-control__hint">切换或导入主题后，整页设计语言会同步替换</p>
+    <p class="theme-control__hint">设计语言在本页维护。切换、导入或导出主题后，整页 token 会同步替换</p>
     <div class="theme-control__toast" data-theme-toast role="status" aria-live="polite"></div>
   </div>
 
@@ -566,6 +615,7 @@ parts.append("""<!doctype html>
       <div class="document-nav__brand"><span class="document-nav__mark" aria-hidden="true"></span><strong>SEED</strong></div>
       <div class="document-nav__links">
         <a href="#cover" class="is-active">封面</a>
+        <a href="#tokens">设计语言</a>
         <a href="#grid1">Grid 1</a>
         <a href="#grid2">Grid 2</a>
         <a href="#grid3">Grid 3</a>
@@ -601,7 +651,18 @@ parts.append(cover(
     author="〔作者〕",
     date="〔日期〕",
     cta="开始阅读",
-    cta_href="#grid1",
+    cta_href="#tokens",
+))
+
+parts.append(cover(
+    "tokens", "00", "tokens", "设计语言", "本套模板自己的 Token",
+    "颜色、字号、圆角、线宽、间距。和流式模板不共用。主题栏可切换、导入、导出。",
+    cta="查看 Token",
+    cta_href="#tokens-board",
+))
+parts.append(slide(
+    "tokens", "00.a", "tokens-board", "设计语言", "本套 token，不和流式共用",
+    region(tokens_board()),
 ))
 
 parts.append(cover("grid1", "01", "grid1", "一格", "Grid 1", "整块 Content 占一格。数据来源在白卡里。"))
@@ -712,8 +773,8 @@ parts.append("""        <section class="report-slide" data-chapter="notes" data-
               <li>单元格里 <strong>加粗</strong> 用 strong，<em>强调</em> 用 em（强调色 + 加粗）。同一张表里示意即可，不要另开强调组件。</li>
               <li>Evidence 单独成章：现场图、截图、横屏、条带、Media Switch。不进 Grid 格。封面默认并排多张。</li>
               <li>全屏单独成章：有图、无图，或只有图。永远 1 块。</li>
-              <li>视觉由设计 Token 驱动。主题栏固定在左下角。右键文字编辑、右键图片替换。翻页用键盘或顶栏。</li>
-              <li>这是分屏模板。流式是另一套：templates/editorial-flow/。两套不能互切，也不要加「流式阅读」按钮。</li>
+              <li>视觉由本目录的设计语言驱动：token 在 <code>design-system/</code>，导入导出只在本页主题栏。右键文字编辑、右键图片替换。翻页用键盘或顶栏。</li>
+              <li>这是分屏模板。流式是另一套：templates/editorial-flow/。两套不能互切，也不要加「流式阅读」按钮，也不要挂 seed-edit。</li>
             </ol>
           </footer>
         </section>
@@ -727,8 +788,8 @@ parts.append("""        <section class="report-slide" data-chapter="notes" data-
     </div>
   </div>
 
-  <script src="../shared/design-data.js"></script>
-  <script src="../shared/theme-runtime.js"></script>
+  <script src="design-system/design-data.js"></script>
+  <script src="design-system/theme-runtime.js"></script>
   <script src="assets/template.js"></script>
 </body>
 </html>

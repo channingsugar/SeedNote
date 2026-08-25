@@ -93,20 +93,20 @@
 .report-shell.is-flow .rule {
   display: block;
   width: 100%;
-  height: 2px;
+  height: var(--rule);
   margin: 0;
   border: 0;
   background: var(--c-text);
 }
 .report-shell.is-flow .rule.is-soft {
-  height: 1px;
+  height: var(--rule-soft);
   background: var(--c-line);
 }
 
 /* 主标题下必须有可见强线：有 .rule 就显示；没有就用伪元素补上。不得藏线。 */
 .report-shell.is-flow .slide-head + .rule {
   display: block !important;
-  height: 2px !important;
+  height: var(--rule) !important;
   background: var(--c-text) !important;
   margin-top: var(--s-in);
 }
@@ -116,7 +116,7 @@
 .report-shell.is-flow .slide-head:not(:has(+ .rule))::after {
   content: "";
   display: block;
-  height: 2px;
+  height: var(--rule);
   margin-top: var(--s-in);
   background: var(--c-text);
 }
@@ -148,13 +148,36 @@
   scroll-margin-top: 0;
 }
 
-.report-shell.is-flow .topbar,
-.report-shell.is-flow .progress {
+.report-shell.is-flow[data-catalog] .topbar,
+.report-shell.is-flow[data-catalog] .progress {
   display: none !important;
 }
 .report-shell.is-flow[data-catalog] .flow-lab .topbar,
 .report-shell.is-flow[data-catalog] .flow-lab .progress {
   display: block !important;
+}
+
+.report-shell.is-flow:not([data-catalog]) .flow-stack {
+  gap: 0;
+}
+.report-shell.is-flow:not([data-catalog]) .flow-stack > * + * {
+  margin-top: var(--s-stack);
+}
+.report-shell.is-flow:not([data-catalog]) .flow-stack > .slide-head {
+  margin-top: var(--s-chapter);
+}
+.report-shell.is-flow:not([data-catalog]) .flow-stack > .slide-head:first-child,
+.report-shell.is-flow:not([data-catalog]) .flow-stack > :first-child {
+  margin-top: 0;
+}
+.report-shell.is-flow:not([data-catalog]) .flow-stack > .slide-head + .rule {
+  margin-top: var(--s-in);
+}
+.report-shell.is-flow:not([data-catalog]) .flow-stack > .slide-head + .rule + * {
+  margin-top: var(--s-stack);
+}
+.report-shell.is-flow:not([data-catalog]) .flow-stack > .source-note {
+  margin-top: var(--s-in);
 }
 
 .report-shell.is-flow .report-notes {

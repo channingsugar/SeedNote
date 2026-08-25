@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>流式报告</title>
+  <link rel="stylesheet" href="design-system/components.css">
+  <link rel="stylesheet" href="assets/template.css">
+  <link rel="stylesheet" href="assets/flow.css">
+  <link rel="stylesheet" href="assets/source.css">
+  <link rel="stylesheet" href="assets/lib.css">
+  <link rel="stylesheet" href="assets/v2.css">
+</head>
+<body>
+  <!-- 报告壳：不要加 data-catalog。导航用 .topbar，不要用 .document-nav。主题导入导出只在 index.html。 -->
+  <div class="report-shell is-flow">
+    <header class="topbar" aria-label="文档导航">
+      <div class="topbar-inner">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1.2 12.8 7 7 12.8 1.2 7Z" fill="currentColor"/></svg>
+          </span>
+          <span class="brand-text">报告名 <span class="muted">· 副题</span></span>
+        </div>
+        <nav class="toc" data-component-id="navigation" aria-label="章节目录">
+          <a href="#cover" class="is-active">封面</a>
+          <a href="#chapter-1">第一章</a>
+        </nav>
+      </div>
+    </header>
+    <div class="progress" aria-hidden="true"><span style="width:8%"></span></div>
+
+    <div class="report-stage" data-report-stage>
+      <div class="report-slides" data-report-slides>
+        <section class="report-slide is-chapter-cover is-active" data-chapter="cover" id="cover">
+          <header class="chapter-cover">
+            <span class="chapter-cover__kicker">流式报告</span>
+            <h2 class="chapter-cover__title">主判断写在这里</h2>
+            <p class="chapter-cover__lead">封面导语。没有就删这一段。</p>
+          </header>
+        </section>
+
+        <section class="report-section report-slide" data-chapter="chapter-1" id="chapter-1">
+          <div class="flow-stack">
+            <header class="slide-head">
+              <div class="kicker">01 · 题域</div>
+              <h2>这一章的判断句</h2>
+            </header>
+            <hr class="rule">
+            <div class="research-lead">
+              <p>用目录里已有的父组件往下铺。对照 templates/editorial-flow/index.html。缺组件才新增。</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <dialog class="media-lightbox" id="mediaLightbox" aria-label="查看大图">
+    <div class="media-lightbox-frame">
+      <button class="media-lightbox-close" type="button" aria-label="关闭大图">×</button>
+      <button class="media-lightbox-nav media-lightbox-prev" type="button" aria-label="上一张">‹</button>
+      <div class="media-lightbox-viewport" id="mediaLightboxViewport">
+        <div class="media-lightbox-canvas" id="mediaLightboxCanvas">
+          <img class="media-lightbox-image" id="mediaLightboxImage" alt="" draggable="false">
+        </div>
+      </div>
+      <button class="media-lightbox-nav media-lightbox-next" type="button" aria-label="下一张">›</button>
+      <div class="media-lightbox-count" aria-live="polite"></div>
+      <div class="media-lightbox-zoom-controls" aria-label="大图缩放">
+        <button class="media-zoom-out" type="button" aria-label="缩小">−</button>
+        <button class="media-zoom-reset" type="button" aria-label="还原缩放">100%</button>
+        <button class="media-zoom-in" type="button" aria-label="放大">+</button>
+      </div>
+    </div>
+  </dialog>
+  <link rel="stylesheet" href="editor/seed-edit.css">
+  <script src="design-system/design-data.js"></script>
+  <script src="design-system/theme-runtime.js"></script>
+  <script src="editor/seed-edit.js"></script>
+  <script src="assets/template.js"></script>
+  <script src="assets/source.js"></script>
+</body>
+</html>

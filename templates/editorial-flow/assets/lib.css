@@ -58,6 +58,10 @@
   font-weight: 700;
   letter-spacing: .08em;
 }
+.stat-card:not([data-variant="note"]) .stat-card__kicker,
+.stat-card:not([data-variant="note"]) .stat-card__ratio { display: none; }
+.stat-card[data-variant="note"] .stat-card__kicker:empty,
+.stat-card[data-variant="note"] .stat-card__ratio:empty { display: none; }
 .stat-card__num {
   display: block;
   color: var(--c-text);
@@ -445,7 +449,19 @@
   border: 1px solid var(--c-line);
   background: var(--c-bg-subtle);
 }
-.token[data-token-kind="size"] {
+input.token-color {
+  box-sizing: border-box;
+  padding: 0;
+  border-radius: 2px;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+input.token-color::-webkit-color-swatch-wrapper { padding: 0; }
+input.token-color::-webkit-color-swatch { border: 0; border-radius: 1px; }
+input.token-color::-moz-color-swatch { border: 0; }
+.token[data-token-kind="size"],
+.token[data-token-kind="type"] {
   grid-template-columns: minmax(0, 1fr) auto;
 }
 .token[data-token-kind="size"] .token-swatch {
@@ -455,7 +471,6 @@
   border: 0;
   background: var(--c-text);
 }
-.token[data-token-kind="type"] .token-swatch { display: none; }
 .token-meta { min-width: 0; }
 .token-meta b {
   display: block;
@@ -469,10 +484,12 @@
   font-size: 11px;
 }
 .token-value {
+  justify-self: end;
   color: var(--c-text);
   font-family: var(--f-num);
   font-size: 13px;
   font-variant-numeric: tabular-nums;
+  text-align: right;
   white-space: nowrap;
 }
 .token-sample {

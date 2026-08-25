@@ -1,6 +1,6 @@
 /* Design System canvas chrome only.
-   Tokens + component visuals: ../templates/shared/components.css
-   Token defaults: ../templates/shared/design-data.js
+   Tokens + component visuals: ../shared/components.css
+   Token defaults: ../shared/design-data.js
    Page-regions rules stay here until the Pages canvas is rebuilt onto page-grid. */
 
 :root {

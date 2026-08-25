@@ -4,13 +4,13 @@ description: >-
   Reads user research, writes a chapter-tree markdown reference, then builds
   Outputs/<slug>/ as a paginated 分屏 deck from templates/editorial-page/.
   One screen is one audience question, not one component. Use when the user
-  pastes or points to HTML, 大纲, 调研, Inputs, or asks to 套模板 / 生成汇报 / 组织内容 /
-  呈现项目 / 分页 / 一屏一问. Do not use for 流式长文规整 — that is editorial-html-normalize.
+  asks to 分页 / 分屏 / 一屏一问, or explicitly wants a deck. Do not use for
+  流式长文、独立版、大纲/笔记套组件库 — that is editorial-html-flow.
 ---
 
 # 分页 HTML（分屏）
 
-这是**分页 / 分屏**模板。流式长文规整是另一套：`templates/editorial-flow/`，skill 是 `editorial-html-normalize`。两套不能互切：不要加载 `flow.css`，不要加「流式阅读」按钮，不要把 `.is-deck` 改成 `.is-flow`。
+这是**分页 / 分屏**模板。流式长文、大纲套组件库、独立版是另一套：`templates/editorial-flow/`，skill 是 `editorial-html-flow`。两套不能互切：不要加载 `flow.css`，不要加「流式阅读」按钮，不要把 `.is-deck` 改成 `.is-flow`。没说分页时不要走本 skill。
 
 报告的原子是听众的一步。演示的原子是一个父组件。抄演示的 markup，不抄演示的切法。
 
@@ -151,7 +151,7 @@ description: >-
 
 ## 3. 页面与父组件
 
-形式跟着问句走。markup 从 `templates/editorial-page/` 抄壳。这是分屏：`.report-shell.is-deck`，带标题栏和翻页。不要抄 `templates/editorial-flow/`。模板按分页穷举父组件：标题是组件名，副题是使用场景。报告抄 class 和结构，不要按它一组件一屏切。Evidence 多一种比例时打开 `templates/draft/editorial-flow/states-demo/`。样式拷到 `Outputs/<slug>/lib/`：`template.css`、`template.js`，以及 `templates/shared/` 的 `components.css`、`theme-runtime.js`、`design-data.js`。再从仓库根 `editor/` 拷 `seed-edit.css` / `seed-edit.js` 到 `lib/editor/`，在 HTML 引入；不要靠 `template.js` 里的旧白名单编辑器。不要拷 `flow.css`。不要输出去读 `../../design-system/`。
+形式跟着问句走。markup 从 `templates/editorial-page/` 抄壳。这是分屏：`.report-shell.is-deck`，带标题栏和翻页。不要抄 `templates/editorial-flow/`。模板按分页穷举父组件：标题是组件名，副题是使用场景。报告抄 class 和结构，不要按它一组件一屏切。Evidence 多一种比例时打开 `templates/draft/editorial-flow/states-demo/`。样式拷到 `Outputs/<slug>/lib/`：`template.css`、`template.js`，以及 `templates/editorial-page/design-system/` 的 `components.css`、`theme-runtime.js`、`design-data.js` 和 `fonts/`。编辑器用 `template.js` 内置的右键菜单，不要挂 `seed-edit`。不要拷 `flow.css`。不要读流式的 `design-system/`，也不要读仓库根的旧 `design-system/`。设计语言和模板都在 `templates/editorial-page/index.html`。
 
 先选分页，再往格子里放**一种** Content。一个 `.page-grid` 只放一种。不要发明新的分页，也不要在一个格子里叠两种 Content。`report-section__stack`、`report-split`、`.block-set` 不是分页，不要抄。
 
@@ -267,6 +267,7 @@ Evidence 三种素材：通用图默认 Fill；截图 `shot` + `0.46:1` Fit；�
 - 把全屏当成另一种 Grid 分组，或在全屏里放多格
 - 发明新的分页，或把 `report-section__stack` / `report-split` 带进报告
 - 加流式切换、加载 `flow.css`，或把 `.is-deck` 改成 `.is-flow`
+- 给分屏挂 `seed-edit`，或去读流式的 `design-system/`
 - Formula 超过 5 个因子，Matrix 加第 5 格，Venn 加到 4 圈，Line Chart 画 3 条线
 - 把公式 / Matrix / Line / Venn / Evidence 放进 2 / 3 / 4 / 5–9 / 10+ 或全屏
 - Line Chart 用 `preserveAspectRatio="none"` 拉满格子，或去掉纵轴 / 图例 / 点

@@ -309,12 +309,14 @@
     let index = 0;
 
     const setChromeHeight = () => {
-      const navEl = document.querySelector('.document-nav');
+      const navEl = document.querySelector('.document-nav') || document.querySelector('.topbar');
       document.documentElement.style.setProperty('--chrome-height', `${navEl?.offsetHeight || 0}px`);
     };
 
     const syncNavAlign = () => {
-      const track = nav?.querySelector('.document-nav__links');
+      const track = nav?.matches?.('.toc, .document-nav__links')
+        ? nav
+        : nav?.querySelector('.document-nav__links, .toc');
       if (!track) return;
       track.classList.remove('is-overflow');
       track.classList.toggle('is-overflow', track.scrollWidth > track.clientWidth + 1);
@@ -330,7 +332,9 @@
     };
 
     const activateNav = (chapter) => {
-      const track = nav?.querySelector('.document-nav__links');
+      const track = nav?.matches?.('.toc, .document-nav__links')
+        ? nav
+        : nav?.querySelector('.document-nav__links, .toc');
       links.forEach((link) => {
         const href = (link.getAttribute('href') || '').replace('#', '');
         const on = href === chapter;

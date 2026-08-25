@@ -1,15 +1,14 @@
 
 @font-face {
   font-family: "Fliggy Travel";
-  src: url(../../shared/fonts/DINAlternate.ttf) format("truetype");
+  src: url(../design-system/fonts/DINAlternate.ttf) format("truetype");
   font-weight: 500;
   font-style: italic;
   font-display: swap;
 }
 
 /* ============================================================
-   携宠出行服务 · Apple-inspired
-   纯白背景 · 中性灰阶 · 单一蓝色强调 · 细线分隔
+   流式组件库 · 中性灰阶 · 单一蓝色强调 · 细线分隔
    ============================================================ */
 
 :root {
@@ -62,6 +61,8 @@
   /* 正负向（只给表的数据栏用，不用在表头 / 左列） */
   --c-pos: var(--c-success);
   --c-neg: var(--c-danger);
+  --rule: 1px;
+  --rule-soft: 1px;
 
   /* 圆角（克制） */
   --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 22px;
@@ -302,7 +303,7 @@ button { font-family: inherit; }
 .tagline a:hover { border-bottom-color: var(--c-accent); }
 .tagline .sep { color: var(--c-text-4); margin: 0 4px; }
 
-/* 统一来源 / 引用：以“来源：运输调研 · 07 出行痛点”为基准 */
+/* 统一来源 / 引用 */
 .source-note {
   margin: 14px 0 0;
   color: var(--c-text-4);
@@ -1096,7 +1097,7 @@ button { font-family: inherit; }
   box-decoration-break: clone;
 }
 
-/* 02 · 痛点总结：四条纯文字证据带 */
+/* 议题格：四条纯文字证据带 */
 .pain-text-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2232,7 +2233,7 @@ button:focus-visible, a:focus-visible {
 }
 
 /* ============================================================
-   PMF · 安索夫矩阵
+   四象限矩阵
    ============================================================ */
 .ansoff-wrap {
   display: flex; flex-direction: column;
@@ -2684,7 +2685,7 @@ button:focus-visible, a:focus-visible {
 }
 
 /* ============================================================
-   08 · 运输全景（迁自运输调研）
+   图文卡
    ============================================================ */
 .transport-overview .slide-head { margin-bottom: 34px; }
 .transport-methods { margin-top: 58px; }
@@ -3038,7 +3039,7 @@ button:focus-visible, a:focus-visible {
   font-weight: 700;
 }
 .airline-matrix .user-value-row td:first-child { color: var(--c-accent); }
-/* 11–14 · 完整运输调研 */
+/* 对照表 */
 .transport-research .slide-head { margin-bottom: 40px; }
 .transport-research h3, .transport-research h4 { margin-top: 0; }
 .rail-key-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 38px; }
@@ -3242,7 +3243,7 @@ button:focus-visible, a:focus-visible {
 }
 
 /* ============================================================
-   15 · 酒店携宠入住洞察
+   导语与调研块
    ============================================================ */
 .hotel-insight .slide-head { margin-bottom: 34px; }
 .hotel-insight .slide-head .sub { max-width: none; }
@@ -3349,7 +3350,7 @@ button:focus-visible, a:focus-visible {
   .hotel-qa-verdict article + article { border-top: 1px solid var(--tint-line); border-left: 0; }
 }
 
-/* 酒店源调研 02–06：映射到总览 16–20 */
+/* 排行与调研表 */
 .hotel-research .slide-head { margin-bottom: 40px; }
 .hotel-research .plain-table-wrap {
   overflow-x: auto;
@@ -3919,7 +3920,7 @@ button:focus-visible, a:focus-visible {
 }
 .chapter:not(.cover) > .slide-head + .rule {
   display: block !important;
-  height: 2px !important;
+  height: var(--rule) !important;
   background: var(--c-text) !important;
   margin-top: var(--s-in);
 }
@@ -3929,7 +3930,7 @@ button:focus-visible, a:focus-visible {
 .chapter:not(.cover) > .slide-head:not(:has(+ .rule))::after {
   content: "";
   display: block;
-  height: 2px;
+  height: var(--rule);
   margin-top: var(--s-in);
   background: var(--c-text);
 }

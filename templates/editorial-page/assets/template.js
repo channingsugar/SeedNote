@@ -1240,12 +1240,12 @@
   if (mountDeck()) {
     bindEvidenceLayout();
     drawLineCharts();
-    if (!window.SeedEdit) mountReportEditor();
+    mountReportEditor();
     return;
   }
   bindEvidenceLayout();
   drawLineCharts();
-  if (!window.SeedEdit) mountReportEditor();
+  mountReportEditor();
 
   const nav = document.querySelector('[data-component-id="navigation"]');
   const links = [...(nav?.querySelectorAll('a') || [])];

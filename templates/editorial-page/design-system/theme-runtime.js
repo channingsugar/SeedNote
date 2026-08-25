@@ -130,6 +130,21 @@
     return applyTheme(theme);
   }
 
+  function exportThemeFile() {
+    const payload = { version: DS.version, theme: clone(activeTheme) };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const safe = (activeTheme.name || 'theme').replace(/[^\w\u4e00-\u9fff-]+/g, '-');
+    link.href = url;
+    link.download = `${safe}.theme.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    return payload;
+  }
+
   async function importThemeFile(file) {
     const data = JSON.parse(await file.text());
     if (data.version !== DS.version || !validateTheme(data.theme)) {
@@ -155,6 +170,7 @@
     const select = rootEl.querySelector('[data-theme-select]');
     const importInput = rootEl.querySelector('[data-theme-import]');
     const importButton = rootEl.querySelector('[data-theme-import-trigger]');
+    const exportButton = rootEl.querySelector('[data-theme-export]');
     const nameNode = rootEl.querySelector('[data-theme-name]');
     const toast = rootEl.querySelector('[data-theme-toast]');
 
@@ -189,6 +205,10 @@
     });
 
     importButton?.addEventListener('click', () => importInput?.click());
+    exportButton?.addEventListener('click', () => {
+      exportThemeFile();
+      showToast(`已导出：${activeTheme.name}`);
+    });
     importInput?.addEventListener('change', async () => {
       const file = importInput.files?.[0];
       if (!file) return;
@@ -213,6 +233,7 @@
     getThemes: () => clone(store.themes),
     applyTheme,
     setActiveTheme,
+    exportThemeFile,
     importThemeFile,
     onChange,
     mountThemeControl,

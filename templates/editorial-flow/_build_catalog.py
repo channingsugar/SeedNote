@@ -8,7 +8,7 @@
 from pathlib import Path
 
 OUT = Path(__file__).with_name("index.html")
-IMG = "../states-demo/assets"
+IMG = "assets/demo"
 CABIN = f"{IMG}/cabin-01.jpg"
 CABIN2 = f"{IMG}/cabin-02.jpg"
 CARGO = f"{IMG}/air-cargo-01.jpg"
@@ -61,15 +61,15 @@ def formula():
     op = '<div class="market-operator" aria-hidden="true">{}</div>'
     return (
         '<div class="market-formula" aria-label="公式">'
-        + factor("7,800", "万人", "城镇犬猫宠主")
+        + factor("A", "单位", "因子：基数")
         + op.format("×")
-        + factor("71", "%", "有携宠出行意愿 / 需求")
+        + factor("B", "%", "因子：转化率")
         + op.format("×")
-        + factor("50", "%", "有意愿人群选择出行")
+        + factor("C", "%", "因子：采用率")
         + op.format("×")
-        + factor("2", "次 / 年", "年均携宠出行频次")
+        + factor("D", "次", "因子：频次")
         + op.format("=")
-        + factor("5,538", "万次 / 年", "年度潜在携宠旅行次数", True)
+        + factor("N", "次", "结果：把算法写在这里", True)
         + "</div>"
     )
 
@@ -98,11 +98,12 @@ def stat_row(*cells, cols=None):
     return f'<div class="stat-row"{attr}>{"".join(cells)}</div>'
 
 
-def stat_card(num, title, body, kicker=None, ratio=None):
-    kick = f'<span class="stat-card__kicker">{kicker}</span>' if kicker else ""
-    rat = f'<span class="stat-card__ratio">{ratio}</span>' if ratio else ""
+def stat_card(num, title, body, kicker=None, ratio=None, variant=None):
+    kick = f'<span class="stat-card__kicker">{kicker or ""}</span>'
+    rat = f'<span class="stat-card__ratio">{ratio or ""}</span>'
+    var = ' data-variant="note"' if variant == "note" else ""
     return (
-        f'<article class="stat-card">{kick}'
+        f'<article class="stat-card"{var}>{kick}'
         f'<strong class="stat-card__num">{num}{rat}</strong>'
         f"<h3>{title}</h3><p>{body}</p></article>"
     )
@@ -155,18 +156,25 @@ def plain_grid(*cards, cols=None, surface=None):
 
 def token_item(var, label, value, kind="size", sample=None):
     swatch = ""
+    shown = value
     if kind == "color":
-        swatch = f'<span class="token-swatch" style="background:{value}"></span>'
+        hexv = value if str(value).startswith("#") else f"#{value}"
+        swatch = (
+            f'<input type="color" class="token-swatch token-color" '
+            f'value="{hexv.lower()}" aria-label="{var}">'
+        )
+        shown = hexv.upper()
     elif kind == "size":
         w = value if str(value).endswith("px") else f"{value}px"
         swatch = f'<span class="token-swatch" style="width:{w}"></span>'
-    else:
-        swatch = '<span class="token-swatch"></span>'
+        shown = str(value)[:-2] if str(value).endswith("px") else str(value)
+    elif kind == "type" and str(value).endswith("px") and "clamp" not in str(value):
+        shown = str(value)[:-2]
     extra = f'<span class="token-sample" style="font-size:{value}">{sample}</span>' if sample else ""
     return (
         f'<article class="token" data-css-var="{var}" data-token-kind="{kind}">'
         f"{swatch}<div class=\"token-meta\"><b>{var}</b><span>{label}</span></div>"
-        f'<span class="token-value">{value}</span>{extra}</article>'
+        f'<span class="token-value">{shown}</span>{extra}</article>'
     )
 
 
@@ -201,8 +209,10 @@ def tokens():
     ])
     line = (
         '<div class="token-board__col"><h3>线</h3>'
-        '<div class="token-line"><hr class="rule"><small>.rule 强 2px · 主标题下必有强线</small></div>'
-        '<div class="token-line"><hr class="rule is-soft"><small>.rule.is-soft 弱 1px</small></div>'
+        + token_item("--rule", "强 · 主标题下必有", "1", "size")
+        + token_item("--rule-soft", "弱", "1", "size")
+        + '<div class="token-line"><hr class="rule"><small>预览 · 强线</small></div>'
+        + '<div class="token-line"><hr class="rule is-soft"><small>预览 · 弱线</small></div>'
         "</div>"
     )
     return f'<div class="token-board">{spacing}{type_}{color}{line}</div>'
@@ -215,25 +225,14 @@ def topbar():
         <span class="brand-mark" aria-hidden="true">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1.2 12.8 7 7 12.8 1.2 7Z" fill="currentColor"/></svg>
         </span>
-        <span class="brand-text">携宠出行服务 <span class="muted">· Pet-friendly Travel</span></span>
+        <span class="brand-text">报告名称 <span class="muted">· 副题</span></span>
       </div>
       <nav class="toc" aria-label="章节目录">
         <a href="#cover">封面</a>
-        <a href="#market">市场</a>
-        <a href="#pain">痛点</a>
-        <a href="#transport">运输全景</a>
-        <a href="#air-scale">航空规模</a>
-        <a href="#air-solution">飞机建议</a>
-        <a href="#rail">高铁</a>
-        <a href="#rail-solution">高铁建议</a>
-        <a href="#land">陆运</a>
-        <a href="#land-solution">陆运建议</a>
-        <a href="#granularity">资质</a>
-        <a href="#hotel-questions">住宿七问</a>
-        <a href="#hotel-survey">top10酒店</a>
-        <a href="#hotel-findings">调研小结</a>
-        <a href="#supply-close">竞品调研</a>
-        <a href="#hotel-solution">酒店</a>
+        <a href="#ch-1">第一章</a>
+        <a href="#ch-2">第二章</a>
+        <a href="#ch-3">第三章</a>
+        <a href="#notes">怎么用</a>
       </nav>
       <div class="tools" role="group" aria-label="工具">
         <span class="counter">8 / 22</span>
@@ -247,7 +246,7 @@ def topbar():
 
 
 def rail_chart():
-    return """<figure class="rail-growth-chart" aria-label="2025 年 4 月至 2026 年 7 月，高铁宠物托运覆盖站点与可办车次增长趋势">
+    return """<figure class="rail-growth-chart" aria-label="折线图：同一指标随时间变化">
           <div class="rail-growth-chart-scroll">
             <svg viewBox="0 0 1160 230" role="img">
               <line class="chart-grid" x1="68" y1="178" x2="1120" y2="178" />
@@ -261,41 +260,41 @@ def rail_chart():
               <text class="chart-tick" x="56" y="109" text-anchor="end">200</text>
               <text class="chart-tick" x="56" y="72.5" text-anchor="end">300</text>
               <text class="chart-tick" x="56" y="36" text-anchor="end">400</text>
-              <text class="chart-axis-label" x="17" y="112" text-anchor="middle" transform="rotate(-90 17 112)">数量（站 / 趟）</text>
+              <text class="chart-axis-label" x="17" y="112" text-anchor="middle" transform="rotate(-90 17 112)">数量</text>
               <line class="chart-line chart-line--stations" x1="90" y1="176.2" x2="430" y2="168.9" />
               <line class="chart-line chart-line--stations" x1="430" y1="168.9" x2="770" y2="133.8" />
               <line class="chart-line chart-line--stations" x1="770" y1="133.8" x2="1110" y2="118.5" />
               <line class="chart-line chart-line--trains" x1="90" y1="174.4" x2="430" y2="164.1" />
               <line class="chart-line chart-line--trains" x1="430" y1="164.1" x2="770" y2="94.8" />
               <line class="chart-line chart-line--trains" x1="770" y1="94.8" x2="1110" y2="45.1" />
-              <g aria-label="覆盖站点">
+              <g aria-label="系列 B">
                 <circle class="chart-point chart-point--stations" cx="90" cy="176.2" r="4" />
                 <circle class="chart-point chart-point--stations" cx="430" cy="168.9" r="4" />
                 <circle class="chart-point chart-point--stations" cx="770" cy="133.8" r="4" />
                 <circle class="chart-point chart-point--stations" cx="1110" cy="118.5" r="4" />
-                <text class="chart-value chart-value--stations" x="90" y="195" text-anchor="middle">5 站</text>
-                <text class="chart-value chart-value--stations" x="430" y="188" text-anchor="middle">25 站</text>
-                <text class="chart-value chart-value--stations" x="770" y="153" text-anchor="middle">121 站</text>
-                <text class="chart-value chart-value--stations" x="1110" y="138" text-anchor="end">163 站</text>
+                <text class="chart-value chart-value--stations" x="90" y="195" text-anchor="middle">5</text>
+                <text class="chart-value chart-value--stations" x="430" y="188" text-anchor="middle">25</text>
+                <text class="chart-value chart-value--stations" x="770" y="153" text-anchor="middle">121</text>
+                <text class="chart-value chart-value--stations" x="1110" y="138" text-anchor="end">163</text>
               </g>
-              <g aria-label="可办车次">
+              <g aria-label="系列 A">
                 <circle class="chart-point chart-point--trains" cx="90" cy="174.4" r="4" />
                 <circle class="chart-point chart-point--trains" cx="430" cy="164.1" r="4" />
                 <circle class="chart-point chart-point--trains" cx="770" cy="94.8" r="4" />
                 <circle class="chart-point chart-point--trains" cx="1110" cy="45.1" r="4" />
-                <text class="chart-value" x="90" y="158" text-anchor="middle">10 趟</text>
-                <text class="chart-value" x="430" y="148" text-anchor="middle">38 趟</text>
-                <text class="chart-value" x="770" y="79" text-anchor="middle">228 趟</text>
-                <text class="chart-value" x="1110" y="30" text-anchor="end">364 趟</text>
+                <text class="chart-value" x="90" y="158" text-anchor="middle">10</text>
+                <text class="chart-value" x="430" y="148" text-anchor="middle">38</text>
+                <text class="chart-value" x="770" y="79" text-anchor="middle">228</text>
+                <text class="chart-value" x="1110" y="30" text-anchor="end">364</text>
               </g>
-              <text class="chart-date" x="90" y="218" text-anchor="middle">2025.04</text>
-              <text class="chart-date" x="430" y="218" text-anchor="middle">2025.06</text>
-              <text class="chart-date" x="770" y="218" text-anchor="middle">2026.04</text>
-              <text class="chart-date" x="1110" y="218" text-anchor="end">2026.07</text>
+              <text class="chart-date" x="90" y="218" text-anchor="middle">T1</text>
+              <text class="chart-date" x="430" y="218" text-anchor="middle">T2</text>
+              <text class="chart-date" x="770" y="218" text-anchor="middle">T3</text>
+              <text class="chart-date" x="1110" y="218" text-anchor="end">T4</text>
               <line class="chart-line chart-line--trains" x1="820" y1="18" x2="852" y2="18" />
-              <text class="chart-legend" x="860" y="22">可办车次</text>
+              <text class="chart-legend" x="860" y="22">系列 A</text>
               <line class="chart-line chart-line--stations" x1="960" y1="18" x2="992" y2="18" />
-              <text class="chart-legend" x="1000" y="22">覆盖站点</text>
+              <text class="chart-legend" x="1000" y="22">系列 B</text>
             </svg>
           </div>
         </figure>"""
@@ -309,16 +308,16 @@ def ansoff():
             f'<p class="cell-hint">{hint}</p>{extra}</div>'
         )
     return f"""<div class="ansoff-wrap">
-    <div class="ansoff-grid" aria-label="安索夫矩阵：规模化 × 服务空白">
+    <div class="ansoff-grid" aria-label="四象限矩阵：纵轴规模化 × 横轴空白度">
       <div class="ansoff-corner"></div>
-      <div class="ansoff-col-head"><span class="ansoff-kicker">服务空白度 · 低</span><span class="ansoff-title">市场渗透</span></div>
-      <div class="ansoff-col-head"><span class="ansoff-kicker accent">服务空白度 · 高</span><span class="ansoff-title">产品开发</span></div>
+      <div class="ansoff-col-head"><span class="ansoff-kicker">空白度 · 低</span><span class="ansoff-title">象限 · 渗透</span></div>
+      <div class="ansoff-col-head"><span class="ansoff-kicker accent">空白度 · 高</span><span class="ansoff-title">象限 · 开发</span></div>
       <div class="ansoff-row-head"><span class="ansoff-kicker">规模化 · 高</span></div>
-      {cell("风险等级 I", "垂直品类服务", "代办、专车与单点深耕。", "规模化高 / 服务空白低。既有供给相对充分，增长来自渗透率提升。")}
-      {cell("风险等级 II", "一站式服务（代理）", "整合资质、运输、住宿与目的地链路。", "规模化高 / 服务空白高。", extra='<p class="cell-hint">最契合当前市场需求，且服务空白、潜力高。</p>', cls=" accent")}
+      {cell("等级 I", "象限名称 A", "高规模、低空白时做什么。", "规模化高 / 空白度低。增长来自既有供给的渗透。")}
+      {cell("等级 II", "象限名称 B", "高规模、高空白时做什么。", "规模化高 / 空白度高。", extra='<p class="cell-hint">需要强调的象限加 accent。</p>', cls=" accent")}
       <div class="ansoff-row-head"><span class="ansoff-kicker">规模化 · 低</span></div>
-      {cell("风险等级 II", "拓展机会市场", "将既有垂直能力复制到新客群 / 新场景。", "规模化低 / 服务空白低。需求较分散，增长依赖区域与客群拓展。", cls=" is-hatch")}
-      {cell("风险等级 IV", "自助型服务（DIY）", "面向新市场建立全新的自助服务形态。", "规模化低 / 服务空白高。用户更小众，市场与服务能力需同步教育。", cls=" is-quiet")}
+      {cell("等级 III", "象限名称 C", "低规模、低空白时做什么。", "规模化低 / 空白度低。增长依赖新客群或新区域。", cls=" is-hatch")}
+      {cell("等级 IV", "象限名称 D", "低规模、高空白时做什么。", "规模化低 / 空白度高。市场与能力都要重新教育。", cls=" is-quiet")}
     </div>
   </div>"""
 
@@ -327,46 +326,46 @@ def city_network():
     return """<div class="hotel-city-network">
         <span id="sampleDateText" hidden></span>
         <div class="section-head">
-          <div><p>点击左侧出发城市，再点击右侧目的地查看航班或车次。</p></div>
-          <div class="legend"><span><i></i>✈ 飞机客舱</span><span class="train"><i></i>🚆 高铁托运</span></div>
+          <div><p>左侧选起点，右侧选终点，中间看两种关系是否连通。用于点对点供给、覆盖或通路。</p></div>
+          <div class="legend"><span><i></i>方式 A</span><span class="train"><i></i>方式 B</span></div>
         </div>
-        <section class="network-shell" aria-label="出发城市与目的地连线">
+        <section class="network-shell" aria-label="起点与终点连线">
           <div class="network-toolbar">
             <b>显示方式</b>
-            <div class="mode-filter" role="group" aria-label="交通方式筛选">
+            <div class="mode-filter" role="group" aria-label="关系类型筛选">
               <button class="active" data-mode="all" type="button">全部</button>
-              <button data-mode="flight" type="button">飞机</button>
-              <button data-mode="rail" type="button">高铁</button>
+              <button data-mode="flight" type="button">方式 A</button>
+              <button data-mode="rail" type="button">方式 B</button>
             </div>
             <span class="network-status" id="networkStatus">读取数据中</span>
           </div>
           <div class="network-stage" id="networkStage">
             <aside class="city-column origins">
-              <p class="column-label">出发城市</p>
+              <p class="column-label">起点</p>
               <div class="city-list" id="originList"></div>
             </aside>
             <div class="connection-area" id="connectionArea">
               <svg id="networkSvg" aria-hidden="true"></svg>
-              <div class="connection-empty" id="connectionEmpty">选择左侧城市<br>查看已经核到的出行通路</div>
+              <div class="connection-empty" id="connectionEmpty">选择左侧起点<br>查看已核到的连通关系</div>
               <div class="origin-summary" id="originSummary"></div>
               <div class="route-detail" id="routeDetail" hidden></div>
             </div>
             <aside class="city-column destinations">
-              <p class="column-label">旅行目的地候选</p>
+              <p class="column-label">终点候选</p>
               <div id="destinationList"></div>
             </aside>
           </div>
         </section>
         <div class="section-head top20-head">
-          <div><h2>Top 20 城市表</h2><p>通达数按本轮已核验结果统计，适合与酒店需求和供给一起判断。</p></div>
+          <div><h2>节点表</h2><p>终点按连通数排序。列：类型、信号、已核起点数、方式。</p></div>
         </div>
         <div class="table-tools">
-          <input id="citySearch" type="search" placeholder="搜索城市、类型或需求信号" aria-label="搜索目的地">
-          <select id="cityType" aria-label="筛选目的地类型"><option value="all">全部类型</option></select>
+          <input id="citySearch" type="search" placeholder="搜索节点、类型或信号" aria-label="搜索终点">
+          <select id="cityType" aria-label="筛选终点类型"><option value="all">全部类型</option></select>
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>#</th><th>目的地</th><th>类型</th><th>需求信号</th><th>已核出发城市</th><th>方式</th></tr></thead>
+            <thead><tr><th>#</th><th>终点</th><th>类型</th><th>信号</th><th>已核起点</th><th>方式</th></tr></thead>
             <tbody id="top20Rows"></tbody>
           </table>
         </div>
@@ -375,22 +374,22 @@ def city_network():
 
 def hotel_ranking():
     rows = [
-        (1, "杭州桐庐康莱德酒店", "豪华型", "99.20", "54", "2,116", "7,703", "9,166"),
-        (2, "杭州富春芳草地臻品之选度假酒店", "豪华型", "93.43", "38", "823", "9,918", "12,173"),
-        (3, "朴宿·所在民宿(新安江店)", "豪华型", "91.48", "38", "1,297", "2,982", "5,043"),
-        (4, "桐庐语山水·叙旧民宿", "高档型", "87.05", "37", "500", "1,806", "3,330"),
-        (5, "杭州西溪花间堂", "豪华型", "86.92", "37", "294", "3,394", "4,046"),
-        (6, "杭州开元森泊度假乐园", "豪华型", "80.71", "18", "336", "5,755", "4,858"),
-        (7, "千岛湖绿城蓝湾度假酒店", "高档型", "75.79", "15", "259", "2,243", "3,164"),
-        (8, "杭州天域开元观堂", "豪华型", "75.10", "16", "172", "2,773", "1,912"),
-        (9, "大乐之野(桐庐店)", "高档型", "70.73", "11", "748", "428", "672"),
-        (10, "建德云漫松间温泉美宿", "高档型", "68.81", "8", "177", "3,601", "2,430"),
-        (11, "杭州临安青山湖科技城万丽酒店", "豪华型", "68.21", "14", "178", "221", "870"),
-        (12, "草塗·温泉建筑美宿(桐庐店)", "高档型", "64.48", "5", "193", "3,496", "2,514"),
+        (1, "对象名称 01", "档位 A", "99.20", "54", "2,116", "7,703", "9,166"),
+        (2, "对象名称 02", "档位 A", "93.43", "38", "823", "9,918", "12,173"),
+        (3, "对象名称 03", "档位 A", "91.48", "38", "1,297", "2,982", "5,043"),
+        (4, "对象名称 04", "档位 B", "87.05", "37", "500", "1,806", "3,330"),
+        (5, "对象名称 05", "档位 A", "86.92", "37", "294", "3,394", "4,046"),
+        (6, "对象名称 06", "档位 A", "80.71", "18", "336", "5,755", "4,858"),
+        (7, "对象名称 07", "档位 B", "75.79", "15", "259", "2,243", "3,164"),
+        (8, "对象名称 08", "档位 A", "75.10", "16", "172", "2,773", "1,912"),
+        (9, "对象名称 09", "档位 B", "70.73", "11", "748", "428", "672"),
+        (10, "对象名称 10", "档位 B", "68.81", "8", "177", "3,601", "2,430"),
+        (11, "对象名称 11", "档位 A", "68.21", "14", "178", "221", "870"),
+        (12, "对象名称 12", "档位 B", "64.48", "5", "193", "3,496", "2,514"),
     ]
     body = "".join(
         f'<tr><td class="rank">{r[0]}</td><td class="hotel-name">{r[1]}</td>'
-        f'<td class="hotel-tier-cell"><span class="hotel-tier {"tier-luxury" if r[2]=="豪华型" else "tier-upscale"}">{r[2]}</span></td>'
+        f'<td class="hotel-tier-cell"><span class="hotel-tier {"tier-luxury" if r[2]=="档位 A" else "tier-upscale"}">{r[2]}</span></td>'
         f'<td class="score total">{r[3]}</td><td class="score">{r[4]}</td><td class="score">{r[5]}</td>'
         f'<td class="score">{r[6]}</td><td class="score">{r[7]}</td></tr>'
         for r in rows
@@ -398,14 +397,14 @@ def hotel_ranking():
     return f"""<section class="hotel-ranking-block">
           <div class="hotel-ranking-head">
             <div>
-              <h4>杭州宠物友好酒店热度榜</h4>
-              <p>按综合分降序排列。目录展示前 12 名；报告里窗口可滚动查看全部。</p>
+              <h4>排行榜标题</h4>
+              <p>按综合分降序。目录展示前 12 行；报告里窗口可滚动看全部。</p>
             </div>
-            <span class="hotel-ranking-count">12 / 161 家</span>
+            <span class="hotel-ranking-count">12 / 161</span>
           </div>
           <div class="plain-table-wrap hotel-ranking-scroll" tabindex="0">
             <table class="poi-table hotel-ranking-table">
-              <thead><tr><th>排名</th><th>酒店名称</th><th>档位</th><th>综合分</th><th>笔记数</th><th>评论数</th><th>收藏数</th><th>点赞数</th></tr></thead>
+              <thead><tr><th>排名</th><th>对象名称</th><th>档位</th><th>综合分</th><th>指标 A</th><th>指标 B</th><th>指标 C</th><th>指标 D</th></tr></thead>
               <tbody>{body}</tbody>
             </table>
           </div>
@@ -413,30 +412,30 @@ def hotel_ranking():
 
 
 def funnel_chart():
-    return """<figure class="hotel-funnel-chart" aria-label="杭州酒店筛选路径">
+    return """<figure class="hotel-funnel-chart" aria-label="漏斗：样本如何逐级收窄">
           <div class="hotel-funnel-chart-scroll">
             <svg viewBox="0 0 1200 300" xmlns="http://www.w3.org/2000/svg" role="img">
               <path class="funnel-line" d="M110 34 L600 94 L1090 154"/>
               <path class="funnel-line is-muted" d="M110 34 L410 190"/>
               <g transform="translate(110 34)">
                 <circle class="funnel-node" r="7"/>
-                <text class="funnel-value" x="0" y="48" text-anchor="middle">6326家</text>
-                <text class="funnel-label" x="0" y="74" text-anchor="middle">飞猪宠物友好酒店</text>
+                <text class="funnel-value" x="0" y="48" text-anchor="middle">6,326</text>
+                <text class="funnel-label" x="0" y="74" text-anchor="middle">总量 · 平台样本</text>
               </g>
               <g transform="translate(600 94)">
                 <circle class="funnel-node" r="7"/>
-                <text class="funnel-value" x="0" y="48" text-anchor="middle">161家</text>
-                <text class="funnel-label" x="0" y="74" text-anchor="middle">小红书真实入住经验</text>
+                <text class="funnel-value" x="0" y="48" text-anchor="middle">161</text>
+                <text class="funnel-label" x="0" y="74" text-anchor="middle">有证据的样本</text>
               </g>
               <g transform="translate(1090 154)">
                 <circle class="funnel-node" r="7"/>
-                <text class="funnel-value" x="0" y="48" text-anchor="middle">100家</text>
-                <text class="funnel-label" x="0" y="74" text-anchor="middle">审核优选TOP</text>
+                <text class="funnel-value" x="0" y="48" text-anchor="middle">100</text>
+                <text class="funnel-label" x="0" y="74" text-anchor="middle">审核后的优选</text>
               </g>
               <g transform="translate(410 190)">
                 <circle class="funnel-node is-muted" r="7"/>
-                <text class="funnel-value is-muted" x="0" y="48" text-anchor="middle">300家</text>
-                <text class="funnel-label is-muted" x="0" y="74" text-anchor="middle">电话skill长尾</text>
+                <text class="funnel-value is-muted" x="0" y="48" text-anchor="middle">300</text>
+                <text class="funnel-label is-muted" x="0" y="74" text-anchor="middle">旁路 · 长尾核验</text>
               </g>
             </svg>
           </div>
@@ -492,53 +491,53 @@ def transport_card(title, lead, facts, thumbs):
 PAIN_LIST = (
     '<div class="pain-text-list">'
     + pain(
-        "01", "手续麻烦",
-        "证件流程复杂、有效期长短不一、出入境要求不一致。",
+        "01", "议题名称",
+        "一句概括：这一格要回答什么问题。",
         [
-            "高铁用户中，<strong>38.1%</strong> 认为办理《动物检疫合格证明》手续麻烦。",
-            "飞机用户中，<strong>54.6%</strong> 被检疫证明、航空箱和提前申请等复杂手续困扰。",
-            "开放题中，“手续简化 / 代办”被提及约 <strong>40 次</strong>，是频次最高的主题。",
-            "不同地区、交通方式和往返程要求不一致，用户必须重新核对材料与有效期。",
+            "样本 A 中，<strong>38.1%</strong> 指向该议题的第一证据。",
+            "样本 B 中，<strong>54.6%</strong> 指向同一议题的另一侧证据。",
+            "开放题里该主题被提及约 <strong>40 次</strong>，用来证明它不是偶发。",
+            "补充一条边界：不同渠道或往返程口径不一致时，用户必须重新核对。",
         ],
     )
-    + pain("02", "政策复杂", "用户必须逐一确认自己的宠物是否匹配航司要求与酒店政策。", [
-        "重量：不设固定 kg、能放进箱即可（南航）；含箱 ≤ 7kg（海航）；不占座 ≤ 10kg、占座 ≤ 18kg（东航）。",
-        "尺寸：不占座箱包 40 × 38 × 25cm；占座箱包 60 × 40 × 35cm。",
-        "年龄：满 8 周（南航）；满 2 个月（东航）。",
-        "数量：最多 1 只（南航、东航）；最多 2 只（海航）。",
+    + pain("02", "议题名称", "一句概括：规则不统一时，用户要逐条核对什么。", [
+        "条件甲：对象 A 不设上限；对象 B ≤ 7；对象 C 分两档 10 / 18。",
+        "条件乙：规格一 40 × 38 × 25；规格二 60 × 40 × 35。",
+        "条件丙：对象 A 满 8 周；对象 C 满 2 个月。",
+        "条件丁：对象 A、C 最多 1；对象 B 最多 2。",
     ])
-    + pain("03", "价格模糊", "无法判断应该选择哪种运输和住宿方式，价格不可比导致选择困难。", [
-        "航空：每家航司的进客舱、同机托运价格不同，还要叠加箱包、保障费和保险。",
-        "酒店：29.5% 认为清洁费、押金不透明。",
-        "清洁费：可能按每只每晚、每间每晚、每只每间、一次性或免费计收。",
+    + pain("03", "议题名称", "一句概括：价格或口径不可比时，决策卡在哪里。", [
+        "渠道甲：基础价不同，还要叠加配件、保障和保险。",
+        "渠道乙：<strong>29.5%</strong> 认为附加费、押金不透明。",
+        "计费可能按次、按晚、按件、一次性或免费，把规则写进格内，不要抬成新卡。",
     ])
-    + pain("04", "不确定性", "既担心运输途中宠物出事，也担心抵达酒店后被拒。", [
-        "高铁：61.6% 担心全程看不到、不能探视。",
-        "飞机：69.7% 担心货舱温度、加压和意外。",
-        "36.0% 担心到店被拒、酒店临时变卦。",
+    + pain("04", "议题名称", "一句概括：过程不可见或终点可能被拒时，用户怕什么。", [
+        "方式 A：<strong>61.6%</strong> 担心全程看不到。",
+        "方式 B：<strong>69.7%</strong> 担心环境与意外。",
+        "<strong>36.0%</strong> 担心到达后被拒或临时变卦。",
     ])
     + "</div>"
 )
 
 TRANSPORT_CARDS = (
     '<div class="transport-cards">'
-    + transport_card("飞机进客舱", "软包随主人进客舱。陪伴感最好，费用通常最高。",
-                     [("费用", "约 ¥1,288–1,430"), ("位置", "客舱软包"), ("主人", "必须同行")],
-                     [(CABIN, "软包"), (CABIN2, "陪伴")])
-    + transport_card("飞机托运", "有氧货舱航空箱，可同机或单独飞。两端都要交接。",
-                     [("费用", "同机约 ¥548"), ("位置", "有氧货舱"), ("主人", "可同行或不同行")],
-                     [(CARGO, "交运"), (CARGO2, "装卸"), (CARGO3, "货舱")])
-    + transport_card("高铁托运", "行李车厢恒温监控运输箱，主人通常同车。",
-                     [("费用", "约 ¥500 / 只"), ("位置", "行李车厢"), ("主人", "通常同一车次")],
-                     [(RAIL, "运输箱"), (RAIL5, "办理区"), (MON, "监控")])
-    + transport_card("陆运", "班线、拼车、专车和人宠同行。通常少办一份检疫证明。",
-                     [("费用", "约 ¥450–1,280"), ("位置", "笼位或同行"), ("主人", "可同行或不同行")],
-                     [(ROAD, "车内"), (VAN, "专业车"), (RIDE, "同行")])
+    + transport_card("方案名称 A", "一句对比：这条方案相对其他方案的核心差异。",
+                     [("属性 A", "约 ¥1,288–1,430"), ("属性 B", "取值"), ("属性 C", "必须同时发生")],
+                     [(CABIN, "图 1"), (CABIN2, "图 2")])
+    + transport_card("方案名称 B", "一句对比：适用边界、交接次数、能否拆开走。",
+                     [("属性 A", "约 ¥548"), ("属性 B", "取值"), ("属性 C", "可拆开或同时")],
+                     [(CARGO, "图 1"), (CARGO2, "图 2"), (CARGO3, "图 3")])
+    + transport_card("方案名称 C", "一句对比：过程是否可见、是否必须同班次。",
+                     [("属性 A", "约 ¥500 / 件"), ("属性 B", "取值"), ("属性 C", "通常同一班次")],
+                     [(RAIL, "图 1"), (RAIL5, "图 2"), (MON, "图 3")])
+    + transport_card("方案名称 D", "一句对比：材料是否更少、形式是否更灵活。",
+                     [("属性 A", "约 ¥450–1,280"), ("属性 B", "取值"), ("属性 C", "可拆开或同时")],
+                     [(ROAD, "图 1"), (VAN, "图 2"), (RIDE, "图 3")])
     + "</div>"
 )
 
 VENN = """<div class="venn-wrap">
-<svg class="venn" viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="韦恩图：三类场景共同依赖疫苗">
+<svg class="venn" viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="韦恩图：三组场景的共有条件">
   <defs>
     <linearGradient id="vennBg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#EFF6FC"/>
@@ -570,18 +569,18 @@ VENN = """<div class="venn-wrap">
     <line x1="694" y1="404" x2="724" y2="404"/>
   </g>
   <g class="venn-scene" fill="#1D1D1F" font-size="19" font-weight="700">
-    <text x="450" y="48" text-anchor="middle">酒店入住</text>
-    <text x="158" y="411" text-anchor="end">航空、高铁</text>
-    <text x="742" y="411" text-anchor="start">长途陆运</text>
+    <text x="450" y="48" text-anchor="middle">集合 A</text>
+    <text x="158" y="411" text-anchor="end">集合 B</text>
+    <text x="742" y="411" text-anchor="start">集合 C</text>
   </g>
   <g class="venn-cert" fill="#1D1D1F" text-anchor="middle">
-    <text x="450" y="198" font-size="21" font-weight="700">养宠许可证</text>
-    <text x="450" y="222" font-size="13" fill="#3A3A3F">（猫证、犬证）</text>
-    <text x="305" y="432" font-size="21" font-weight="700">检疫</text>
-    <text x="305" y="456" font-size="13" fill="#3A3A3F">（出发前几天）</text>
-    <text x="595" y="432" font-size="21" font-weight="700">无额外证件</text>
-    <text x="450" y="353" font-size="21" font-weight="700">疫苗</text>
-    <text x="450" y="377" font-size="13" fill="#3A3A3F">（猫 3 联、犬 8 联）</text>
+    <text x="450" y="198" font-size="21" font-weight="700">仅 A 的条件</text>
+    <text x="450" y="222" font-size="13" fill="#3A3A3F">（圈外标签可写备注）</text>
+    <text x="305" y="432" font-size="21" font-weight="700">仅 B 的条件</text>
+    <text x="305" y="456" font-size="13" fill="#3A3A3F">（时点或范围）</text>
+    <text x="595" y="432" font-size="21" font-weight="700">仅 C 的条件</text>
+    <text x="450" y="353" font-size="21" font-weight="700">三方共有</text>
+    <text x="450" y="377" font-size="13" fill="#3A3A3F">（交集里写共同门槛）</text>
   </g>
 </svg>
 </div>"""
@@ -610,143 +609,138 @@ LIGHTBOX = """
 lib = "".join([
     lab("基础 token", tokens()),
     lab("导航栏", topbar()),
-    lab("章头", head("01 · 市场", "携宠旅行是一个每年超5000万次的潜在旅行市场。")),
+    lab("章头", head("01 · 题域", "判断句写在这里：这一章要让读者先信什么。")),
     lab("章头 · 副标题", head(
-        "CONCEPT FILM",
-        "品牌概念：飞猪出发，狗狗GO~",
-        "花间堂订单占比 95% 是带狗入住用户，所以用狗的概念为核心延展出品牌设计。",
+        "小节标签",
+        "需要副题时把解释放在判断句下面。",
+        "副题补充口径、范围或为什么这样判断，不另起一章。",
     )),
-    lab("导语", '<div class="research-lead"><p>跨城带宠的问题不是“有没有运输方式”，而是不同方式的准入条件、宠物位置、价格口径、办理材料和交接流程高度非标。真正影响用户决策的，是“宠物能不能运”、“能不能和主人同行”、“实际总价是多少”，以及“需要提前准备哪些材料”。</p></div>'),
+    lab("导语", '<div class="research-lead"><p>章头与证据之间的解释。写清边界、用户实际卡在哪几件事、这一章接下来用什么证据。不要把导语画进议题格、图文卡、公式或韦恩图。</p></div>'),
     lab("来源", source_note(
-        "《2026年中国宠物行业白皮书》",
-        "《携宠出行意愿调研报告》",
-        "《携程酒店数据》",
+        "《资料名称 A》",
+        "《资料名称 B》",
+        "平台 / 调研口径",
     )),
     lab("分割线", rule()),
     lab("分割线弱", rule(soft=True)),
     lab("公式", formula()),
     lab("横排数字", stat_row(
-        stat_cell("49.9", "%", "养宠用户中 88VIP 占比"),
-        stat_cell("29.8", "%", "大盘 88VIP 占比", "养宠用户是大盘的 1.7 倍"),
-        stat_cell("17.7", "%", "单品类需求度"),
-        stat_cell("42.9", "%", "多品类需求度", "约为单品类的 2.4 倍"),
-        stat_cell("85.7", "%", "认为一站式有必要", accent=True),
+        stat_cell("49.9", "%", "指标名称 · 样本 A"),
+        stat_cell("29.8", "%", "指标名称 · 对照盘", "样本 A 是对照盘的 1.7 倍"),
+        stat_cell("17.7", "%", "单类需求"),
+        stat_cell("42.9", "%", "多类需求", "约为单类的 2.4 倍"),
+        stat_cell("85.7", "%", "关键认同度", accent=True),
         cols=5,
     )),
     lab("数字信息", stat_grid(
-        stat_card("34 / 52", "航司支持有氧舱托运", "约 65% 国内常态化客运航司具备政策基础；是否能运仍取决于具体机型、温度与当班装载条件。"),
-        stat_card("17 / 52", "航司试点宠物进客舱", "约 33% 航司已开放付费产品，通常按机场白名单、指定国内直达航班和单班名额执行。"),
-        stat_card("6%", "杭州 4 星 / 5 星占比", "宠物友好酒店中的高星供给仍然很少。", kicker="现状 · 平台供给", ratio="377 / 6326"),
-    )),
-    lab("数字信息 · 成对", stat_grid(
-        stat_pair("有氧舱托运", "航司覆盖", "约 65%", "航线覆盖", "约 55–65%"),
-        stat_pair("宠物进客舱", "航司覆盖", "约 33%", "航线覆盖", "约 25–30%"),
-        cols=2,
+        stat_card("34 / 52", "覆盖率标题", "分子 / 分母。正文写口径：具备政策基础不等于当天可订，仍取决于规格、时段与名额。", kicker="口径 · 覆盖", ratio="分子 / 分母"),
+        stat_card("17 / 52", "试点覆盖标题", "约 33% 已开放付费产品，通常按白名单、指定线路和单班名额执行。", kicker="口径 · 试点", ratio="开放占比"),
+        stat_card("6%", "分层占比标题", "高档供给在总量中仍然很少。", kicker="现状 · 供给分层", ratio="377 / 6326", variant="note"),
     )),
     lab("编号信息", info_grid("2",
-        info("01", "核心枢纽与旅游城市优先", "北京、上海、广州、深圳、杭州、成都、西安等枢纽，以及海口、三亚、丽江等旅游城市更常进入白名单。"),
-        info("02", "主干航线比支线更成熟", "A320、波音 737 和宽体机更容易具备运输条件；C909 等支线机型通常形成硬约束。"),
-        info("03", "“开放”仍会动态变化", "换季、临时换机、高温管控、代码共享和单班宠物名额，都会让“政策支持”与“当天可订”出现差异。"),
-        info("04", "航司产品差异明显", "单人可带数量、是否允许占座、箱包尺寸、重量、申请时限和材料要求各不相同。"),
+        info("01", "步骤或要点标题", "并列要点。写清这条在论证什么，不要塞进数字卡。"),
+        info("02", "步骤或要点标题", "条件更成熟的主干，和形成硬约束的支线，分开写。"),
+        info("03", "步骤或要点标题", "“开放”仍会动态变化：换季、临时候选、额度，都会让政策与当天可订出现差异。"),
+        info("04", "步骤或要点标题", "对象之间的产品差异：数量、规格、时限和材料要求各不相同。"),
     )),
     lab("编号信息 · 列表", info_grid("stack",
-        info("01", "先确认这班能不能运", "查航司、机场、机型、品种和当班名额。"),
-        info("02", "订人票，并申请宠物服务", "进客舱 / 同机托运先选人票，再申请同一航班的宠物服务。"),
-        info("03", "临近出发办理检疫证明", "携带宠物、身份证或属地居住证明、免疫记录，到申报点接受临床检查。"),
+        info("01", "先确认这条能不能走", "查对象、节点、规格和当班名额。"),
+        info("02", "先订主单，再申请附加服务", "主单与附加服务要落在同一班次。"),
+        info("03", "临近出发补齐材料", "带齐身份、行程证明和当日有效的核验材料。"),
     )),
     lab("编号信息 · 大编号", info_grid("stack",
-        info("01", "先确认这班能不能运", "查航司、机场、机型、品种和当班名额。", lg=True),
-        info("02", "订人票，并申请宠物服务", "进客舱 / 同机托运先选人票，再申请同一航班的宠物服务。", lg=True),
-        info("03", "临近出发办理检疫证明", "携带宠物、身份证或属地居住证明、免疫记录，到申报点接受临床检查。", lg=True),
+        info("01", "先确认这条能不能走", "查对象、节点、规格和当班名额。", lg=True),
+        info("02", "先订主单，再申请附加服务", "主单与附加服务要落在同一班次。", lg=True),
+        info("03", "临近出发补齐材料", "带齐身份、行程证明和当日有效的核验材料。", lg=True),
         no="lg",
     )),
     lab("编号信息 · 横排卡片", info_grid("cols",
-        info("01", "先确认这班能不能运", "查航司、机场、机型、品种和当班名额。", lg=True),
-        info("02", "订人票，并申请宠物服务", "进客舱 / 同机托运先选人票，再申请同一航班的宠物服务。", lg=True),
-        info("03", "临近出发办理检疫证明", "携带宠物、身份证或属地居住证明、免疫记录，到申报点接受临床检查。", lg=True),
+        info("01", "先确认这条能不能走", "查对象、节点、规格和当班名额。", lg=True),
+        info("02", "先订主单，再申请附加服务", "主单与附加服务要落在同一班次。", lg=True),
+        info("03", "临近出发补齐材料", "带齐身份、行程证明和当日有效的核验材料。", lg=True),
         no="lg",
     )),
     lab("编号信息 · 行", info_grid("row",
-        info("Q1", "带宠物能否入住？", "犬种、体重、数量限制，以及是否需要入住材料。OTA 展示的信息经常与酒店实际政策不符。"),
-        info("01", "宠物档案", "录入品种、体重、芯片、疫苗、性情等结构化信息，自动筛选匹配其体型与政策的可用服务。"),
-        info("CAT", "准备猫三联等免疫记录", "部分航司申请时要求猫三联证明；申报点也可能核验其他有效免疫记录。"),
+        info("Q1", "读者会问的第一句", "把限制条件写在答里：种类、体量、数量、材料。展示信息经常与现场不符。"),
+        info("01", "结构化档案", "录入关键字段，用来自动筛选匹配政策的可用服务。"),
+        info("TAG", "材料标签", "申请时可能要求某类证明；核验点也可能抽查其他有效记录。"),
     )),
     lab("提问", info_grid("row",
-        info("Q1", "带宠物能否入住？", "犬种、体重、数量限制，以及是否需要入住材料。OTA 展示的信息经常与酒店实际政策不符。"),
-        info("Q2", "额外费用是多少？", "清洁费与保证金，其中清洁费还分“按晚收”和“按次收”。"),
-        info("Q3", "是否有房型限制？", "部分酒店只有指定房型可携宠，最低价房型往往不在可携宠范围内。"),
-        info("Q4", "宠物在酒店的活动范围有多大？", "只能待在客房，还是可以去公区、餐厅、户外场地或草坪，以及能否单独留房。"),
-        info("Q5", "有哪些宠物设施？", "是否提供宠物餐食，以及宠物厕所、玩具、睡窝、食盆和水盆等用品。"),
-        info("Q6", "造成损坏怎么赔偿？", "宠物弄脏沙发或床、抓坏家具等物品时，赔偿标准和押金扣除规则是什么。"),
-        info("Q7", "如何确认留痕，确保到店不会被拒？", "下单时是否需要备注或提前告知前台；口头确认后，如何保障到店不被拒。"),
+        info("Q1", "能不能用？", "限制条件，以及是否需要材料。展示信息经常与现场不符。"),
+        info("Q2", "额外费用是多少？", "附加费与保证金，其中附加费还分“按晚收”和“按次收”。"),
+        info("Q3", "有没有档位限制？", "部分对象只有指定档位可用，最低价往往不在范围内。"),
+        info("Q4", "活动范围有多大？", "只能待在指定区，还是可以去公区、配套或户外，以及能否单独留置。"),
+        info("Q5", "有哪些设施？", "是否提供餐食，以及用具、场地等配套。"),
+        info("Q6", "造成损坏怎么赔？", "弄脏或损坏物品时，赔偿标准和押金扣除规则是什么。"),
+        info("Q7", "如何留痕，确保到达不被拒？", "下单时是否需要备注或提前告知；口头确认后如何保障不被拒。"),
     )),
     lab("编号信息 · 标签", info_grid("label",
-        info("运输方式", "专用运输箱", "铁路提供 54×43×40cm 专用运输箱，每箱 1 只，放置在列车指定行李车厢；运输途中不能探视。"),
+        info("属性名", "属性取值", "规格、容量、放置位置和过程中能不能查看，写在说明里。"),
         info("预约时间", "至少提前 1 天", "当天 12:00 前可约次日，12:00 后最早约第三日。"),
-        info("办理材料", "检疫证明当日有效", "携带宠物、本人有效身份证件、购票证明及承运当日有效的《动物检疫合格证明》。"),
-        info("线下时间", "开车前至少 2 小时", "到中铁快运营业部办理；列车到站后建议在 1 小时内领取。"),
+        info("办理材料", "证明当日有效", "携带身份证件、购票或订单证明，以及承运当日有效的核验材料。"),
+        info("线下时间", "出发前至少 2 小时", "到指定办理点；到达后建议在 1 小时内领取。"),
     )),
     lab("无编号信息", plain_grid(
-        plain("价格通常更低", "京杭拼载询价约 ¥450–1,280，明显低于飞机进客舱。"),
-        plain("手续更简单", "本次服务商样本多数不要求检疫证明。"),
-        plain("宠物类型更广", "滴滴档案覆盖猫、狗、鸟类、鱼类和其他合规宠物。"),
-        plain("陪伴方式可选", "可让宠物单独运输，也可选择人宠同行。"),
+        plain("对比点标题", "用一句可核对的数字或范围，说明它比对照方案更有利。"),
+        plain("对比点标题", "样本里多数不要求某类材料。"),
+        plain("对比点标题", "档案覆盖的对象类型更广。"),
+        plain("对比点标题", "可单独走，也可选择同行。"),
         surface="tint",
     )),
-    lab("观点", point("观点判断", "供给不是问题，而是如何寻找合适的航司进行流程简化和服务能力突破。")),
-    lab("观点 · 浅底", point("", "<strong>合作顺序建议：</strong>首选南航，用最大覆盖建立基础供给；第二家选择海航，补足两宠、大箱包和临近出发申请。", soft=True)),
-    lab("痛点卡", PAIN_LIST),
+    lab("观点", point("观点判断", "一句立场：问题不在供给有没有，而在如何找对象做流程简化和能力突破。")),
+    lab("观点 · 浅底", point("", "<strong>顺序建议：</strong>首选覆盖最大的对象建立基础供给；第二家补足名额、规格和临近出发申请。", soft=True)),
+    lab("议题格", PAIN_LIST),
     lab("发现", """<article class="finding">
-        <h3>信息失真严重：既有“信息缺失”，更有“信息有误”</h3>
-        <p>现状下用户需要靠“打电话”才能完成决策。</p>
+        <h3>发现标题：既有“信息缺失”，更有“信息有误”</h3>
+        <p>现状下用户需要靠二次核验才能完成决策。</p>
         <div class="finding-sub">
-          <b>① 信息有误——平台写的和实际不符</b>
-          <p>电话实测 2 例：一家飞猪写“不可携带宠物”（实际部分房型可以）；另一家写 ¥100 / 晚（实际免费）。</p>
+          <b>① 信息有误——展示的和实际不符</b>
+          <p>实测 2 例：一家写“不可用”（实际部分档位可以）；另一家写 ¥100 / 晚（实际免费）。</p>
         </div>
         <div class="finding-sub">
-          <b>② 信息缺失——决定能否入住的关键条件，平台不展示</b>
+          <b>② 信息缺失——决定能否使用的关键条件，平台不展示</b>
           <div class="stat-lines">
-            <div class="stat-line"><b>50%</b><p><strong>证件、疫苗时效要求</strong>　5 / 10 家要求养宠许可证 / 疫苗证。</p></div>
-            <div class="stat-line"><b>30%</b><p><strong>仅部分房型可带宠物</strong>　3 / 10 家有房型限制。</p></div>
+            <div class="stat-line"><b>50%</b><p><strong>材料、时效要求</strong>　5 / 10 家要求许可证 / 有效证明。</p></div>
+            <div class="stat-line"><b>30%</b><p><strong>仅部分档位可用</strong>　3 / 10 家有档位限制。</p></div>
           </div>
         </div>
       </article>"""),
     lab("表格", """<div class="plain-table-wrap"><table class="airline-matrix">
         <thead><tr><th>维度</th>
-          <th><span class="airline-title">南方航空 <span class="airline-rank one">TOP 1</span></span></th>
-          <th><span class="airline-title">海南航空 <span class="airline-rank two">TOP 2</span></span></th>
-          <th><span class="airline-title">东方航空</span></th></tr></thead>
+          <th><span class="airline-title">对象 A <span class="airline-rank one">TOP 1</span></span></th>
+          <th><span class="airline-title">对象 B <span class="airline-rank two">TOP 2</span></span></th>
+          <th><span class="airline-title">对象 C</span></th></tr></thead>
         <tbody>
-          <tr><td>覆盖率</td><td class="best">约 57%，45 座机场</td><td>约 43%，38 个城市</td><td>约 47%，36 个国内城市</td></tr>
-          <tr><td>申请截止</td><td class="best">起飞前 6 小时</td><td>48h 前在线；进入 24h 后可到机场申请</td><td class="weak">仅起飞前 7 天至 24h</td></tr>
-          <tr><td>每位旅客宠物数</td><td>1 只</td><td class="best">最多 2 只</td><td>1 只</td></tr>
-          <tr><td>基础价格</td><td>&lt;2000km ¥1299</td><td>¥1430</td><td class="best">¥1288</td></tr>
+          <tr><td>覆盖率</td><td class="best">约 57%，45 个节点</td><td>约 43%，38 个节点</td><td>约 47%，36 个节点</td></tr>
+          <tr><td>申请截止</td><td class="best">出发前 6 小时</td><td>48h 前在线；进入 24h 后可现场申请</td><td class="weak">仅出发前 7 天至 24h</td></tr>
+          <tr><td>单次数量</td><td>1</td><td class="best">最多 2</td><td>1</td></tr>
+          <tr><td>基础价格</td><td>&lt;2000km ¥1,299</td><td>¥1,430</td><td class="best">¥1,288</td></tr>
         </tbody>
       </table></div>"""),
     lab("折线图", rail_chart()),
-    lab("安索夫矩阵", ansoff()),
+    lab("四象限矩阵", ansoff()),
     lab("漏斗图", funnel_chart()),
-    lab("城市通航网络", city_network()),
-    lab("酒店热度榜", hotel_ranking()),
+    lab("关系网络", city_network()),
+    lab("排行榜", hotel_ranking()),
     lab("图", '<div class="shot-grid" data-cols="2">'
-        + shot(PROFILE, "滴滴宠物档案", "宠物档案 · 类型更广", "可选狗、猫、鸟类、鱼类和其他合规宠物")
-        + shot(METHODS, "动物检疫合格证明示例", "《动物检疫合格证明》示例", "运输方式和行程信息需按实际承运填写。", kind="crop", group="cert")
+        + shot(PROFILE, "截图 · 档案", "主图标题", "一句说明：这张图在论证什么。")
+        + shot(METHODS, "截图 · 材料", "主图标题", "一句说明：材料或流程截图要填的字段。", kind="crop", group="cert")
         + "</div>"),
-    lab("图 · 滚动", shot(DELIVER, "玩小伴小程序", "玩小伴 · 微信小程序", "酒店以套餐为主，基本都有平台专属清洁费优惠。", kind="scroll", group="app")),
+    lab("图 · 滚动", shot(DELIVER, "长截图", "主图标题 · 滚动", "长页或小程序流，用滚动变体，不要裁成方图。", kind="scroll", group="app")),
     lab("图 · 宽", (
         '<div class="shot-stack">'
-        + shot(FLOW, "12306 爱宠行链路", "12306 爱宠行链路", "进入宠物托运、查询仓位、选择对应人票、锁定仓位并提交订单。", kind="wide")
-        + '<article class="shot-plan"><div class="shot-plan__label"><span>方案</span><h4>飞机</h4></div>'
-        + shot(FLOW, "飞机下单链路", "飞机下单链路", "串联托运方式说明、检疫代办、航班与服务选择、下单和订单详情。", kind="wide")
+        + shot(FLOW, "宽图 · 链路", "主图标题 · 链路", "进入、查询、选择、锁定并提交。宽图不要再拆成多张方图。", kind="wide")
+        + '<article class="shot-plan"><div class="shot-plan__label"><span>方案</span><h4>方案名</h4></div>'
+        + shot(FLOW, "宽图 · 方案", "主图标题 · 方案链路", "方案标签不是第二套组件，只是宽图上的槽。", kind="wide")
         + "</article></div>"
     )),
     lab("海报墙", '<div class="shot-grid" data-cols="4">'
-        + shot(POSTER, "手续帮你办", "", "", kind="poster", group="poster")
-        + shot(CABIN, "同舱更安心", "", "", kind="poster", group="poster")
-        + shot(PROFILE, "带宠放心住", "", "", kind="poster", group="poster")
-        + shot(DELIVER, "一站下单全搞定", "", "", kind="poster", group="poster")
+        + shot(POSTER, "海报 01", "", "", kind="poster", group="poster")
+        + shot(CABIN, "海报 02", "", "", kind="poster", group="poster")
+        + shot(PROFILE, "海报 03", "", "", kind="poster", group="poster")
+        + shot(DELIVER, "海报 04", "", "", kind="poster", group="poster")
         + "</div>"),
-    lab("运输卡", TRANSPORT_CARDS),
+    lab("图文卡", TRANSPORT_CARDS),
     lab("韦恩图", VENN),
 ])
 
@@ -756,12 +750,12 @@ html = f"""<!doctype html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>知识汇报模板 · 流式 v2</title>
-  <link rel="stylesheet" href="../shared/components.css">
+  <link rel="stylesheet" href="design-system/components.css">
   <link rel="stylesheet" href="assets/template.css">
   <link rel="stylesheet" href="assets/flow.css">
-  <link rel="stylesheet" href="assets/source.css">
-  <link rel="stylesheet" href="assets/lib.css">
-  <link rel="stylesheet" href="assets/v2.css">
+  <link rel="stylesheet" href="assets/source.css?v=9">
+  <link rel="stylesheet" href="assets/lib.css?v=10">
+  <link rel="stylesheet" href="assets/v2.css?v=9">
 </head>
 <body>
   <div class="theme-control" id="themeControl" aria-label="主题控制">
@@ -771,8 +765,9 @@ html = f"""<!doctype html>
     </div>
     <select data-theme-select aria-label="切换主题"></select>
     <button type="button" data-theme-import-trigger>导入主题</button>
+    <button type="button" data-theme-export>导出主题</button>
     <input data-theme-import type="file" accept="application/json,.json" hidden>
-    <p class="theme-control__hint">切换或导入主题后，整页设计语言会同步替换</p>
+    <p class="theme-control__hint">点颜色色块用取色器，或右键改数值；会写入当前主题并立刻作用于整页。导入导出只在本目录页</p>
     <div class="theme-control__toast" data-theme-toast role="status" aria-live="polite"></div>
   </div>
 
@@ -781,7 +776,7 @@ html = f"""<!doctype html>
       <div class="document-nav__brand"><span class="document-nav__mark" aria-hidden="true"></span><strong>SEED</strong></div>
       <div class="document-nav__links"><a href="#cover" class="is-active">封面</a>
         <a href="#lib">组件</a>
-        <a href="#notes">口径</a>
+        <a href="#notes">怎么用</a>
       </div>
     </nav>
 
@@ -790,8 +785,8 @@ html = f"""<!doctype html>
         <section class="report-slide is-chapter-cover is-active" data-chapter="cover" data-slide="00" id="cover">
           <header class="chapter-cover">
             <span class="chapter-cover__kicker">流式 v2</span>
-            <h2 class="chapter-cover__title">源稿组件库</h2>
-            <p class="chapter-cover__lead">从独立版 HTML 拆出的可复用块。结构和作用接近的收成一套父组件，用 data-* / is-* 切换变体。每个组件只陈列内容：不要把章头、分割线和导语画进痛点卡、运输卡、公式、韦恩图或提问。</p>
+            <h2 class="chapter-cover__title">流式组件库</h2>
+            <p class="chapter-cover__lead">可复用块按结构和作用收成父组件，用 data-* / is-* 切换变体。每个组件只陈列内容：不要把章头、分割线和导语画进议题格、图文卡、公式、韦恩图或提问。文案是槽位说明，换成项目内容即可。</p>
             <p class="chapter-cover__byline"><span class="chapter-cover__scope">组件</span><span class="chapter-cover__kind">editorial-flow</span></p>
             <div class="chapter-cover__actions"><a class="button primary" href="#lib">开始阅读</a></div>
           </header>
@@ -804,17 +799,18 @@ html = f"""<!doctype html>
             <h2>怎么用</h2>
             <ol>
               <li>这是流式模板。壳是文档栏：report-shell.is-flow、吸顶导航、flow-stack 上下叠。</li>
-              <li>合并后的父组件：<code>.stat-row</code> 横排数字；<code>.stat-card</code> 数字信息（<code>.is-pair</code> 成对）；<code>.info</code> 编号信息（<code>data-layout</code>：2 / stack / row / label / cols；<code>.is-lg</code> / <code>data-no="lg"</code> 大编号）；<code>.plain</code> 无编号信息（<code>data-surface</code>：tint / line）；<code>.point</code> 观点（<code>.is-soft</code> 浅底）；<code>.shot</code> 图（<code>data-kind</code>：photo / crop / scroll / wide / poster）。</li>
+              <li>合并后的父组件：<code>.stat-row</code> 横排数字；<code>.stat-card</code> 数字信息（<code>data-variant</code>：默认数字卡 / <code>note</code> 标注卡，右键切换）；<code>.info</code> 编号信息（<code>data-layout</code>：2 / stack / row / label / cols；<code>.is-lg</code> / <code>data-no="lg"</code> 大编号）；<code>.plain</code> 无编号信息（<code>data-surface</code>：tint / line）；<code>.point</code> 观点（<code>.is-soft</code> 浅底）；<code>.shot</code> 图（<code>data-kind</code>：photo / crop / scroll / wide / poster）。</li>
               <li>组件库必须带基础 token：间隔 <code>--s-in</code> / <code>--s-stack</code> / <code>--s-chapter</code>；字号 <code>--t-h1</code> / <code>--t-num</code> / <code>--t-no-lg</code> / <code>--t-body</code> / <code>--t-aux</code>；颜色 <code>--c-text</code> 档、<code>--c-line</code>、<code>--c-accent</code>、表数据栏 <code>--c-pos</code> / <code>--c-neg</code>；分割线 <code>.rule</code> / <code>.rule.is-soft</code>。</li>
-              <li>仍独立：公式、痛点卡 <code>.pain-text-list</code> / <code>.pain-topic</code>、发现、运输卡 <code>.transport-cards</code> / <code>.transport-card</code>、韦恩图、导语、来源、章头、分割线、导航栏 <code>.topbar</code>、折线图 <code>.rail-growth-chart</code>、安索夫矩阵 <code>.ansoff-grid</code>、漏斗图 <code>.hotel-funnel-chart</code>、城市通航网络 <code>.hotel-city-network</code>、酒店热度榜 <code>.hotel-ranking-block</code>。</li>
+              <li>仍独立：公式、议题格 <code>.pain-text-list</code> / <code>.pain-topic</code>、发现、图文卡 <code>.transport-cards</code> / <code>.transport-card</code>、韦恩图、导语、来源、章头、分割线、导航栏 <code>.topbar</code>、折线图 <code>.rail-growth-chart</code>、四象限矩阵 <code>.ansoff-grid</code>、漏斗图 <code>.hotel-funnel-chart</code>、关系网络 <code>.hotel-city-network</code>、排行榜 <code>.hotel-ranking-block</code>。</li>
               <li>同类块用父组件 + 变体，不要另起皮肤，也不要再收成 flow-block。</li>
-              <li>公式、韦恩图、提问、痛点卡、运输卡只保留内容。章头 <code>.slide-head</code>、分割线 <code>.rule</code>、导语 <code>.research-lead</code> 是独立组件，不要画进这些块。报告里章头下方仍必须紧跟强线，那是排版规则，不是组件自带的。</li>
+              <li>公式、韦恩图、提问、议题格、图文卡只保留内容。章头 <code>.slide-head</code>、分割线 <code>.rule</code>、导语 <code>.research-lead</code> 是独立组件，不要画进这些块。报告里章头下方仍必须紧跟强线，那是排版规则，不是组件自带的。</li>
               <li>报告中每个主标题（<code>.slide-head</code>）下方必须紧跟一条可见的<strong>强线</strong> <code>.rule</code>，不得省略，不得用下一块顶线替代，CSS 不得把这条线 <code>display:none</code>。小节标题下必须有弱线。其余块之间不加线，只靠间距。表 / list / 卡内部只用 1px 弱线。</li>
               <li>间距分三档。区内 <code>--s-in</code>（16，含章头→强线）；章内换排 <code>--s-stack</code>（40，含强线→第一块）；换章 <code>--s-chapter</code>（96）。来源贴在所属证据块下面，不要和换章同一档。</li>
-              <li>格内条目留在该卡里。例如痛点卡的百分比、运输卡的费用行，不要抬成新的一排。</li>
+              <li>格内条目留在该卡里。例如议题格的百分比、图文卡的属性行，不要抬成新的一排。</li>
               <li>来源写一次。源格没有口径句，就不要补。</li>
+              <li>没有源 HTML 时：从 <code>templates/editorial-flow/report.html</code> 生成报告。对照目录选父组件，缺了才新增。不要抄 <code>data-catalog</code>，报告导航用 <code>.topbar</code>。主题导入导出只在本目录页，不要做到报告壳上。</li>
               <li>分屏是另一套：templates/editorial-page/。旧稿在 templates/draft/。报告不要抄 data-catalog。报告导航用 <code>.topbar</code>，不要用目录壳的 <code>.document-nav</code>。</li>
-              <li>图上问题：两张截图卡已是同一父组件 <code>.shot</code>，<code>photo</code> / <code>crop</code> 变体，不另合；图区坏图时不把 alt 再写一层，标题只留在 figcaption。宽图和方案图也是同一父组件：<code>.shot[data-kind=wide]</code>，方案只是 <code>.shot-plan</code> 标签槽，目录收在「图 · 宽」，不另开「图 · 方案」。提问是 <code>.info-grid[data-layout=row]</code> 的问答内容，不是新父组件；底下浅蓝格是无编号信息，不要画进提问。城市通航网络舞台高度跟左右列表走，不要写死 min-height。图 / 表 / 折线右键「调整」可拖宽高；折线拖高后绘图区跟着拉高，改数字后纵轴刻度自适应。韦恩图陆运圈保留，「无额外证件」就是该场景的判断。公式和韦恩图只在组件区出现一次。航空规模标题是判断句，数字卡在付账，不改标题。市场公式与横排数字不是同一组件：公式是算法，横排是支撑数字。安索夫源稿是静图，目录用代码版 <code>.ansoff-grid</code>。基础 token 已图形化，右键改数值会写回 CSS 变量。痛点四格是同一父组件 <code>.pain-topic</code> 铺进 <code>.pain-text-list</code>，目录名「痛点卡」；01–04 主题不同，不把正文并成一块。运输四卡是同一父组件 <code>.transport-card</code> 横排进 <code>.transport-cards</code>，目录名「运输卡」；导语不画进卡。图廊主图不另写当前图名，缩略图才是切换槽，不是第二个组件。</li>
+              <li>结构说明：两张截图卡是同一父组件 <code>.shot</code>，<code>photo</code> / <code>crop</code> 变体；图区坏图时不把 alt 再写一层，标题只留在 figcaption。宽图和方案图也是同一父组件：<code>.shot[data-kind=wide]</code>，方案只是 <code>.shot-plan</code> 标签槽，目录收在「图 · 宽」。提问是 <code>.info-grid[data-layout=row]</code> 的问答内容，不是新父组件；底下浅底格是无编号信息，不要画进提问。关系网络舞台高度跟左右列表走，不要写死 min-height。图 / 表 / 折线右键「调整」可拖宽高；折线拖高后绘图区跟着拉高，改数字后纵轴刻度自适应。韦恩图第三圈保留，圈内文案是该集合自己的判断。公式和韦恩图只在组件区出现一次。公式与横排数字不是同一组件：公式是算法，横排是支撑数字。四象限矩阵目录用代码版 <code>.ansoff-grid</code>。基础 token 右键改数值，立刻作用于整页并写入当前主题，可导出 JSON 在本目录导入。颜色 token 点色块用取色器，也可改 hex。议题四格是同一父组件 <code>.pain-topic</code> 铺进 <code>.pain-text-list</code>，目录名「议题格」；01–04 主题不同，不把正文并成一块。图文四卡是同一父组件 <code>.transport-card</code> 横排进 <code>.transport-cards</code>，目录名「图文卡」；导语不画进卡。图廊主图不另写当前图名，缩略图才是切换槽，不是第二个组件。</li>
             </ol>
           </footer>
         </section>
@@ -822,10 +818,10 @@ html = f"""<!doctype html>
     </div>
   </div>
 {LIGHTBOX}
-  <link rel="stylesheet" href="../../editor/seed-edit.css">
-  <script src="../shared/design-data.js"></script>
-  <script src="../shared/theme-runtime.js"></script>
-  <script src="../../editor/seed-edit.js"></script>
+  <link rel="stylesheet" href="editor/seed-edit.css">
+  <script src="design-system/design-data.js"></script>
+  <script src="design-system/theme-runtime.js"></script>
+  <script src="editor/seed-edit.js"></script>
   <script src="assets/template.js"></script>
   <script src="assets/source.js"></script>
   <script src="assets/network.js"></script>

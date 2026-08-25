@@ -1,4 +1,4 @@
-/* Single source of token defaults. Design System and templates both load this file. */
+/* editorial-page 自己的 token。不要和 editorial-flow 共用。 */
 (() => {
   const tokens = {
     aliases: {},
@@ -73,8 +73,8 @@
   };
 
   window.DesignSystemData = {
-    version: 7,
-    storageKey: 'knowledge-report-design-system-v7',
+    version: 1,
+    storageKey: 'editorial-page-design-v1',
     clone(value) {
       return JSON.parse(JSON.stringify(value));
     },
