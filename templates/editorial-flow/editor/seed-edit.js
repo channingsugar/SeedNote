@@ -229,14 +229,53 @@
     {
       group: 'info',
       sel: '.info-grid',
-      items: [
-        { id: 'left', label: '编号在左' },
-        { id: 'cols', label: '编号在上' },
-        { id: 'stack', label: '编号列表' },
-        { id: 'row', label: '编号行' },
-        { id: 'label', label: '标签列' },
-        { id: 'no-sm', label: '小号编号' },
-        { id: 'no-lg', label: '大编号' },
+      sections: [
+        {
+          id: 'layout',
+          title: '布局',
+          items: [
+            { id: 'layout-grid', label: '格子' },
+            { id: 'layout-stack', label: '列表 A' },
+            { id: 'layout-row', label: '列表 B' },
+          ],
+        },
+        {
+          id: 'index',
+          title: '显示编号',
+          items: [
+            { id: 'index-on', label: '是' },
+            { id: 'index-off', label: '否' },
+          ],
+        },
+        {
+          id: 'pos',
+          title: '编号位置',
+          when: 'index-on',
+          items: [
+            { id: 'pos-top', label: '顶部' },
+            { id: 'pos-left', label: '左侧' },
+          ],
+        },
+        {
+          id: 'type',
+          title: '编号类型',
+          when: 'index-on',
+          items: [
+            { id: 'type-num', label: '数字' },
+            { id: 'type-alpha', label: '字母' },
+            { id: 'type-q', label: '问题' },
+            { id: 'type-label', label: '标签' },
+          ],
+        },
+        {
+          id: 'size',
+          title: '编号字号',
+          when: 'index-on',
+          items: [
+            { id: 'no-lg', label: '大' },
+            { id: 'no-sm', label: '小' },
+          ],
+        },
       ],
     },
     {
@@ -286,6 +325,19 @@
     return 'left';
   };
 
+  const infoShapeOf = (grid) => {
+    const v = grid.getAttribute('data-layout') || '';
+    if (v === 'stack' || v === 'label') return 'stack';
+    if (v === 'row') return 'row';
+    return 'grid';
+  };
+
+  const infoPosOf = (grid) => {
+    const pos = grid.getAttribute('data-pos');
+    if (pos === 'top' || pos === 'left') return pos;
+    return (grid.getAttribute('data-layout') || '') === 'cols' ? 'top' : 'left';
+  };
+
   const writeInfoKind = (grid, kind) => {
     const cur = grid.getAttribute('data-layout') || '';
     if (cur === 'split' || cur === '2') grid.dataset.seedLeftLayout = cur;
@@ -294,13 +346,108 @@
       grid.setAttribute('data-layout', grid.dataset.seedLeftLayout || fallback);
       return;
     }
+    if (kind === 'label') {
+      grid.setAttribute('data-layout', 'stack');
+      return;
+    }
     grid.setAttribute('data-layout', kind);
+  };
+
+  const writeInfoShape = (grid, shape) => {
+    const pos = infoPosOf(grid);
+    if (shape === 'grid') {
+      writeInfoKind(grid, pos === 'left' ? 'left' : 'cols');
+    } else {
+      writeInfoKind(grid, shape === 'row' ? 'row' : 'stack');
+    }
+    grid.setAttribute('data-pos', pos);
+  };
+
+  const writeInfoPos = (grid, pos) => {
+    grid.setAttribute('data-pos', pos);
+    if (infoShapeOf(grid) === 'grid') writeInfoKind(grid, pos === 'left' ? 'left' : 'cols');
   };
 
   const writeInfoNo = (grid, lg) => {
     if (lg) grid.setAttribute('data-no', 'lg');
     else grid.removeAttribute('data-no');
     grid.querySelectorAll('.info').forEach((el) => el.classList.toggle('is-lg', lg));
+  };
+
+  const isSeqNo = (text) => /^(0?\d+|Q\d+|[A-Z])$/i.test(String(text || '').trim());
+
+  const infoIndexOf = (grid) => (grid.getAttribute('data-index') === 'off' ? 'off' : 'on');
+
+  const infoTypeOf = (grid) => {
+    const v = grid.getAttribute('data-index');
+    if (v === 'alpha' || v === 'q' || v === 'label') return v;
+    if (v === 'off') {
+      const remembered = grid.dataset.seedIndexType;
+      if (remembered === 'alpha' || remembered === 'q' || remembered === 'label' || remembered === 'num') {
+        return remembered;
+      }
+    }
+    if ((grid.getAttribute('data-layout') || '') === 'label') return 'label';
+    const labels = infoLabelsOf(grid).map((t) => t.trim()).filter(Boolean);
+    if (labels.length && labels.every((t) => /^Q\d+$/i.test(t))) return 'q';
+    if (labels.length && labels.every((t) => /^[A-Z]$/.test(t))) return 'alpha';
+    if (labels.length && labels.every((t) => !isSeqNo(t))) return 'label';
+    return 'num';
+  };
+
+  const infoLabelsOf = (grid) => [...grid.querySelectorAll('.info')].map((el) => {
+    const no = el.querySelector('.info__no');
+    return no ? no.textContent : '';
+  });
+
+  const formatInfoIndex = (i, type) => {
+    if (type === 'alpha') return String.fromCharCode(65 + (i % 26));
+    if (type === 'q') return `Q${i + 1}`;
+    return String(i + 1).padStart(2, '0');
+  };
+
+  const ensureInfoNo = (item) => {
+    let no = item.querySelector('.info__no');
+    if (!no) {
+      no = document.createElement('span');
+      no.className = 'info__no';
+      item.prepend(no);
+    }
+    return no;
+  };
+
+  const writeInfoLabels = (grid, labels) => {
+    grid.querySelectorAll('.info').forEach((el, i) => {
+      if (labels && labels[i] != null) ensureInfoNo(el).textContent = labels[i];
+    });
+  };
+
+  const writeInfoIndex = (grid, kind, labels) => {
+    if (labels) writeInfoLabels(grid, labels);
+    if (kind === 'off') {
+      if (!labels) {
+        const prev = grid.getAttribute('data-index');
+        if (prev && prev !== 'off') grid.dataset.seedIndexType = prev === 'alpha' || prev === 'q' || prev === 'label' ? prev : 'num';
+        else if (!grid.dataset.seedIndexType) grid.dataset.seedIndexType = infoTypeOf(grid);
+      }
+      grid.setAttribute('data-index', 'off');
+      return;
+    }
+    const type = kind === 'alpha' || kind === 'q' || kind === 'label' || kind === 'num' ? kind : 'num';
+    grid.dataset.seedIndexType = type;
+    if ((grid.getAttribute('data-layout') || '') === 'label') grid.setAttribute('data-layout', 'stack');
+    if (!labels) {
+      grid.querySelectorAll('.info').forEach((el, i) => {
+        const no = ensureInfoNo(el);
+        if (type === 'label') {
+          if (!no.textContent.trim() || isSeqNo(no.textContent)) no.textContent = '标签';
+          return;
+        }
+        no.textContent = formatInfoIndex(i, type);
+      });
+    }
+    if (type === 'num') grid.removeAttribute('data-index');
+    else grid.setAttribute('data-index', type);
   };
 
   const ensureStatNoteSlots = (card) => {
@@ -345,7 +492,13 @@
       return {
         group: 'info',
         layout: infoKindOf(host),
+        pos: infoPosOf(host),
         no: host.getAttribute('data-no') === 'lg' || host.querySelector('.info.is-lg') ? 'lg' : 'sm',
+        index: infoIndexOf(host),
+        type: infoTypeOf(host),
+        labels: infoLabelsOf(host),
+        seedIndexType: host.dataset.seedIndexType || '',
+        seedLeftLayout: host.dataset.seedLeftLayout || '',
       };
     }
     if (spec.group === 'plain') return { group: 'plain', surface: host.getAttribute('data-surface') || 'plain' };
@@ -361,8 +514,18 @@
       return;
     }
     if (snap.group === 'info') {
-      writeInfoKind(host, snap.layout);
+      if (snap.seedLeftLayout) host.dataset.seedLeftLayout = snap.seedLeftLayout;
+      else delete host.dataset.seedLeftLayout;
+      writeInfoKind(host, snap.layout === 'label' ? 'stack' : snap.layout);
+      if (snap.pos) host.setAttribute('data-pos', snap.pos);
+      else host.removeAttribute('data-pos');
       writeInfoNo(host, snap.no === 'lg');
+      if (snap.seedIndexType) host.dataset.seedIndexType = snap.seedIndexType;
+      else delete host.dataset.seedIndexType;
+      const indexKind = snap.index === 'off'
+        ? 'off'
+        : (snap.index === 'on' ? (snap.type || 'num') : (snap.index || snap.type || 'num'));
+      writeInfoIndex(host, indexKind, snap.labels);
       return;
     }
     if (snap.group === 'plain') {
@@ -386,6 +549,17 @@
     } else if (spec.group === 'info') {
       if (id === 'no-lg') writeInfoNo(host, true);
       else if (id === 'no-sm') writeInfoNo(host, false);
+      else if (id === 'index-off') writeInfoIndex(host, 'off');
+      else if (id === 'index-on') writeInfoIndex(host, infoTypeOf(host), infoLabelsOf(host));
+      else if (id === 'type-alpha') writeInfoIndex(host, 'alpha');
+      else if (id === 'type-num') writeInfoIndex(host, 'num');
+      else if (id === 'type-q') writeInfoIndex(host, 'q');
+      else if (id === 'type-label') writeInfoIndex(host, 'label');
+      else if (id === 'layout-grid') writeInfoShape(host, 'grid');
+      else if (id === 'layout-stack') writeInfoShape(host, 'stack');
+      else if (id === 'layout-row') writeInfoShape(host, 'row');
+      else if (id === 'pos-top') writeInfoPos(host, 'top');
+      else if (id === 'pos-left') writeInfoPos(host, 'left');
       else writeInfoKind(host, id);
     } else if (spec.group === 'plain') {
       restoreVariant(host, { group: 'plain', surface: id });
@@ -401,7 +575,18 @@
     const snap = snapshotVariant(host);
     if (!snap) return [];
     if (snap.group === 'stat') return [snap.variant || 'plain'];
-    if (snap.group === 'info') return [snap.layout, snap.no === 'lg' ? 'no-lg' : 'no-sm'];
+    if (snap.group === 'info') {
+      const shape = snap.layout === 'row' ? 'row' : (snap.layout === 'stack' || snap.layout === 'label') ? 'stack' : 'grid';
+      const type = snap.type === 'alpha' || snap.type === 'q' || snap.type === 'label' ? snap.type : 'num';
+      const pos = snap.pos || (snap.layout === 'cols' ? 'top' : 'left');
+      return [
+        `layout-${shape}`,
+        snap.index === 'off' ? 'index-off' : 'index-on',
+        `pos-${pos}`,
+        `type-${type}`,
+        snap.no === 'lg' ? 'no-lg' : 'no-sm',
+      ];
+    }
     if (snap.group === 'plain') return [snap.surface || 'plain'];
     if (snap.group === 'point') return [snap.soft ? 'soft' : 'tint'];
     if (snap.group === 'shot') return [snap.kind || 'photo'];
@@ -744,7 +929,7 @@
     };
 
     const paintVariantMenu = (host) => {
-      menu.querySelectorAll('[data-edit-variant], [data-edit-variant-rule]').forEach((el) => el.remove());
+      menu.querySelectorAll('[data-edit-variant], [data-edit-variant-rule], [data-edit-variant-label]').forEach((el) => el.remove());
       const spec = specOf(host);
       if (!spec) return;
       const rule = document.createElement('div');
@@ -752,14 +937,34 @@
       rule.setAttribute('data-edit-variant-rule', '');
       menu.append(rule);
       const active = new Set(variantActiveIds(host));
-      spec.items.forEach((item) => {
+      const appendItem = (item) => {
+        if (item.rule) {
+          const split = document.createElement('div');
+          split.className = 'seed-edit-menu__rule';
+          split.setAttribute('data-edit-variant-rule', '');
+          menu.append(split);
+        }
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.dataset.editVariant = item.id;
         btn.textContent = item.label;
         btn.classList.toggle('is-on', active.has(item.id));
         menu.append(btn);
-      });
+      };
+      if (spec.sections) {
+        const indexOn = !active.has('index-off');
+        spec.sections.forEach((section) => {
+          if (section.when === 'index-on' && !indexOn) return;
+          const label = document.createElement('div');
+          label.className = 'seed-edit-menu__label';
+          label.setAttribute('data-edit-variant-label', '');
+          label.textContent = section.title;
+          menu.append(label);
+          (section.items || []).forEach(appendItem);
+        });
+        return;
+      }
+      (spec.items || []).forEach(appendItem);
     };
 
     const showMenu = (event, { text, media, variant, resize }) => {

@@ -3101,7 +3101,7 @@ button:focus-visible, a:focus-visible {
 .design-solution-figure { margin-top: 12px; }
 .design-solution-figure figcaption { line-height: 1.6; }
 .subsection { margin-top: 44px; }
-.subsection > h3 { margin: 0; padding-bottom: 12px; border-bottom: 2px solid var(--c-text); font-size: 20px; }
+.subsection > h3 { margin: 0; padding-bottom: 0; border-bottom: 0; font-size: 20px; }
 .rail-growth-chart { margin: 20px 0 0; }
 .rail-growth-chart-scroll { overflow-x: auto; border-bottom: 1px solid var(--c-line); -webkit-overflow-scrolling: touch; }
 .rail-growth-chart svg { display: block; width: 100%; min-width: 760px; height: 230px; font-family: var(--f-sans); }

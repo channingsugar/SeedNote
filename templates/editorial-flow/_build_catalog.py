@@ -133,10 +133,14 @@ def info(no, title, body, lg=False):
     )
 
 
-def info_grid(layout, *cards, no=None):
+def info_grid(layout, *cards, no=None, index=None, cols=None):
     attr = f' data-layout="{layout}"'
     if no:
         attr += f' data-no="{no}"'
+    if index:
+        attr += f' data-index="{index}"'
+    if cols:
+        attr += f' data-cols="{cols}"'
     return f'<div class="info-grid"{attr}>{"".join(cards)}</div>'
 
 
@@ -660,6 +664,14 @@ lib = "".join([
         info("03", "临近出发补齐材料", "带齐身份、行程证明和当日有效的核验材料。", lg=True),
         no="lg",
     )),
+    lab("编号信息 · 隐藏编号", info_grid("cols",
+        info("01", "要点标题", "同一父组件，只是不显示编号。"),
+        info("02", "要点标题", "右键可打开编号，或改成字母 A B C。"),
+        info("03", "要点标题", "不超过 4 条仍用编号在上。"),
+        info("04", "要点标题", "四条时加 data-cols=\"4\"。"),
+        index="off",
+        cols="4",
+    )),
     lab("编号信息 · 行", info_grid("row",
         info("Q1", "读者会问的第一句", "把限制条件写在答里：种类、体量、数量、材料。展示信息经常与现场不符。"),
         info("01", "结构化档案", "录入关键字段，用来自动筛选匹配政策的可用服务。"),
@@ -673,12 +685,14 @@ lib = "".join([
         info("Q5", "有哪些设施？", "是否提供餐食，以及用具、场地等配套。"),
         info("Q6", "造成损坏怎么赔？", "弄脏或损坏物品时，赔偿标准和押金扣除规则是什么。"),
         info("Q7", "如何留痕，确保到达不被拒？", "下单时是否需要备注或提前告知；口头确认后如何保障不被拒。"),
+        index="q",
     )),
-    lab("编号信息 · 标签", info_grid("label",
+    lab("编号信息 · 标签", info_grid("stack",
         info("属性名", "属性取值", "规格、容量、放置位置和过程中能不能查看，写在说明里。"),
         info("预约时间", "至少提前 1 天", "当天 12:00 前可约次日，12:00 后最早约第三日。"),
         info("办理材料", "证明当日有效", "携带身份证件、购票或订单证明，以及承运当日有效的核验材料。"),
         info("线下时间", "出发前至少 2 小时", "到指定办理点；到达后建议在 1 小时内领取。"),
+        index="label",
     )),
     lab("无编号信息", plain_grid(
         plain("对比点标题", "用一句可核对的数字或范围，说明它比对照方案更有利。"),
@@ -799,12 +813,12 @@ html = f"""<!doctype html>
             <h2>怎么用</h2>
             <ol>
               <li>这是流式模板。壳是文档栏：report-shell.is-flow、吸顶导航、flow-stack 上下叠。</li>
-              <li>合并后的父组件：<code>.stat-row</code> 横排数字；<code>.stat-card</code> 数字信息（<code>data-variant</code>：默认数字卡 / <code>note</code> 标注卡，右键切换）；<code>.info</code> 编号信息（<code>data-layout</code>：2 / stack / row / label / cols；<code>.is-lg</code> / <code>data-no="lg"</code> 大编号）；<code>.plain</code> 无编号信息（<code>data-surface</code>：tint / line）；<code>.point</code> 观点（<code>.is-soft</code> 浅底）；<code>.shot</code> 图（<code>data-kind</code>：photo / crop / scroll / wide / poster）。</li>
+              <li>合并后的父组件：<code>.stat-row</code> 横排数字；<code>.stat-card</code> 数字信息（<code>data-variant</code>：默认数字卡 / <code>note</code> 标注卡，右键切换）；<code>.info</code> 编号信息（布局：格子 <code>cols</code> / 列表 A <code>stack</code> / 列表 B <code>row</code>；<code>data-pos</code> 顶部 / 左侧；<code>data-index</code>：数字 / <code>alpha</code> / <code>q</code> 问题 / <code>label</code> 标签 / <code>off</code> 隐藏；<code>.is-lg</code> / <code>data-no="lg"</code> 大编号）；<code>.plain</code> 无编号信息（<code>data-surface</code>：tint / line）；<code>.point</code> 观点（<code>.is-soft</code> 浅底）；<code>.shot</code> 图（<code>data-kind</code>：photo / crop / scroll / wide / poster）。</li>
               <li>组件库必须带基础 token：间隔 <code>--s-in</code> / <code>--s-stack</code> / <code>--s-chapter</code>；字号 <code>--t-h1</code> / <code>--t-num</code> / <code>--t-no-lg</code> / <code>--t-body</code> / <code>--t-aux</code>；颜色 <code>--c-text</code> 档、<code>--c-line</code>、<code>--c-accent</code>、表数据栏 <code>--c-pos</code> / <code>--c-neg</code>；分割线 <code>.rule</code> / <code>.rule.is-soft</code>。</li>
               <li>仍独立：公式、议题格 <code>.pain-text-list</code> / <code>.pain-topic</code>、发现、图文卡 <code>.transport-cards</code> / <code>.transport-card</code>、韦恩图、导语、来源、章头、分割线、导航栏 <code>.topbar</code>、折线图 <code>.rail-growth-chart</code>、四象限矩阵 <code>.ansoff-grid</code>、漏斗图 <code>.hotel-funnel-chart</code>、关系网络 <code>.hotel-city-network</code>、排行榜 <code>.hotel-ranking-block</code>。</li>
               <li>同类块用父组件 + 变体，不要另起皮肤，也不要再收成 flow-block。</li>
               <li>公式、韦恩图、提问、议题格、图文卡只保留内容。章头 <code>.slide-head</code>、分割线 <code>.rule</code>、导语 <code>.research-lead</code> 是独立组件，不要画进这些块。报告里章头下方仍必须紧跟强线，那是排版规则，不是组件自带的。</li>
-              <li>报告中每个主标题（<code>.slide-head</code>）下方必须紧跟一条可见的<strong>强线</strong> <code>.rule</code>，不得省略，不得用下一块顶线替代，CSS 不得把这条线 <code>display:none</code>。小节标题下必须有弱线。其余块之间不加线，只靠间距。表 / list / 卡内部只用 1px 弱线。</li>
+              <li>报告中每个主标题（<code>.slide-head</code>）下方必须紧跟一条可见的<strong>强线</strong> <code>.rule</code>，不得省略，不得用下一块顶线替代，CSS 不得把这条线 <code>display:none</code>。小节标题下不加线，只用间隔。其余块之间不加线，只靠间距。表 / list / 卡内部只用 1px 弱线。编号信息不超过 4 条用 <code>data-layout="cols"</code>（编号在上），5 条及以上才用 <code>stack</code>。</li>
               <li>间距分三档。区内 <code>--s-in</code>（16，含章头→强线）；章内换排 <code>--s-stack</code>（40，含强线→第一块）；换章 <code>--s-chapter</code>（96）。来源贴在所属证据块下面，不要和换章同一档。</li>
               <li>格内条目留在该卡里。例如议题格的百分比、图文卡的属性行，不要抬成新的一排。</li>
               <li>来源写一次。源格没有口径句，就不要补。</li>

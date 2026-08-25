@@ -10,7 +10,7 @@ description: >-
 
 # 分页 HTML（分屏）
 
-这是**分页 / 分屏**模板。流式长文、大纲套组件库、独立版是另一套：`templates/editorial-flow/`，skill 是 `editorial-html-flow`。两套不能互切：不要加载 `flow.css`，不要加「流式阅读」按钮，不要把 `.is-deck` 改成 `.is-flow`。没说分页时不要走本 skill。
+给任意 Agent 用。路径相对带着 `templates/` 的仓库根。这是**分页 / 分屏**模板。流式长文、大纲套组件库、独立版是另一套：`templates/editorial-flow/`，说明是 `editorial-html-flow`。两套不能互切：不要加载 `flow.css`，不要加「流式阅读」按钮，不要把 `.is-deck` 改成 `.is-flow`。没说分页时不要走本说明。
 
 报告的原子是听众的一步。演示的原子是一个父组件。抄演示的 markup，不抄演示的切法。
 

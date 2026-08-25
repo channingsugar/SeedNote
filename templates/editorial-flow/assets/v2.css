@@ -38,8 +38,8 @@
   margin-top: var(--s-3);
 }
 .report-shell.is-flow .subsection > h3 {
-  border-bottom: 1px solid var(--c-line);
-  padding-bottom: var(--s-3);
+  border-bottom: 0;
+  padding-bottom: 0;
 }
 
 .report-shell.is-flow .document-nav {
