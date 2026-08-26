@@ -1024,6 +1024,10 @@ html:has(.report-shell.is-flow) .theme-control__hint { display: none; }
   color: var(--flow-ink);
   font-family: "PingFang SC", "Avenir Next", sans-serif;
 }
+.report-shell.is-flow .flow-stack > * {
+  flex-shrink: 0;
+  min-height: auto;
+}
 .report-shell.is-flow[data-catalog] .flow-lab {
   position: relative;
   scroll-margin-top: calc(var(--flow-nav) + 16px);

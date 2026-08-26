@@ -41,9 +41,12 @@
 /* —— 数字信息（原 air-signal / rail-key / hotel-funnel-fact / air-coverage） —— */
 .stat-grid {
   display: grid;
+  width: 100%;
+  max-width: 100%;
   grid-template-columns: repeat(var(--stat-cols, 3), minmax(0, 1fr));
 }
 .stat-grid[data-cols="2"] { --stat-cols: 2; }
+.stat-grid[data-cols="3"] { --stat-cols: 3; }
 .stat-grid[data-cols="4"] { --stat-cols: 4; }
 .stat-card {
   min-width: 0;
@@ -107,7 +110,7 @@
 }
 
 /* —— 编号信息（原 air-feature / step / species-doc / opportunity / qa / rail-rule） —— */
-.info-grid { display: grid; }
+.info-grid { display: grid; width: 100%; max-width: 100%; }
 .info {
   display: grid;
   align-items: start;
@@ -168,6 +171,7 @@
   row-gap: var(--s-stack, 40px);
 }
 .info-grid[data-layout="cols"][data-cols="2"] { --info-cols: 2; }
+.info-grid[data-layout="cols"][data-cols="3"] { --info-cols: 3; }
 .info-grid[data-layout="cols"][data-cols="4"] { --info-cols: 4; }
 .info-grid[data-layout="cols"] .info {
   display: flex;
@@ -568,6 +572,7 @@ input.token-color::-moz-color-swatch { border: 0; }
 .flow-lab .topbar { position: relative; z-index: 1; overflow: visible; }
 .flow-lab .topbar-inner { max-width: none; padding: 0 16px; }
 .flow-lab .hotel-city-network { margin: 0; }
+.flow-lab .network-node-table { margin: 0; }
 .flow-lab .hotel-ranking-block { margin: 0; }
 .flow-lab .ansoff-wrap { gap: 14px; }
 .flow-lab .rail-growth-chart { margin: 0; }
@@ -577,6 +582,8 @@ input.token-color::-moz-color-swatch { border: 0; }
   height: 520px;
   max-height: 70vh;
   overflow: auto;
+  isolation: isolate;
+  background: var(--c-bg, #fff);
   border-top: 2px solid var(--c-text);
   overscroll-behavior: contain;
 }
@@ -614,6 +621,7 @@ input.token-color::-moz-color-swatch { border: 0; }
   font-weight: 600;
   text-overflow: ellipsis;
 }
+.hotel-ranking-table tbody td { background: var(--c-bg, #fff); }
 .hotel-ranking-table td.score { font-variant-numeric: tabular-nums; font-weight: 650; }
 .hotel-ranking-table .hotel-tier { color: var(--c-text-3); font-weight: 600; }
 .hotel-ranking-table .tier-luxury { color: var(--c-accent); }
@@ -623,10 +631,11 @@ input.token-color::-moz-color-swatch { border: 0; }
 .table-wrap[style*="height"] {
   display: flex;
   flex-direction: column;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 .plain-table-wrap[style*="height"] table,
-.table-wrap[style*="height"] table { height: 100%; }
+.table-wrap[style*="height"] table { width: 100%; height: 100%; }
 .rail-growth-chart[style*="height"] {
   display: flex;
   flex-direction: column;
@@ -643,6 +652,48 @@ input.token-color::-moz-color-swatch { border: 0; }
   height: 100%;
   min-height: 160px;
 }
+.hotel-funnel-chart[style*="height"] {
+  display: flex;
+  flex-direction: column;
+}
+.hotel-funnel-chart[style*="height"] .hotel-funnel-chart-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}
+.hotel-funnel-chart[style*="height"] svg {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* 重点文本：不依赖 .hotel-research */
+.finding { margin: 0; }
+.finding > h3 {
+  margin: 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--c-text);
+  color: var(--c-text);
+  font-size: 21px;
+  line-height: 1.45;
+}
+.finding > p { margin: 14px 0 0; color: var(--c-text-3); font-size: 15px; line-height: 1.75; }
+.finding-sub { margin-top: 22px; }
+.finding-sub > b { display: block; color: var(--c-text); font-size: 15px; }
+.finding-sub > p { margin: 7px 0 0; color: var(--c-text-3); font-size: 14px; line-height: 1.75; }
+.stat-lines { margin-top: 16px; border-top: 1px solid var(--c-line); }
+.stat-line {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 18px;
+  align-items: baseline;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--c-line);
+}
+.stat-line > b { color: var(--c-accent); font-size: 19px; font-variant-numeric: tabular-nums; }
+.stat-line p { margin: 0; color: var(--c-text-3); font-size: 14px; line-height: 1.65; }
+.stat-line p strong { color: var(--c-text); }
 
 @media (max-width: 980px) {
   .token-board { grid-template-columns: 1fr 1fr; }

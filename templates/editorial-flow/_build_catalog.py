@@ -360,6 +360,11 @@ def city_network():
             </aside>
           </div>
         </section>
+      </div>"""
+
+
+def node_table():
+    return """<div class="network-node-table">
         <div class="section-head top20-head">
           <div><h2>节点表</h2><p>终点按连通数排序。列：类型、信号、已核起点数、方式。</p></div>
         </div>
@@ -704,7 +709,7 @@ lib = "".join([
     lab("观点", point("观点判断", "一句立场：问题不在供给有没有，而在如何找对象做流程简化和能力突破。")),
     lab("观点 · 浅底", point("", "<strong>顺序建议：</strong>首选覆盖最大的对象建立基础供给；第二家补足名额、规格和临近出发申请。", soft=True)),
     lab("议题格", PAIN_LIST),
-    lab("发现", """<article class="finding">
+    lab("重点文本", """<article class="finding">
         <h3>发现标题：既有“信息缺失”，更有“信息有误”</h3>
         <p>现状下用户需要靠二次核验才能完成决策。</p>
         <div class="finding-sub">
@@ -735,6 +740,7 @@ lib = "".join([
     lab("四象限矩阵", ansoff()),
     lab("漏斗图", funnel_chart()),
     lab("关系网络", city_network()),
+    lab("节点表", node_table()),
     lab("排行榜", hotel_ranking()),
     lab("图", '<div class="shot-grid" data-cols="2">'
         + shot(PROFILE, "截图 · 档案", "主图标题", "一句说明：这张图在论证什么。")
@@ -767,8 +773,8 @@ html = f"""<!doctype html>
   <link rel="stylesheet" href="design-system/components.css">
   <link rel="stylesheet" href="assets/template.css">
   <link rel="stylesheet" href="assets/flow.css">
-  <link rel="stylesheet" href="assets/source.css?v=9">
-  <link rel="stylesheet" href="assets/lib.css?v=10">
+  <link rel="stylesheet" href="assets/source.css?v=17">
+  <link rel="stylesheet" href="assets/lib.css?v=17">
   <link rel="stylesheet" href="assets/v2.css?v=9">
 </head>
 <body>
@@ -815,7 +821,7 @@ html = f"""<!doctype html>
               <li>这是流式模板。壳是文档栏：report-shell.is-flow、吸顶导航、flow-stack 上下叠。</li>
               <li>合并后的父组件：<code>.stat-row</code> 横排数字；<code>.stat-card</code> 数字信息（<code>data-variant</code>：默认数字卡 / <code>note</code> 标注卡，右键切换）；<code>.info</code> 编号信息（布局：格子 <code>cols</code> / 列表 A <code>stack</code> / 列表 B <code>row</code>；<code>data-pos</code> 顶部 / 左侧；<code>data-index</code>：数字 / <code>alpha</code> / <code>q</code> 问题 / <code>label</code> 标签 / <code>off</code> 隐藏；<code>.is-lg</code> / <code>data-no="lg"</code> 大编号）；<code>.plain</code> 无编号信息（<code>data-surface</code>：tint / line）；<code>.point</code> 观点（<code>.is-soft</code> 浅底）；<code>.shot</code> 图（<code>data-kind</code>：photo / crop / scroll / wide / poster）。</li>
               <li>组件库必须带基础 token：间隔 <code>--s-in</code> / <code>--s-stack</code> / <code>--s-chapter</code>；字号 <code>--t-h1</code> / <code>--t-num</code> / <code>--t-no-lg</code> / <code>--t-body</code> / <code>--t-aux</code>；颜色 <code>--c-text</code> 档、<code>--c-line</code>、<code>--c-accent</code>、表数据栏 <code>--c-pos</code> / <code>--c-neg</code>；分割线 <code>.rule</code> / <code>.rule.is-soft</code>。</li>
-              <li>仍独立：公式、议题格 <code>.pain-text-list</code> / <code>.pain-topic</code>、发现、图文卡 <code>.transport-cards</code> / <code>.transport-card</code>、韦恩图、导语、来源、章头、分割线、导航栏 <code>.topbar</code>、折线图 <code>.rail-growth-chart</code>、四象限矩阵 <code>.ansoff-grid</code>、漏斗图 <code>.hotel-funnel-chart</code>、关系网络 <code>.hotel-city-network</code>、排行榜 <code>.hotel-ranking-block</code>。</li>
+              <li>仍独立：公式、议题格 <code>.pain-text-list</code> / <code>.pain-topic</code>、重点文本 <code>.finding</code>、图文卡 <code>.transport-cards</code> / <code>.transport-card</code>、韦恩图、导语、来源、章头、分割线、导航栏 <code>.topbar</code>、折线图 <code>.rail-growth-chart</code>、四象限矩阵 <code>.ansoff-grid</code>、漏斗图 <code>.hotel-funnel-chart</code>、关系网络 <code>.hotel-city-network</code>、节点表 <code>.network-node-table</code>、排行榜 <code>.hotel-ranking-block</code>。关系网络和节点表是两个父组件，不要包在同一块里。</li>
               <li>同类块用父组件 + 变体，不要另起皮肤，也不要再收成 flow-block。</li>
               <li>公式、韦恩图、提问、议题格、图文卡只保留内容。章头 <code>.slide-head</code>、分割线 <code>.rule</code>、导语 <code>.research-lead</code> 是独立组件，不要画进这些块。报告里章头下方仍必须紧跟强线，那是排版规则，不是组件自带的。</li>
               <li>报告中每个主标题（<code>.slide-head</code>）下方必须紧跟一条可见的<strong>强线</strong> <code>.rule</code>，不得省略，不得用下一块顶线替代，CSS 不得把这条线 <code>display:none</code>。小节标题下不加线，只用间隔。其余块之间不加线，只靠间距。表 / list / 卡内部只用 1px 弱线。编号信息不超过 4 条用 <code>data-layout="cols"</code>（编号在上），5 条及以上才用 <code>stack</code>。</li>
@@ -824,7 +830,7 @@ html = f"""<!doctype html>
               <li>来源写一次。源格没有口径句，就不要补。</li>
               <li>没有源 HTML 时：从 <code>templates/editorial-flow/report.html</code> 生成报告。对照目录选父组件，缺了才新增。不要抄 <code>data-catalog</code>，报告导航用 <code>.topbar</code>。主题导入导出只在本目录页，不要做到报告壳上。</li>
               <li>分屏是另一套：templates/editorial-page/。旧稿在 templates/draft/。报告不要抄 data-catalog。报告导航用 <code>.topbar</code>，不要用目录壳的 <code>.document-nav</code>。</li>
-              <li>结构说明：两张截图卡是同一父组件 <code>.shot</code>，<code>photo</code> / <code>crop</code> 变体；图区坏图时不把 alt 再写一层，标题只留在 figcaption。宽图和方案图也是同一父组件：<code>.shot[data-kind=wide]</code>，方案只是 <code>.shot-plan</code> 标签槽，目录收在「图 · 宽」。提问是 <code>.info-grid[data-layout=row]</code> 的问答内容，不是新父组件；底下浅底格是无编号信息，不要画进提问。关系网络舞台高度跟左右列表走，不要写死 min-height。图 / 表 / 折线右键「调整」可拖宽高；折线拖高后绘图区跟着拉高，改数字后纵轴刻度自适应。韦恩图第三圈保留，圈内文案是该集合自己的判断。公式和韦恩图只在组件区出现一次。公式与横排数字不是同一组件：公式是算法，横排是支撑数字。四象限矩阵目录用代码版 <code>.ansoff-grid</code>。基础 token 右键改数值，立刻作用于整页并写入当前主题，可导出 JSON 在本目录导入。颜色 token 点色块用取色器，也可改 hex。议题四格是同一父组件 <code>.pain-topic</code> 铺进 <code>.pain-text-list</code>，目录名「议题格」；01–04 主题不同，不把正文并成一块。图文四卡是同一父组件 <code>.transport-card</code> 横排进 <code>.transport-cards</code>，目录名「图文卡」；导语不画进卡。图廊主图不另写当前图名，缩略图才是切换槽，不是第二个组件。</li>
+              <li>结构说明：两张截图卡是同一父组件 <code>.shot</code>，<code>photo</code> / <code>crop</code> 变体；图区坏图时不把 alt 再写一层，标题只留在 figcaption。宽图和方案图也是同一父组件：<code>.shot[data-kind=wide]</code>，方案只是 <code>.shot-plan</code> 标签槽，目录收在「图 · 宽」。提问是 <code>.info-grid[data-layout=row]</code> 的问答内容，不是新父组件；底下浅底格是无编号信息，不要画进提问。关系网络舞台高度跟左右列表走，不要写死 min-height。图 / 表 / 折线右键「尺寸」可拖宽高；折线拖高后绘图区跟着拉高，改数字后纵轴刻度自适应。韦恩图第三圈保留，圈内文案是该集合自己的判断。公式和韦恩图只在组件区出现一次。公式与横排数字不是同一组件：公式是算法，横排是支撑数字。四象限矩阵目录用代码版 <code>.ansoff-grid</code>。基础 token 右键改数值，立刻作用于整页并写入当前主题，可导出 JSON 在本目录导入。颜色 token 点色块用取色器，也可改 hex。议题四格是同一父组件 <code>.pain-topic</code> 铺进 <code>.pain-text-list</code>，目录名「议题格」；01–04 主题不同，不把正文并成一块。图文四卡是同一父组件 <code>.transport-card</code> 横排进 <code>.transport-cards</code>，目录名「图文卡」；导语不画进卡。图廊主图不另写当前图名，缩略图才是切换槽，不是第二个组件。</li>
             </ol>
           </footer>
         </section>
@@ -832,13 +838,13 @@ html = f"""<!doctype html>
     </div>
   </div>
 {LIGHTBOX}
-  <link rel="stylesheet" href="editor/seed-edit.css">
+  <link rel="stylesheet" href="editor/seed-edit.css?v=18">
   <script src="design-system/design-data.js"></script>
   <script src="design-system/theme-runtime.js"></script>
-  <script src="editor/seed-edit.js"></script>
+  <script src="editor/seed-edit.js?v=18"></script>
   <script src="assets/template.js"></script>
   <script src="assets/source.js"></script>
-  <script src="assets/network.js"></script>
+  <script src="assets/network.js?v=16"></script>
 </body>
 </html>
 """

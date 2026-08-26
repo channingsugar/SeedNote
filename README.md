@@ -4,13 +4,14 @@
 
 本仓库的工作说明在 `skills/`，任何 Agent（Cursor、Claude Code、Codex、ChatGPT、其它 IDE）动手前先读对应 `SKILL.md`，路径相对仓库根。
 
-没说分页，默认流式。两套不能互切，不要交叉引用 `design-system/` 或编辑器。
+没说分页，默认流式。流式和分页不能互切，不要交叉引用 `design-system/` 或编辑器。把已有 HTML 变成可右键编辑、不要换皮时，走 `editorial-html-universal`。
 
 
-| 用户要什么                              | 先读                                    |
-| ---------------------------------- | ------------------------------------- |
+| 用户要什么 | 先读 |
+|---|---|
 | 规整 / 换皮 / 套组件 / 流式 / 独立版 / 大纲笔记出长文 | `skills/editorial-html-flow/SKILL.md` |
-| 分页 / 分屏 / 一屏一问 / deck              | `skills/editorial-html-page/SKILL.md` |
+| 分页 / 分屏 / 一屏一问 / deck | `skills/editorial-html-page/SKILL.md` |
+| 任意已有 HTML → 右键可编辑（不换皮） | `editorial-html-universal/SKILL.md` |
 
 
 模板在 `templates/editorial-flow/` 与 `templates/editorial-page/`。详细触发词和步骤以 Skill 正文为准。

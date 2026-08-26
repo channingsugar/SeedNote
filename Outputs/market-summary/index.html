@@ -4,1202 +4,1585 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>宠物跨城出行市场调研</title>
-  <link rel="stylesheet" href="lib/components.css">
-  <link rel="stylesheet" href="lib/template.css">
+  <style>
+    :root {
+      --paper: #fbfaf7;
+      --paper-2: #f3f1eb;
+      --white: rgba(255, 255, 255, .78);
+      --ink: #18202a;
+      --navy: #143d71;
+      --blue: #58789c;
+      --muted: #68717b;
+      --faint: #9da4ab;
+      --line: #d9d6cf;
+      --green: #287456;
+      --green-bg: #e6f0ea;
+      --amber: #9a681d;
+      --amber-bg: #f5ead5;
+      --red: #b94b39;
+      --page: min(1160px, calc(100vw - 48px));
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: "Avenir Next", "PingFang SC", "Microsoft YaHei", sans-serif;
+      letter-spacing: 0;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background-image:
+        linear-gradient(rgba(20, 61, 113, .045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(20, 61, 113, .045) 1px, transparent 1px);
+      background-size: 42px 42px;
+    }
+    img { display: block; max-width: 100%; }
+    a { color: inherit; }
+    p { margin: 0; line-height: 1.75; }
+    h1, h2, h3 { margin: 0; letter-spacing: 0; }
+    h1 { color: var(--navy); font-size: clamp(2.25rem, 4vw, 3.7rem); line-height: 1.12; }
+    h2 { color: var(--navy); font-size: clamp(1.65rem, 3vw, 2.65rem); line-height: 1.2; }
+    h3 { font-size: 1.15rem; line-height: 1.4; }
+    strong { font-weight: 700; }
+    .number { font-variant-numeric: tabular-nums; }
+
+    .document-head {
+      width: var(--page);
+      margin: 0 auto;
+      padding: 58px 0 46px;
+    }
+    .kicker {
+      color: var(--blue);
+      font-size: .86rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+    .document-head p {
+      margin-top: 16px;
+      color: #46505a;
+      font-size: 1rem;
+    }
+
+    main { width: 100%; }
+    .section {
+      padding: 82px 0;
+      border-top: 1px solid var(--line);
+    }
+    .section:nth-child(even) { background: rgba(255,255,255,.34); }
+    .section-inner { width: var(--page); margin: 0 auto; }
+    .section-head { display: grid; grid-template-columns: 260px 1fr; gap: 48px; margin-bottom: 44px; align-items: start; }
+    .section-no { color: var(--blue); font-size: .84rem; font-weight: 700; }
+    .section-intro { margin-top: 14px; color: var(--muted); max-width: 820px; font-size: 1.03rem; }
+
+    .transport-cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .transport-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto 1fr;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: var(--white);
+    }
+    .gallery-stage {
+      position: relative;
+      height: 380px;
+      min-height: 380px;
+      overflow: hidden;
+      background: #e4e1da;
+    }
+    .gallery-main {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      cursor: zoom-in;
+    }
+    .gallery-open {
+      position: absolute;
+      z-index: 3;
+      top: 14px;
+      right: 14px;
+      min-width: 42px;
+      height: 42px;
+      border: 1px solid rgba(255,255,255,.58);
+      border-radius: 50%;
+      color: white;
+      background: rgba(16, 24, 34, .62);
+      font: inherit;
+      font-size: 1.1rem;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+    }
+    .gallery-thumbs {
+      position: absolute;
+      z-index: 3;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      display: flex;
+      gap: 7px;
+      padding: 8px;
+      overflow-x: auto;
+      border-radius: 4px;
+      background: rgba(16, 24, 34, .62);
+      scrollbar-width: none;
+      backdrop-filter: blur(8px);
+    }
+    .gallery-thumbs::-webkit-scrollbar { display: none; }
+    .gallery-thumb {
+      flex: 0 0 52px;
+      width: 52px;
+      height: 42px;
+      padding: 0;
+      overflow: hidden;
+      border: 2px solid transparent;
+      border-radius: 2px;
+      background: #fff;
+      cursor: pointer;
+      opacity: .72;
+    }
+    .gallery-thumb.is-active { border-color: #fff; opacity: 1; }
+    .gallery-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .transport-card-copy {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: 24px 20px;
+      border-top: 1px solid var(--line);
+    }
+    .transport-card-copy > p {
+      height: 8.5em;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: .94rem;
+    }
+    .transport-facts {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
+      margin-top: 22px;
+      border-top: 1px solid var(--line);
+    }
+    .transport-fact {
+      display: flex;
+      min-height: 84px;
+      flex-direction: column;
+      justify-content: center;
+      padding: 13px 0;
+    }
+    .transport-fact + .transport-fact { border-top: 1px solid var(--line); }
+    .transport-fact span { display: block; color: var(--faint); font-size: .72rem; font-weight: 700; }
+    .transport-fact strong { display: block; margin-top: 5px; font-size: .86rem; line-height: 1.55; }
+    .transport-fact strong.price-known { color: var(--red); font-size: 1rem; }
+    .transport-fact strong.price-missing { color: var(--faint); font-weight: 500; }
+    .transport-fact small { display: block; margin-top: 2px; color: var(--muted); font-size: .72rem; font-weight: 500; }
+
+    .rail-key-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-bottom: 38px;
+    }
+    .rail-key { padding-top: 16px; border-top: 2px solid var(--navy); }
+    .rail-key b { display: block; color: var(--navy); font-size: 1.55rem; line-height: 1.15; }
+    .rail-key h3 { margin-top: 9px; }
+    .rail-key p { margin-top: 7px; color: var(--muted); font-size: .86rem; line-height: 1.6; }
+    .rail-rule-layout {
+      display: grid;
+      grid-template-columns: .9fr 1.1fr;
+      gap: 34px;
+      align-items: start;
+    }
+    .rail-rule-list { border-top: 2px solid var(--navy); }
+    .rail-rule {
+      display: grid;
+      grid-template-columns: 118px 1fr;
+      gap: 18px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .rail-rule span { color: var(--blue); font-size: .78rem; font-weight: 700; }
+    .rail-rule p { color: var(--muted); font-size: .9rem; line-height: 1.65; }
+    .rail-flow-figure {
+      margin: 38px 0 0;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      background: white;
+    }
+    .rail-flow-media { position: relative; min-width: 980px; }
+    .rail-flow-figure img { display: block; width: 100%; cursor: zoom-in; }
+    .rail-flow-figure figcaption { padding: 10px 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: .78rem; }
+    .ota-note { margin-top: 12px; color: var(--muted); font-size: .82rem; }
+    .rail-rule-layout table { min-width: 0; }
+    .plain-table-wrap td.weak { color: var(--red); }
+
+    .lightbox {
+      width: min(1120px, calc(100vw - 32px));
+      max-width: none;
+      max-height: calc(100vh - 32px);
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: white;
+    }
+    .lightbox::backdrop { background: rgba(8, 11, 15, .9); }
+    .lightbox-frame { position: relative; height: calc(100vh - 32px); overflow: hidden; }
+    .lightbox-viewport {
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      scrollbar-width: none;
+      overscroll-behavior: contain;
+    }
+    .lightbox-viewport::-webkit-scrollbar { display: none; }
+    .lightbox-canvas {
+      display: grid;
+      place-items: center;
+      width: 100%;
+      height: 100%;
+      min-width: 100%;
+      min-height: 100%;
+    }
+    .lightbox img {
+      display: block;
+      max-width: none;
+      max-height: none;
+      object-fit: contain;
+    }
+    .lightbox.can-zoom .lightbox-viewport { cursor: default; }
+    .lightbox.can-zoom #lightboxImage { cursor: zoom-in; }
+    .lightbox.can-zoom .lightbox-viewport.is-zoomed { cursor: grab; touch-action: none; user-select: none; }
+    .lightbox.can-zoom .lightbox-viewport.is-zoomed #lightboxImage { cursor: grab; }
+    .lightbox.can-zoom .lightbox-viewport.is-dragging { cursor: grabbing; }
+    .lightbox-close {
+      position: fixed;
+      z-index: 2;
+      top: 22px;
+      right: 24px;
+      width: 44px;
+      height: 44px;
+      border: 1px solid rgba(255,255,255,.48);
+      border-radius: 50%;
+      color: white;
+      background: rgba(0,0,0,.34);
+      font: inherit;
+      font-size: 1.45rem;
+      cursor: pointer;
+    }
+    .lightbox-nav {
+      position: fixed;
+      z-index: 2;
+      top: 50%;
+      width: 48px;
+      height: 64px;
+      transform: translateY(-50%);
+      border: 1px solid rgba(255,255,255,.4);
+      border-radius: 4px;
+      color: white;
+      background: rgba(0,0,0,.32);
+      font: inherit;
+      font-size: 2rem;
+      cursor: pointer;
+    }
+    .lightbox-prev { left: 22px; }
+    .lightbox-next { right: 22px; }
+    .lightbox-count {
+      position: fixed;
+      z-index: 2;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      padding: 6px 10px;
+      border-radius: 3px;
+      color: rgba(255,255,255,.84);
+      background: rgba(0,0,0,.38);
+      font-size: .8rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .lightbox-zoom-controls {
+      position: fixed;
+      z-index: 3;
+      right: 24px;
+      bottom: 18px;
+      display: none;
+      align-items: center;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.4);
+      border-radius: 4px;
+      background: rgba(0,0,0,.42);
+    }
+    .lightbox.can-zoom .lightbox-zoom-controls { display: flex; }
+    .lightbox-zoom-controls button {
+      min-width: 42px;
+      height: 38px;
+      padding: 0 10px;
+      border: 0;
+      border-right: 1px solid rgba(255,255,255,.22);
+      color: white;
+      background: transparent;
+      font: inherit;
+      font-size: 1.05rem;
+      cursor: pointer;
+    }
+    .lightbox-zoom-controls button:last-child { border-right: 0; }
+    .lightbox-zoom-controls .zoom-reset { min-width: 62px; font-size: .76rem; font-variant-numeric: tabular-nums; }
+    .lightbox-zoom-controls button:disabled { color: rgba(255,255,255,.34); cursor: default; }
+
+    .plain-table-wrap { overflow-x: auto; border-top: 2px solid var(--navy); }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; }
+    th, td { padding: 15px 14px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; line-height: 1.55; }
+    th { color: var(--blue); font-size: .78rem; font-weight: 700; }
+    td { font-size: .91rem; }
+    td.muted { color: var(--muted); }
+    tr:last-child td { border-bottom: 0; }
+    .airline-matrix { min-width: 920px; }
+    .airline-matrix th:first-child,
+    .airline-matrix td:first-child { width: 16%; color: var(--blue); font-weight: 700; }
+    .airline-matrix th:not(:first-child),
+    .airline-matrix td:not(:first-child) { width: 28%; }
+    .airline-matrix .best { color: var(--green); font-weight: 700; }
+    .airline-matrix .weak { color: var(--red); }
+    .airline-matrix thead th:not(:first-child) { color: var(--ink); font-size: 1.08rem; }
+    .airline-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .airline-rank {
+      display: inline-flex;
+      padding: 2px 6px;
+      border-radius: 2px;
+      font-size: .66rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+    }
+    .airline-rank.one { color: var(--green); background: var(--green-bg); }
+    .airline-rank.two { color: var(--amber); background: var(--amber-bg); }
+    .decision-note {
+      margin-top: 18px;
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.48);
+      color: var(--ink);
+      line-height: 1.7;
+    }
+    .status {
+      display: inline-flex;
+      padding: 3px 7px;
+      border-radius: 3px;
+      font-size: .75rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .status.green { background: var(--green-bg); color: var(--green); }
+    .status.amber { background: var(--amber-bg); color: var(--amber); }
+
+    .air-methods {
+      display: grid;
+      grid-template-columns: .78fr 1.22fr;
+      gap: 36px;
+      align-items: start;
+    }
+    .air-methods figure { margin: 0; border: 1px solid var(--line); background: white; }
+    .air-methods figure img { width: 100%; max-height: 620px; object-fit: contain; }
+    .air-methods-copy { display: grid; gap: 18px; }
+    .method-row { border-top: 2px solid var(--navy); padding: 18px 0 4px; display: grid; grid-template-columns: 90px 1fr; gap: 18px; }
+    .method-row span { color: var(--blue); font-size: .82rem; font-weight: 700; }
+    .method-row p { margin-top: 6px; color: var(--muted); font-size: .94rem; }
+
+    .air-process-block {
+      margin-top: 52px;
+      padding-top: 26px;
+      border-top: 2px solid var(--navy);
+    }
+    .air-process-block > h3 { color: var(--navy); font-size: 1.35rem; }
+    .air-process-lead { margin-top: 8px; max-width: 850px; color: var(--muted); font-size: .94rem; }
+    .process-frictions {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0;
+      margin-top: 22px;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+    .process-friction { padding: 15px 16px 16px 0; }
+    .process-friction + .process-friction { padding-left: 16px; border-left: 1px solid var(--line); }
+    .process-friction b { display: block; color: var(--navy); font-size: .88rem; }
+    .process-friction p { margin-top: 5px; color: var(--muted); font-size: .8rem; line-height: 1.55; }
+    .air-process-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 250px;
+      gap: 38px;
+      margin-top: 28px;
+      align-items: start;
+    }
+    .species-docs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-bottom: 26px;
+    }
+    .species-doc {
+      padding: 16px 0 14px;
+      border-top: 2px solid var(--line);
+    }
+    .species-doc span { color: var(--blue); font-size: .76rem; font-weight: 700; }
+    .species-doc h4 { margin: 5px 0 0; font-size: 1rem; }
+    .species-doc p { margin-top: 6px; color: var(--muted); font-size: .86rem; line-height: 1.65; }
+    .air-process-steps { display: grid; }
+    .air-process-step {
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr);
+      gap: 15px;
+      padding: 17px 0;
+      border-top: 1px solid var(--line);
+    }
+    .air-process-step:last-child { border-bottom: 1px solid var(--line); }
+    .air-process-step > span { color: var(--blue); font-size: .78rem; font-weight: 700; }
+    .air-process-step h4 { margin: 0; font-size: 1rem; }
+    .air-process-step p { margin-top: 5px; color: var(--muted); font-size: .88rem; line-height: 1.65; }
+    .process-branches { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
+    .process-branch { padding: 11px 12px; background: var(--paper-2); font-size: .82rem; line-height: 1.55; }
+    .process-branch b { display: block; margin-bottom: 3px; color: var(--navy); }
+    .certificate-card {
+      position: relative;
+      margin: 0;
+      border: 1px solid var(--line);
+      background: white;
+    }
+    .certificate-card .shot-window { height: 500px; overflow: hidden; background: var(--paper-2); }
+    .certificate-card img { width: 100%; height: 100%; object-fit: cover; object-position: top; cursor: zoom-in; }
+    .certificate-card figcaption { padding: 14px 15px 16px; border-top: 1px solid var(--line); }
+    .certificate-card figcaption strong { display: block; font-size: .92rem; }
+    .certificate-card figcaption span { display: block; margin-top: 5px; color: var(--muted); font-size: .78rem; line-height: 1.55; }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 34px;
+    }
+    .summary-grid.summary-grid--three { grid-template-columns: repeat(3, 1fr); }
+    .summary-item { min-height: 176px; border-top: 3px solid var(--navy); background: rgba(255,255,255,.54); padding: 20px 18px; }
+    .summary-item b { display: block; color: var(--navy); font-size: clamp(2rem, 3.8vw, 3.6rem); line-height: 1; }
+    .summary-item h3 { margin-top: 12px; }
+    .summary-item p { margin-top: 7px; color: var(--muted); font-size: .83rem; line-height: 1.55; }
+    .subsection { margin-top: 44px; }
+    .subsection h3 { padding-bottom: 12px; border-bottom: 2px solid var(--navy); color: var(--navy); font-size: 1.3rem; }
+    .subsection-note { margin-top: 10px; color: var(--muted); font-size: .88rem; }
+    .ratio { color: var(--navy); font-weight: 700; white-space: nowrap; }
+    .scale-block {
+      margin-top: 34px;
+      padding: 26px 28px 30px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.46);
+    }
+    .scale-block + .scale-block { margin-top: 22px; }
+    .scale-block.secondary { background: rgba(243,241,235,.58); }
+    .scale-block-label {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+    .scale-block-label span { color: var(--blue); font-size: .78rem; font-weight: 700; }
+    .scale-block-label h3 { color: var(--navy); font-size: 1.28rem; }
+    .scale-block > .plain-table-wrap { margin-top: 14px; }
+
+    .facts {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px 28px;
+    }
+    .fact { border-top: 2px solid var(--navy); padding-top: 16px; }
+    .fact p { margin-top: 7px; color: var(--muted); font-size: .93rem; }
+
+    .competitor-table td:first-child { font-weight: 700; }
+    .competitor-table td:nth-child(2) { color: var(--navy); font-weight: 700; }
+
+    .price-layout { display: grid; grid-template-columns: 1.1fr .9fr; gap: 42px; align-items: start; }
+    .price-list { display: grid; gap: 13px; }
+    .price-item { display: grid; gap: 5px; }
+    .price-row { display: grid; grid-template-columns: 138px 1fr 96px; gap: 14px; align-items: center; }
+    .bar-track { height: 14px; background: #e5e2dc; }
+    .bar { height: 100%; background: var(--navy); }
+    .bar.addon { background: #b58b42; }
+    .bar.cabin { background: #b95a49; }
+    .price-row strong { text-align: right; font-variant-numeric: tabular-nums; }
+    .price-formula { padding-left: 152px; color: var(--muted); font-size: .78rem; line-height: 1.5; }
+    .revenue-list { border-left: 3px solid var(--navy); padding-left: 22px; display: grid; gap: 18px; }
+    .revenue-list p { margin-top: 4px; color: var(--muted); font-size: .89rem; }
+
+    .business-model-note {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-top: 28px;
+    }
+    .business-model-note article { padding-top: 15px; border-top: 2px solid var(--navy); }
+    .business-model-note p { margin-top: 7px; color: var(--muted); font-size: .88rem; }
+
+    .compact-evidence-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 26px;
+    }
+    .compact-evidence-grid .evidence-shot .shot-window {
+      height: 310px;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+    .compact-evidence-grid .evidence-shot img {
+      width: 100%;
+      height: auto;
+      min-height: 100%;
+      object-fit: contain;
+      object-position: top;
+    }
+    .compact-evidence-grid .evidence-shot figcaption { min-height: 78px; }
+    .comparison-context {
+      margin-top: 14px;
+      padding: 13px 15px;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.55);
+      font-size: .82rem;
+      line-height: 1.65;
+    }
+    .comparison-context strong { color: var(--ink); }
+    .service-link { color: var(--navy); text-underline-offset: 3px; }
+
+    .road-platform-facts {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-bottom: 32px;
+    }
+    .road-platform-fact { padding-top: 16px; border-top: 2px solid var(--navy); }
+    .road-platform-fact p { margin-top: 7px; color: var(--muted); font-size: .89rem; }
+    .road-advantage-band {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin-bottom: 36px;
+      color: white;
+      background: var(--navy);
+    }
+    .road-advantage {
+      min-height: 126px;
+      padding: 20px 18px;
+    }
+    .road-advantage + .road-advantage { border-left: 1px solid rgba(255,255,255,.22); }
+    .road-advantage b { display: block; font-size: 1rem; }
+    .road-advantage p { margin-top: 7px; color: rgba(255,255,255,.78); font-size: .82rem; line-height: 1.55; }
+    .road-evidence-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .evidence-shot {
+      position: relative;
+      margin: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: white;
+    }
+    .evidence-shot .shot-window { height: 470px; overflow: hidden; background: var(--paper-2); }
+    .evidence-shot img { width: 100%; height: 100%; object-fit: cover; object-position: top; cursor: zoom-in; }
+    .evidence-shot figcaption { min-height: 92px; padding: 13px 14px 15px; border-top: 1px solid var(--line); }
+    .evidence-shot figcaption strong { display: block; font-size: .91rem; }
+    .evidence-shot figcaption span { display: block; margin-top: 4px; color: var(--muted); font-size: .77rem; line-height: 1.5; }
+    .provider-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .provider-card {
+      position: relative;
+      margin: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: white;
+    }
+    .provider-card .shot-window {
+      height: 300px;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      background: var(--paper-2);
+      scrollbar-width: thin;
+    }
+    .provider-card img { display: block; width: 100%; height: auto; object-fit: contain; object-position: top; }
+    .provider-card figcaption { min-height: 128px; padding: 14px; border-top: 1px solid var(--line); }
+    .provider-card figcaption strong { display: block; font-size: .94rem; }
+    .provider-card figcaption span { display: block; margin-top: 5px; color: var(--muted); font-size: .78rem; line-height: 1.55; }
+    .evidence-shot .gallery-open,
+    .provider-card .gallery-open,
+    .rail-flow-media .gallery-open { top: 10px; right: 10px; }
+
+    .road-layout { display: grid; grid-template-columns: .85fr 1.15fr; gap: 36px; align-items: start; }
+    .road-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .road-photos img { width: 100%; height: 430px; object-fit: cover; border: 1px solid var(--line); }
+    .road-photos img:first-child { object-position: center; }
+    .road-photos img:last-child { object-position: center 20%; }
+    .road-prices { display: grid; gap: 0; border-top: 2px solid var(--navy); }
+    .road-price { display: grid; grid-template-columns: 1.2fr 1fr auto; gap: 18px; align-items: baseline; padding: 16px 0; border-bottom: 1px solid var(--line); }
+    .road-price span { color: var(--muted); font-size: .87rem; }
+    .road-price strong { color: var(--red); font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+
+    .problems { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .problem { border-top: 3px solid var(--navy); padding: 20px 0 0; }
+    .problem p { margin-top: 10px; color: var(--muted); font-size: .9rem; }
+
+    .next-step { display: grid; grid-template-columns: .7fr 1.3fr; gap: 48px; margin-top: 48px; padding-top: 28px; border-top: 1px solid var(--line); }
+    .next-step-intro span { color: var(--blue); font-size: .82rem; font-weight: 700; }
+    .next-step-intro h3 { margin-top: 10px; font-size: 1.25rem; }
+    .next-step-intro p { margin-top: 10px; color: var(--muted); font-size: .9rem; }
+    .next-step-list { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--navy); }
+    .next-step-list li { display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .next-step-list .step-index { color: var(--blue); font-family: var(--mono); font-size: .78rem; }
+    .next-step-list h3 { font-size: 1rem; }
+    .next-step-list p { margin-top: 5px; color: var(--muted); font-size: .86rem; }
+    .flow { display: grid; grid-template-columns: repeat(5, 1fr); margin-top: 40px; }
+    .flow-step { position: relative; border-top: 2px solid var(--navy); padding: 16px 24px 0 0; }
+    .flow-step:not(:last-child)::after { content: "→"; position: absolute; right: 8px; top: 12px; color: var(--blue); }
+    .flow-step p { margin-top: 5px; color: var(--muted); font-size: .8rem; line-height: 1.5; }
+
+    .notes { width: var(--page); margin: 0 auto; padding: 52px 0 72px; border-top: 1px solid var(--line); color: var(--muted); }
+    .notes h2 { font-size: 1.45rem; }
+    .notes ol { margin: 18px 0 0; padding-left: 1.25rem; }
+    .notes li { margin: 8px 0; line-height: 1.65; font-size: .86rem; }
+
+    @media (max-width: 900px) {
+      :root { --page: min(100% - 32px, 760px); }
+      .section-head, .air-methods, .air-process-layout, .price-layout, .road-layout, .transport-card { grid-template-columns: 1fr; }
+      .transport-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .section { padding: 62px 0; }
+      .section-head { gap: 10px; }
+      .summary-grid, .summary-grid.summary-grid--three, .problems, .rail-key-grid { grid-template-columns: 1fr 1fr; }
+      .rail-rule-layout { grid-template-columns: 1fr; }
+      .road-photos img { height: 350px; }
+      .transport-card-copy { border-left: 0; }
+      .road-evidence-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .compact-evidence-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .business-model-note, .road-platform-facts, .road-advantage-band, .process-frictions { grid-template-columns: 1fr 1fr; }
+      .road-advantage:nth-child(3) { border-left: 0; border-top: 1px solid rgba(255,255,255,.22); }
+      .road-advantage:nth-child(4) { border-top: 1px solid rgba(255,255,255,.22); }
+    }
+    @media (max-width: 620px) {
+      :root { --page: calc(100% - 24px); }
+      .document-head { padding: 40px 0 34px; }
+      .section { padding: 50px 0; }
+      .transport-cards, .summary-grid, .summary-grid.summary-grid--three, .facts, .problems, .rail-key-grid { grid-template-columns: 1fr; }
+      .gallery-stage { height: 68vh; min-height: 430px; max-height: 620px; }
+      .transport-card-copy { padding: 20px 18px 22px; }
+      .transport-card-copy > p { height: auto; }
+      .transport-facts { grid-template-columns: 1fr 1fr; }
+      .transport-fact:nth-child(even) { padding-left: 14px; border-left: 1px solid var(--line); }
+      .transport-fact:nth-child(2) { border-top: 0; }
+      .transport-fact:nth-child(n+3) { border-top: 1px solid var(--line); }
+      .lightbox-nav { width: 40px; height: 56px; }
+      .lightbox-prev { left: 8px; }
+      .lightbox-next { right: 8px; }
+      .method-row { grid-template-columns: 64px 1fr; }
+      .species-docs, .process-branches { grid-template-columns: 1fr; }
+      .certificate-card { max-width: 280px; }
+      .price-row { grid-template-columns: 112px 1fr 72px; gap: 8px; font-size: .86rem; }
+      .price-formula { padding-left: 120px; }
+      .road-photos { grid-template-columns: 1fr; }
+      .road-photos img { height: 330px; }
+      .road-price { grid-template-columns: 1fr auto; }
+      .road-price span { grid-column: 1 / -1; }
+      .road-evidence-grid, .compact-evidence-grid, .provider-grid, .business-model-note, .road-platform-facts { grid-template-columns: 1fr; }
+      .road-advantage-band, .process-frictions { grid-template-columns: 1fr; }
+      .road-advantage + .road-advantage,
+      .process-friction + .process-friction { padding-left: 18px; border-left: 0; border-top: 1px solid rgba(255,255,255,.22); }
+      .process-friction + .process-friction { border-top-color: var(--line); }
+      .road-advantage:nth-child(3) { border-top-color: rgba(255,255,255,.22); }
+      .evidence-shot .shot-window { height: 62vh; min-height: 440px; }
+      .provider-card .shot-window { height: 300px; min-height: 0; }
+      .scale-block { padding: 22px 16px 24px; }
+      .next-step { grid-template-columns: 1fr; gap: 20px; }
+      .flow { grid-template-columns: 1fr; }
+      .flow-step { padding: 13px 0; border-top: 1px solid var(--line); }
+      .flow-step:not(:last-child)::after { display: none; }
+    }
+  </style>
+  <link rel="stylesheet" href="lib/editor/seed-edit.css?v=2">
 </head>
 <body>
-  <div class="theme-control" id="themeControl" aria-label="主题控制">
-    <div class="theme-control__label">
-      <span>THEME</span>
-      <strong data-theme-name>Editorial 默认</strong>
-    </div>
-    <select data-theme-select aria-label="切换主题"></select>
-    <button type="button" data-theme-import-trigger>导入主题</button>
-    <input data-theme-import type="file" accept="application/json,.json" hidden>
-    <p class="theme-control__hint">切换或导入主题后，整页设计语言会同步替换</p>
-    <div class="theme-control__toast" data-theme-toast role="status" aria-live="polite"></div>
-  </div>
+  <header class="document-head">
+    <div class="kicker">行业调研 · 2026.08</div>
+    <h1>宠物跨城出行市场调研</h1>
+    <p>航空、高铁与陆运的供给、价格和履约现状</p>
+  </header>
 
-  <div class="report-shell is-deck">
-    <nav class="document-nav nav-underline is-sticky" data-component-id="navigation" aria-label="文档章节">
-      <div class="document-nav__brand"><span class="document-nav__mark" aria-hidden="true"></span><strong>SEED</strong></div>
-      <div class="document-nav__links">
-      <a href="#transport" class="is-active">运输方式</a>
-      <a href="#rail">高铁现状</a>
-      <a href="#air">航空方式</a>
-      <a href="#supply">供给规模</a>
-      <a href="#partners">合作顺序</a>
-      <a href="#paidao">派到样本</a>
-      <a href="#road">陆运</a>
-      <a href="#problems">出行痛点</a>
-      <a href="#notes">数据口径</a>
-      </div>
-    </nav>
+  <main>
+    <section class="section" id="transport">
+      <div class="section-inner">
+        <header class="section-head">
+          <div class="section-no">01 · 运输方式</div>
+          <div>
+            <h2>目前有哪些跨城运输方式</h2>
+            <p class="section-intro">目前的跨城供给可以归为四类。差异集中在宠物与人的位置、价格、办理材料、交接次数和覆盖范围。</p>
+          </div>
+        </header>
 
-    <div class="report-stage" data-report-stage>
-      <header class="section-header report-deck-head" data-deck-head>
-        <span class="section-header__no" data-deck-no></span>
-        <div>
-          <h2 class="section-header__title" data-deck-title></h2>
-          <p class="section-header__part" data-deck-part hidden></p>
+        <div class="transport-cards">
+          <article class="transport-card" data-gallery>
+            <div class="gallery-stage" data-seed-box>
+              <img class="gallery-main" src="assets/gallery/cabin-01.jpg" alt="宠物装入软包进入飞机客舱" tabindex="0">
+              <button class="gallery-open" type="button" title="查看大图" aria-label="查看飞机进客舱大图">↗</button>
+              <div class="gallery-thumbs" aria-label="切换飞机进客舱图片">
+                <button class="gallery-thumb is-active" type="button" data-src="assets/gallery/cabin-01.jpg" data-alt="宠物装入软包进入飞机客舱"><img src="assets/gallery/cabin-01.jpg" alt="软包内的客舱宠物" decoding="async"></button>
+                <button class="gallery-thumb" type="button" data-src="assets/gallery/cabin-02.jpg" data-alt="宠物在飞机客舱内"><img src="assets/gallery/cabin-02.jpg" alt="客舱内的宠物" loading="lazy" decoding="async"></button>
+              </div>
+            </div>
+            <div class="transport-card-copy">
+              <h3>飞机进客舱</h3>
+              <p>宠物装入符合要求的软包，随主人进入客舱。陪伴感最好，费用通常最高；航司、机场、机型、体重与单班名额共同决定能否办理。</p>
+              <div class="transport-facts">
+                <div class="transport-fact"><span>北京—杭州宠物费用</span><strong class="price-known">约 ¥1,288–1,430 / 只</strong><small>客舱基础服务费，人票另计</small></div>
+                <div class="transport-fact"><span>宠物位置</span><strong>客舱座椅下方软包</strong></div>
+                <div class="transport-fact"><span>主人</span><strong>必须同行</strong></div>
+                <div class="transport-fact"><span>主要优势</span><strong>飞行时间短，全程陪同</strong></div>
+                <div class="transport-fact"><span>主要限制</span><strong>机场白名单、名额、体重与软包要求</strong></div>
+              </div>
+            </div>
+          </article>
+          <article class="transport-card" data-gallery>
+            <div class="gallery-stage" data-seed-box>
+              <img class="gallery-main" src="assets/gallery/air-cargo-01.jpg" alt="航空箱在机场完成固定与交运" tabindex="0">
+              <button class="gallery-open" type="button" title="查看大图" aria-label="查看飞机托运大图">↗</button>
+              <div class="gallery-thumbs" aria-label="切换飞机托运图片">
+                <button class="gallery-thumb is-active" type="button" data-src="assets/gallery/air-cargo-01.jpg" data-alt="航空箱在机场完成固定与交运"><img src="assets/gallery/air-cargo-01.jpg" alt="航空箱固定" decoding="async"></button>
+                <button class="gallery-thumb" type="button" data-src="assets/gallery/air-cargo-02.jpg" data-alt="工作人员装卸宠物航空箱"><img src="assets/gallery/air-cargo-02.jpg" alt="机场装卸" loading="lazy" decoding="async"></button>
+                <button class="gallery-thumb" type="button" data-src="assets/gallery/air-cargo-03.jpg" data-alt="飞机前后货舱位置说明"><img src="assets/gallery/air-cargo-03.jpg" alt="货舱位置说明" loading="lazy" decoding="async"></button>
+                <button class="gallery-thumb" type="button" data-src="assets/gallery/air-cargo-04.jpg" data-alt="飞机有氧货舱说明"><img src="assets/gallery/air-cargo-04.jpg" alt="有氧货舱说明" loading="lazy" decoding="async"></button>
+                <button class="gallery-thumb" type="button" data-src="assets/gallery/air-cargo-05.jpg" data-alt="飞机货舱内部环境"><img src="assets/gallery/air-cargo-05.jpg" alt="货舱内部" loading="lazy" decoding="async"></button>
+                <button class="gallery-thumb" type="button" data-src="assets/gallery/air-cargo-06.jpg" data-alt="货舱内的多个宠物航空箱"><img src="assets/gallery/air-cargo-06.jpg" alt="货舱航空箱" loading="lazy" decoding="async"></button>
+                <button class="gallery-thumb" type="button" data-src="assets/gallery/air-cargo-07.jpg" data-alt="飞机货舱装载空间"><img src="assets/gallery/air-cargo-07.jpg" alt="货舱装载空间" loading="lazy" decoding="async"></button>
+                <button class="gallery-thumb" type="button" data-src="assets/gallery/air-cargo-08.jpg" data-alt="机场内等待交运的宠物航空箱"><img src="assets/gallery/air-cargo-08.jpg" alt="等待交运" loading="lazy" decoding="async"></button>
+              </div>
+            </div>
+            <div class="transport-card-copy">
+              <h3>飞机托运</h3>
+              <p>宠物在有氧货舱运输，可与主人同航班，也可单独飞。两端都需要交接，航空箱、检疫证明、机型与温度限制是关键条件。</p>
+              <div class="transport-facts">
+                <div class="transport-fact"><span>北京—杭州宠物费用</span><strong class="price-known">同机飞约 ¥548<br>单独飞约 ¥950</strong><small>派到样本，未计人票、代办、箱包与保险</small></div>
+                <div class="transport-fact"><span>宠物位置</span><strong>有氧货舱航空箱</strong></div>
+                <div class="transport-fact"><span>主人</span><strong>可同行或不同行</strong></div>
+                <div class="transport-fact"><span>主要优势</span><strong>飞行时间短</strong></div>
+                <div class="transport-fact"><span>主要限制</span><strong>机型、高温、检疫证明与机场条件</strong></div>
+              </div>
+            </div>
+          </article>
+          <article class="transport-card" data-gallery>
+            <div class="gallery-stage" data-seed-box>
+              <img class="gallery-main" src="assets/gallery/rail-05.jpg" alt="高铁宠物运输箱的温湿度与氧气监控" tabindex="0">
+              <button class="gallery-open" type="button" title="查看大图" aria-label="查看高铁托运大图">↗</button>
+              <div class="gallery-thumbs" aria-label="切换高铁托运图片">
+                <button class="gallery-thumb is-active" type="button" data-src="assets/gallery/rail-05.jpg" data-alt="高铁宠物运输箱的温湿度与氧气监控"><img src="assets/gallery/rail-05.jpg" alt="环境监控屏" decoding="async"></button>
+                <button class="gallery-thumb" type="button" data-src="assets/gallery/rail-01.jpg" data-alt="高铁行李车厢内的宠物专用运输箱"><img src="assets/gallery/rail-01.jpg" alt="高铁宠物运输箱" loading="lazy" decoding="async"></button>
+                <button class="gallery-thumb" type="button" data-src="assets/gallery/rail-02.jpg" data-alt="高铁行李车厢储物柜"><img src="assets/gallery/rail-02.jpg" alt="行李车厢" loading="lazy" decoding="async"></button>
+                <button class="gallery-thumb" type="button" data-src="assets/gallery/rail-03.jpg" data-alt="高铁站宠物托运办理区"><img src="assets/gallery/rail-03.jpg" alt="托运办理区" loading="lazy" decoding="async"></button>
+                <button class="gallery-thumb" type="button" data-src="assets/gallery/rail-04.jpg" data-alt="宠物在高铁专用运输箱内"><img src="assets/gallery/rail-04.jpg" alt="运输箱内的宠物" loading="lazy" decoding="async"></button>
+              </div>
+            </div>
+            <div class="transport-card-copy">
+              <h3>高铁托运</h3>
+              <p>宠物进入行李车厢的恒温监控运输箱，主人通常乘坐同一车次。费用较低，但可办车次和站点仍有限。</p>
+              <div class="transport-facts">
+                <div class="transport-fact"><span>北京—杭州宠物费用</span><strong class="price-known">约 ¥500 / 只</strong><small>携宠出行优惠价，人票另计</small></div>
+                <div class="transport-fact"><span>宠物位置</span><strong>行李车厢专用运输箱</strong></div>
+                <div class="transport-fact"><span>主人</span><strong>通常乘坐同一车次</strong></div>
+                <div class="transport-fact"><span>主要优势</span><strong>价格相对低，运输环境可监控</strong></div>
+                <div class="transport-fact"><span>主要限制</span><strong>车次和站点少，体型与犬种受限</strong></div>
+              </div>
+            </div>
+          </article>
+          <article class="transport-card" data-gallery>
+            <div class="gallery-stage" data-seed-box>
+              <img class="gallery-main" src="assets/gallery/road-01.jpg" alt="宠物跨城运输车辆内部" tabindex="0">
+              <button class="gallery-open" type="button" title="查看大图" aria-label="查看陆运大图">↗</button>
+              <div class="gallery-thumbs" aria-label="切换陆运图片">
+                <button class="gallery-thumb is-active" type="button" data-src="assets/gallery/road-01.jpg" data-alt="宠物跨城运输车辆内部"><img src="assets/gallery/road-01.jpg" alt="运输车辆内部" decoding="async"></button>
+                <button class="gallery-thumb" type="button" data-src="assets/gallery/road-02.jpg" data-alt="运输车辆内的宠物笼位"><img src="assets/gallery/road-02.jpg" alt="宠物笼位" loading="lazy" decoding="async"></button>
+                <button class="gallery-thumb" type="button" data-src="assets/gallery/road-03.jpg" data-alt="带固定笼位的专业宠物运输车"><img src="assets/gallery/road-03.jpg" alt="专业运输车" loading="lazy" decoding="async"></button>
+                <button class="gallery-thumb" type="button" data-src="assets/gallery/road-04.jpg" data-alt="宠物运输车笼位内部"><img src="assets/gallery/road-04.jpg" alt="笼位内部" loading="lazy" decoding="async"></button>
+                <button class="gallery-thumb" type="button" data-src="assets/gallery/road-05.jpg" data-alt="宠物陆运订单的定位与车厢监控"><img src="assets/gallery/road-05.jpg" alt="定位和监控" loading="lazy" decoding="async"></button>
+                <button class="gallery-thumb" type="button" data-src="assets/gallery/road-06.jpg" data-alt="人宠共同乘坐跨城商务车"><img src="assets/gallery/road-06.jpg" alt="人宠同行商务车" loading="lazy" decoding="async"></button>
+                <button class="gallery-thumb" type="button" data-src="assets/gallery/road-07.jpg" data-alt="多人和宠物共同乘坐跨城车辆"><img src="assets/gallery/road-07.jpg" alt="多人宠同行" loading="lazy" decoding="async"></button>
+              </div>
+            </div>
+            <div class="transport-card-copy">
+              <h3>陆运</h3>
+              <p>包含固定班线、拼车、专车和人宠同行。覆盖更灵活，通常少办一份检疫证明；价格、时效和照护水平随产品差异较大。</p>
+              <div class="transport-facts">
+                <div class="transport-fact"><span>北京—杭州宠物费用</span><strong class="price-known">约 ¥450–1,280 / 只</strong><small>专业服务商拼载询价样本</small></div>
+                <div class="transport-fact"><span>宠物位置</span><strong>运输车笼位或同行座舱</strong></div>
+                <div class="transport-fact"><span>主人</span><strong>可同行或不同行</strong></div>
+                <div class="transport-fact"><span>主要优势</span><strong>手续更少，覆盖宠物类型更广</strong></div>
+                <div class="transport-fact"><span>主要限制</span><strong>时长较长，车辆与服务标准不一</strong></div>
+              </div>
+            </div>
+          </article>
         </div>
-      </header>
+      </div>
+    </section>
 
-      <div class="report-slides" data-report-slides>
-        <section class="report-slide is-active" data-chapter="cover" data-slide="00" id="cover">
-          <header class="report-cover">
-            <div class="report-cover__meta">
-              <span class="report-cover__kicker">行业调研 · 2026.08</span>
-            </div>
-            <h1>宠物跨城出行市场调研</h1>
-            <p class="report-cover__lead">航空、高铁与陆运的供给、价格和履约现状</p>
-            <div class="report-cover__actions">
-              <a class="button primary" href="#transport">开始阅读</a>
-            </div>
-            <div class="report-cover__aside">
-              <span>MARKET SUMMARY</span>
-              <span>2026.08</span>
-            </div>
-          </header>
-        </section>
+    <section class="section" id="rail-status">
+      <div class="section-inner">
+        <header class="section-head">
+          <div class="section-no">02 · 高铁现状</div>
+          <div>
+            <h2>12306 已提供高铁宠物托运，OTA 的预订衔接仍不稳定</h2>
+            <p class="section-intro">服务由中铁快运承运，12306 负责车次查询、仓位预约和订单管理。当前主要问题已经从“有没有服务”转向“能否顺利找到车次并接着买到对应人票”。</p>
+          </div>
+        </header>
 
-        <section class="report-slide is-chapter-cover" data-chapter="transport" data-slide="01" id="transport">
-          <header class="chapter-cover">
-            <span class="chapter-cover__no">01</span>
-            <span class="chapter-cover__kicker">运输方式</span>
-            <h2 class="chapter-cover__title">目前有哪些跨城运输方式</h2>
-            <p class="chapter-cover__lead">目前的跨城供给可以归为四类。差异集中在宠物与人的位置、价格、办理材料、交接次数和覆盖范围。</p>
-          </header>
-        </section>
+        <div class="rail-key-grid">
+          <article class="rail-key"><b>364 / 9000</b><h3>每日可办车次</h3><p>约占全国每日图定 G / D / C 车次的 4%，目前覆盖 163 座高铁站。</p></article>
+          <article class="rail-key"><b>2 种</b><h3>服务形态</h3><p>“携宠出行”支持人宠同车；“爱宠单独行”由中铁快运审核后安排车次。</p></article>
+          <article class="rail-key"><b>≤15kg</b><h3>宠物准入</h3><p>同时要求肩高 ≤40cm、身长 ≤52cm；47 类烈性犬及不符合健康条件的宠物不承运。</p></article>
+          <article class="rail-key"><b>¥400–860</b><h3>携宠出行价格</h3><p>按运输里程分四档浮动。北京—杭州约 1280km，对应约 ¥500 / 只。</p></article>
+        </div>
 
-        <section class="report-section report-slide" data-chapter="transport" data-slide="01.a" id="transport-modes">
-          <header class="section-header">
-            <span class="section-header__no">01.a · 运输方式</span>
+        <div class="rail-rule-layout">
+          <div class="rail-rule-list">
+            <div class="rail-rule"><span>运输方式</span><p>铁路提供 54×43×40cm 专用运输箱，每箱 1 只，放置在列车指定行李车厢；运输途中不能探视。</p></div>
+            <div class="rail-rule"><span>预约时间</span><p>携宠出行至少提前 1 天预约；当天 12:00 前可约次日，12:00 后最早约第三日。爱宠单独行需提前 2–5 天预约。</p></div>
+            <div class="rail-rule"><span>办理材料</span><p>携带宠物、本人有效身份证件、购票证明及承运当日有效的《动物检疫合格证明》。线上预约上传宠物实际照片。</p></div>
+            <div class="rail-rule"><span>线下时间</span><p>开车前至少 2 小时到中铁快运营业部办理；列车到站后建议在 1 小时内领取。</p></div>
+          </div>
+          <div class="plain-table-wrap" data-seed-box>
+            <table>
+              <thead><tr><th>铁路运程</th><th>携宠出行</th><th>爱宠单独行</th></tr></thead>
+              <tbody>
+                <tr><td>1000km（含）以内</td><td class="number">¥400</td><td class="number">¥558</td></tr>
+                <tr><td>1000–1500km（含）</td><td class="number">¥500</td><td class="number">¥658</td></tr>
+                <tr><td>1500–2000km（含）</td><td class="number">¥660</td><td class="number">¥958</td></tr>
+                <tr><td>2000km 以上</td><td class="number">¥860</td><td class="number">¥1,258</td></tr>
+              </tbody>
+            </table>
+            <p class="ota-note">2026 年 7 月 1 日起执行市场化浮动价格，实际费用以预约页为准；两种服务均含 ¥2,000 基础保险。</p>
+          </div>
+        </div>
+
+        <figure class="rail-flow-figure" data-lightbox-src="assets/rail-ota-flow.jpg" data-lightbox-alt="12306 爱宠行从入口、仓位查询到购买人票和提交订单的完整链路">
+          <div class="rail-flow-media" data-seed-box>
+            <img src="assets/rail-ota-flow.jpg" alt="12306 爱宠行从入口、仓位查询到购买人票和提交订单的完整链路" tabindex="0">
+            <button class="gallery-open" type="button" title="查看大图" aria-label="放大查看 12306 爱宠行链路">↗</button>
+          </div>
+          <figcaption>12306「爱宠行」：进入宠物托运、查询仓位、选择对应人票、锁定仓位并提交订单。</figcaption>
+        </figure>
+
+        <div class="subsection">
+          <h3>OTA 已陆续接入，主要问题出在查询后的预订衔接</h3>
+          <figure class="rail-flow-figure" data-lightbox-src="assets/rail-ota-status.jpg" data-lightbox-alt="携程、去哪儿、智行和同程的高铁宠物托运服务与预订衔接对比">
+            <div class="rail-flow-media" data-seed-box>
+              <img src="assets/rail-ota-status.jpg" alt="携程、去哪儿、智行和同程的高铁宠物托运服务与预订衔接对比" tabindex="0">
+              <button class="gallery-open" type="button" title="查看大图" aria-label="放大查看 OTA 高铁宠物托运现状">↗</button>
+            </div>
+            <figcaption>友商 OTA 高铁宠物托运链路实测：四家均已接入查询页面，差异集中在查询后如何承接对应人票。</figcaption>
+          </figure>
+          <div class="plain-table-wrap" data-seed-box>
+            <table>
+              <thead><tr><th>平台</th><th>服务接入</th><th>查询后衔接</th></tr></thead>
+              <tbody>
+                <tr><td><strong>12306</strong></td><td><span class="status green">官方服务</span> 完整查询与预约</td><td>未购买人票时，可从宠物车次直接进入对应车次购票页</td></tr>
+                <tr><td><strong>携程</strong></td><td><span class="status green">已接入</span> 宠物托运查询页面</td><td class="weak">实测跳转购买对应人票时出现无响应</td></tr>
+                <tr><td><strong>去哪儿</strong></td><td><span class="status green">已接入</span> 宠物托运查询页面</td><td class="weak">购买人票时跳回首页，车次和日期未被承接</td></tr>
+                <tr><td><strong>智行</strong></td><td><span class="status green">已接入</span> 宠物托运查询页面</td><td class="weak">购买人票时跳回首页，需要重新搜索</td></tr>
+                <tr><td><strong>同程</strong></td><td><span class="status green">已接入</span> 宠物托运查询页面</td><td class="weak">当前实测查询不到车次，查询链路可能存在故障</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="ota-note">携程、去哪儿和智行的页面结构与操作流程高度相似，疑似复用同一套服务组件；该判断来自界面对比，尚未得到技术层确认。</p>
+          <p class="decision-note"><strong>现状总结：</strong>四家 OTA 均已接入宠物托运查询，服务供给来自同一套 12306 / 中铁快运体系。体验差异集中在查询后能否保留车次、日期和乘客信息，并顺利完成“先买人票，再预约宠物仓位”的连续操作。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="air-methods">
+      <div class="section-inner">
+        <header class="section-head">
+          <div class="section-no">03 · 航空方式</div>
+          <div>
+            <h2>“坐飞机”包含三套不同流程</h2>
+            <p class="section-intro">市场上的“宠物航空”可能指单独飞、同机托运或进客舱。三者在候机地点、等待时间、接宠位置和收费方式上都不同。</p>
+          </div>
+        </header>
+        <div class="air-methods">
+          <figure data-seed-box><img src="assets/air-methods.png" alt="单独飞、同机飞和进客舱比较表"></figure>
+          <div class="air-methods-copy">
+            <article class="method-row"><span>AIR 01</span><div><h3>宠物单独飞</h3><p>宠物通过货运流程运输，主人不随行。服务商通常负责订舱、文件、机场送宠和目的地接宠。</p></div></article>
+            <article class="method-row"><span>AIR 02</span><div><h3>飞机同机托运</h3><p>主人乘坐同一航班，宠物在有氧货舱。人走客运流程，宠物走货运或特殊行李流程，两端仍需额外交接。</p></div></article>
+            <article class="method-row"><span>AIR 03</span><div><h3>飞机进客舱</h3><p>宠物在客舱软箱内随主人出行。当前属于航司付费增值服务，供应扩张较快，规则仍以白名单和航班为单位。</p></div></article>
+            <p class="section-intro">单独飞和同机托运也需要《动物检疫合格证明》。部分服务商提供代办，办理过程与合法合规边界需要重点核实。</p>
+          </div>
+        </div>
+
+        <div class="air-process-block">
+          <h3>典型流程：最麻烦的一步通常是办检疫证明</h3>
+          <p class="air-process-lead">三种航空方式前半段大致相同：先确认航班能承运，再订位、准备免疫记录并办理《动物检疫合格证明》。客舱和托运的差别主要出现在订位方式、箱包要求和机场交接。</p>
+          <div class="process-frictions" aria-label="检疫证明办理难点">
+            <article class="process-friction"><b>先满足属地材料</b><p>杭州拱墅办理样本要求身份证或居住证明，还要有官方免疫证；不同城区和城市的材料口径可能不同。</p></article>
+            <article class="process-friction"><b>宠物通常要到场</b><p>官方兽医需要做临床检查。杭州样本还要求先到指定医院做疫病筛查，筛查报告仅 3 天有效。</p></article>
+            <article class="process-friction"><b>有效期很短</b><p>杭州公开办理案例中的检疫证明有效期为 5 天；各地常见最长 5–7 天，航司还可能要求起飞前 3–5 天内签发。</p></article>
+            <article class="process-friction"><b>时间必须卡准</b><p>证明要覆盖承运日，行程与启运信息也要一致。办早会过期，办晚可能赶不上申报点工作时间。</p></article>
+          </div>
+          <div class="air-process-layout">
             <div>
-              <h2 class="section-header__title">目前的跨城供给可以归为四类</h2>
-              <p class="section-header__part">北京—杭州</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="image-grid evidence-gallery" data-image-ratio="9:16" data-image-fit="fill" data-item-count="4">
-                <figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill">
-                  <div class="evidence-window">
-                    <img data-media-main src="assets/gallery/cabin-01.jpg" alt="宠物装入软包进入飞机客舱">
-                    <div class="media-switch__thumbs" aria-label="切换飞机进客舱图片">
-                      <button class="media-switch__thumb is-active" type="button" data-src="assets/gallery/cabin-01.jpg" data-alt="宠物装入软包进入飞机客舱"><img src="assets/gallery/cabin-01.jpg" alt="软包内的客舱宠物"></button>
-                      <button class="media-switch__thumb" type="button" data-src="assets/gallery/cabin-02.jpg" data-alt="宠物在飞机客舱内"><img src="assets/gallery/cabin-02.jpg" alt="客舱内的宠物"></button>
+              <div class="species-docs">
+                <article class="species-doc">
+                  <span>DOG · 犬类</span>
+                  <h4>重点检查狂犬疫苗记录</h4>
+                  <p>确认接种已满 21 天且仍在有效期内；部分航司还会核验小动物疫苗注射证明。短鼻犬、烈性犬等品种限制需要在订票前先排除。</p>
+                </article>
+                <article class="species-doc">
+                  <span>CAT · 猫类</span>
+                  <h4>准备猫三联等免疫记录</h4>
+                  <p>部分航司申请时要求猫三联证明；申报点也可能核验其他有效免疫记录。具体材料跟随出发地检疫申报点和所选航司要求。</p>
+                </article>
+              </div>
+
+              <div class="air-process-steps">
+                <article class="air-process-step">
+                  <span>01</span>
+                  <div><h4>先确认这班能不能运</h4><p>查航司、机场、机型、品种和当班名额。客舱看白名单与宠物名额；货舱还要确认有氧舱、温度和装载条件。</p></div>
+                </article>
+                <article class="air-process-step">
+                  <span>02</span>
+                  <div>
+                    <h4>订人票，并申请宠物服务</h4>
+                    <p>申请截止时间和收费方式因航司而异，部分航司可在 App / 小程序完成，部分仍需电话或柜台办理。</p>
+                    <div class="process-branches">
+                      <div class="process-branch"><b>进客舱 / 同机托运</b>先选人票，再申请同一航班的宠物服务。</div>
+                      <div class="process-branch"><b>宠物单独飞</b>不需要主人购买人票，单独向货运或服务商订舱。</div>
                     </div>
-                    <button class="media-switch__label" type="button">飞机进客舱</button>
-                    <div class="media-switch__panel">
-                      <h3>飞机进客舱</h3>
-                      <p>软包随主人进客舱。陪伴感最好，费用通常最高。</p>
-                      <div class="list-block">
-                        <div class="list-row"><span class="list-row__label">北京—杭州宠物费用</span><p class="list-row__text">约 ¥1,288–1,430 / 只。客舱基础服务费，人票另计</p></div>
-                        <div class="list-row"><span class="list-row__label">宠物位置</span><p class="list-row__text">客舱座椅下方软包</p></div>
-                        <div class="list-row"><span class="list-row__label">主人</span><p class="list-row__text">必须同行</p></div>
-                        <div class="list-row"><span class="list-row__label">主要限制</span><p class="list-row__text">机场白名单、名额、体重与软包</p></div>
-                      </div>
+                  </div>
+                </article>
+                <article class="air-process-step">
+                  <span>03</span>
+                  <div><h4>准备疫苗本和免疫证明</h4><p>提前检查宠物姓名、接种日期、疫苗种类和有效期。办理检疫证明时通常需要宠物到场，并出示这些记录。</p></div>
+                </article>
+                <article class="air-process-step">
+                  <span>04</span>
+                  <div><h4>临近出发办理《动物检疫合格证明》</h4><p>携带宠物、身份证或属地居住证明、免疫记录及当地要求的筛查报告，到申报点接受临床检查。货主、启运地、到达地和运输日期要与实际行程一致。</p></div>
+                </article>
+                <article class="air-process-step">
+                  <span>05</span>
+                  <div><h4>按运输方式准备箱包和用品</h4><p>客舱使用航司规定尺寸的软包，犬类通常还要准备口套、牵引绳和尿垫；货舱使用符合要求的硬质航空箱，并完成固定、饮水等准备。</p></div>
+                </article>
+                <article class="air-process-step">
+                  <span>06</span>
+                  <div>
+                    <h4>提前到机场，完成材料核验和交接</h4>
+                    <div class="process-branches">
+                      <div class="process-branch"><b>进客舱</b>通常提前至少 2 小时到人工柜台，现场核验证件、称重并检查软包。</div>
+                      <div class="process-branch"><b>同机 / 单独托运</b>到货运或特殊行李柜台交宠，落地后再到指定地点领取。</div>
                     </div>
                   </div>
-                </figure>
-                <figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill">
-                  <div class="evidence-window">
-                    <img data-media-main src="assets/gallery/air-cargo-01.jpg" alt="航空箱在机场完成固定与交运">
-                    <div class="media-switch__thumbs" aria-label="切换飞机托运图片">
-                      <button class="media-switch__thumb is-active" type="button" data-src="assets/gallery/air-cargo-01.jpg" data-alt="航空箱在机场完成固定与交运"><img src="assets/gallery/air-cargo-01.jpg" alt="航空箱固定"></button>
-                      <button class="media-switch__thumb" type="button" data-src="assets/gallery/air-cargo-02.jpg" data-alt="工作人员装卸宠物航空箱"><img src="assets/gallery/air-cargo-02.jpg" alt="机场装卸"></button>
-                      <button class="media-switch__thumb" type="button" data-src="assets/gallery/air-cargo-03.jpg" data-alt="飞机前后货舱位置说明"><img src="assets/gallery/air-cargo-03.jpg" alt="货舱位置说明"></button>
-                      <button class="media-switch__thumb" type="button" data-src="assets/gallery/air-cargo-04.jpg" data-alt="飞机有氧货舱说明"><img src="assets/gallery/air-cargo-04.jpg" alt="有氧货舱说明"></button>
-                      <button class="media-switch__thumb" type="button" data-src="assets/gallery/air-cargo-05.jpg" data-alt="飞机货舱内部环境"><img src="assets/gallery/air-cargo-05.jpg" alt="货舱内部"></button>
-                      <button class="media-switch__thumb" type="button" data-src="assets/gallery/air-cargo-06.jpg" data-alt="货舱内的多个宠物航空箱"><img src="assets/gallery/air-cargo-06.jpg" alt="货舱航空箱"></button>
-                      <button class="media-switch__thumb" type="button" data-src="assets/gallery/air-cargo-07.jpg" data-alt="飞机货舱装载空间"><img src="assets/gallery/air-cargo-07.jpg" alt="货舱装载空间"></button>
-                      <button class="media-switch__thumb" type="button" data-src="assets/gallery/air-cargo-08.jpg" data-alt="机场内等待交运的宠物航空箱"><img src="assets/gallery/air-cargo-08.jpg" alt="等待交运"></button>
-                    </div>
-                    <button class="media-switch__label" type="button">飞机托运</button>
-                    <div class="media-switch__panel">
-                      <h3>飞机托运</h3>
-                      <p>有氧货舱航空箱，可同机或单独飞。两端都要交接。</p>
-                      <div class="list-block">
-                        <div class="list-row"><span class="list-row__label">北京—杭州宠物费用</span><p class="list-row__text">同机飞约 ¥548，单独飞约 ¥950。派到样本，未计人票、代办、箱包与保险</p></div>
-                        <div class="list-row"><span class="list-row__label">宠物位置</span><p class="list-row__text">有氧货舱航空箱</p></div>
-                        <div class="list-row"><span class="list-row__label">主人</span><p class="list-row__text">可同行或不同行</p></div>
-                        <div class="list-row"><span class="list-row__label">主要限制</span><p class="list-row__text">机型、高温、检疫证明与机场条件</p></div>
-                      </div>
-                    </div>
-                  </div>
-                </figure>
-                <figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill">
-                  <div class="evidence-window">
-                    <img data-media-main src="assets/gallery/rail-05.jpg" alt="高铁宠物运输箱的温湿度与氧气监控">
-                    <div class="media-switch__thumbs" aria-label="切换高铁托运图片">
-                      <button class="media-switch__thumb is-active" type="button" data-src="assets/gallery/rail-05.jpg" data-alt="高铁宠物运输箱的温湿度与氧气监控"><img src="assets/gallery/rail-05.jpg" alt="环境监控屏"></button>
-                      <button class="media-switch__thumb" type="button" data-src="assets/gallery/rail-01.jpg" data-alt="高铁行李车厢内的宠物专用运输箱"><img src="assets/gallery/rail-01.jpg" alt="高铁宠物运输箱"></button>
-                      <button class="media-switch__thumb" type="button" data-src="assets/gallery/rail-02.jpg" data-alt="高铁行李车厢储物柜"><img src="assets/gallery/rail-02.jpg" alt="行李车厢"></button>
-                      <button class="media-switch__thumb" type="button" data-src="assets/gallery/rail-03.jpg" data-alt="高铁站宠物托运办理区"><img src="assets/gallery/rail-03.jpg" alt="托运办理区"></button>
-                      <button class="media-switch__thumb" type="button" data-src="assets/gallery/rail-04.jpg" data-alt="宠物在高铁专用运输箱内"><img src="assets/gallery/rail-04.jpg" alt="运输箱内的宠物"></button>
-                    </div>
-                    <button class="media-switch__label" type="button">高铁托运</button>
-                    <div class="media-switch__panel">
-                      <h3>高铁托运</h3>
-                      <p>行李车厢恒温监控运输箱，主人通常同车。</p>
-                      <div class="list-block">
-                        <div class="list-row"><span class="list-row__label">北京—杭州宠物费用</span><p class="list-row__text">约 ¥500 / 只。携宠出行优惠价，人票另计</p></div>
-                        <div class="list-row"><span class="list-row__label">宠物位置</span><p class="list-row__text">行李车厢专用运输箱</p></div>
-                        <div class="list-row"><span class="list-row__label">主人</span><p class="list-row__text">通常乘坐同一车次</p></div>
-                        <div class="list-row"><span class="list-row__label">主要限制</span><p class="list-row__text">车次和站点少，体型与犬种受限</p></div>
-                      </div>
-                    </div>
-                  </div>
-                </figure>
-                <figure class="evidence-figure media-switch is-cover" data-hover="on" data-image-ratio="9:16" data-image-fit="fill">
-                  <div class="evidence-window">
-                    <img data-media-main src="assets/gallery/road-01.jpg" alt="宠物跨城运输车辆内部">
-                    <div class="media-switch__thumbs" aria-label="切换陆运图片">
-                      <button class="media-switch__thumb is-active" type="button" data-src="assets/gallery/road-01.jpg" data-alt="宠物跨城运输车辆内部"><img src="assets/gallery/road-01.jpg" alt="运输车辆内部"></button>
-                      <button class="media-switch__thumb" type="button" data-src="assets/gallery/road-02.jpg" data-alt="运输车辆内的宠物笼位"><img src="assets/gallery/road-02.jpg" alt="宠物笼位"></button>
-                      <button class="media-switch__thumb" type="button" data-src="assets/gallery/road-03.jpg" data-alt="带固定笼位的专业宠物运输车"><img src="assets/gallery/road-03.jpg" alt="专业运输车"></button>
-                      <button class="media-switch__thumb" type="button" data-src="assets/gallery/road-04.jpg" data-alt="宠物运输车笼位内部"><img src="assets/gallery/road-04.jpg" alt="笼位内部"></button>
-                      <button class="media-switch__thumb" type="button" data-src="assets/gallery/road-05.jpg" data-alt="宠物陆运订单的定位与车厢监控"><img src="assets/gallery/road-05.jpg" alt="定位和监控"></button>
-                      <button class="media-switch__thumb" type="button" data-src="assets/gallery/road-06.jpg" data-alt="人宠共同乘坐跨城商务车"><img src="assets/gallery/road-06.jpg" alt="人宠同行商务车"></button>
-                      <button class="media-switch__thumb" type="button" data-src="assets/gallery/road-07.jpg" data-alt="多人和宠物共同乘坐跨城车辆"><img src="assets/gallery/road-07.jpg" alt="多人宠同行"></button>
-                    </div>
-                    <button class="media-switch__label" type="button">陆运</button>
-                    <div class="media-switch__panel">
-                      <h3>陆运</h3>
-                      <p>班线、拼车、专车和人宠同行。通常少办一份检疫证明。</p>
-                      <div class="list-block">
-                        <div class="list-row"><span class="list-row__label">北京—杭州宠物费用</span><p class="list-row__text">约 ¥450–1,280 / 只。专业服务商拼载询价</p></div>
-                        <div class="list-row"><span class="list-row__label">宠物位置</span><p class="list-row__text">运输车笼位或同行座舱</p></div>
-                        <div class="list-row"><span class="list-row__label">主人</span><p class="list-row__text">可同行或不同行</p></div>
-                        <div class="list-row"><span class="list-row__label">主要限制</span><p class="list-row__text">时长较长，车辆与服务标准不一</p></div>
-                      </div>
-                    </div>
-                  </div>
-                </figure>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-slide is-chapter-cover" data-chapter="rail" data-slide="02" id="rail">
-          <header class="chapter-cover">
-            <span class="chapter-cover__no">02</span>
-            <span class="chapter-cover__kicker">高铁现状</span>
-            <h2 class="chapter-cover__title">12306 已提供高铁宠物托运，OTA 的预订衔接仍不稳定</h2>
-            <p class="chapter-cover__lead">服务由中铁快运承运，12306 负责车次查询、仓位预约和订单管理。当前主要问题已经从“有没有服务”转向“能否顺利找到车次并接着买到对应人票”。</p>
-          </header>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="rail" data-slide="02.a" id="rail-scale">
-          <header class="section-header">
-            <span class="section-header__no">02.a · 高铁现状</span>
-            <div>
-              <h2 class="section-header__title">每天只有约百分之四的车次能办</h2>
-              <p class="section-header__part">覆盖 163 座高铁站</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="card-grid" data-item-count="4" style="--component-columns: 4">
-                <article class="report-card">
-                  <b class="stat-value">364 / 9000</b>
-                  <h3 class="report-card__title">每日可办车次</h3>
-                  <p class="report-card__body">约占全国每日图定 G / D / C 车次的 4%，目前覆盖 163 座高铁站。</p>
-                </article>
-                <article class="report-card">
-                  <b class="stat-value">2 种</b>
-                  <h3 class="report-card__title">服务形态</h3>
-                  <p class="report-card__body">“携宠出行”支持人宠同车；“爱宠单独行”由中铁快运审核后安排车次。</p>
-                </article>
-                <article class="report-card">
-                  <b class="stat-value">≤15kg</b>
-                  <h3 class="report-card__title">宠物准入</h3>
-                  <p class="report-card__body">同时要求肩高 ≤40cm、身长 ≤52cm；47 类烈性犬及不符合健康条件的宠物不承运。</p>
-                </article>
-                <article class="report-card">
-                  <b class="stat-value">¥400–860</b>
-                  <h3 class="report-card__title">携宠出行价格</h3>
-                  <p class="report-card__body">按运输里程分四档浮动。北京—杭州约 1280km，对应约 ¥500 / 只。</p>
                 </article>
               </div>
             </div>
-          </div>
-        </section>
 
-        <section class="report-section report-slide" data-chapter="rail" data-slide="02.b" id="rail-price">
-          <header class="section-header">
-            <span class="section-header__no">02.b · 高铁现状</span>
-            <div>
-              <h2 class="section-header__title">北京到杭州，携宠出行大约五百元</h2>
-              <p class="section-header__part">七月一日起按里程浮动</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="table-wrap">
-                <table class="data-table">
-                  <thead><tr><th>铁路运程</th><th>携宠出行</th><th>爱宠单独行</th></tr></thead>
-                  <tbody>
-                    <tr><td>1000km（含）以内</td><td>¥400</td><td>¥558</td></tr>
-                    <tr><td>1000–1500km（含）</td><td>¥500</td><td>¥658</td></tr>
-                    <tr><td>1500–2000km（含）</td><td>¥660</td><td>¥958</td></tr>
-                    <tr><td>2000km 以上</td><td>¥860</td><td>¥1,258</td></tr>
-                  </tbody>
-                </table>
-                <p class="media-meta">实际费用以预约页为准；两种服务均含 ¥2,000 基础保险。</p>
+            <figure class="certificate-card" data-lightbox-src="assets/process/animal-quarantine-certificate.jpg" data-lightbox-alt="动物检疫合格证明示例" data-lightbox-group="air-process">
+              <div class="shot-window" data-seed-box><img src="assets/process/animal-quarantine-certificate.jpg" alt="动物检疫合格证明示例" loading="lazy" decoding="async" tabindex="0"></div>
+              <button class="gallery-open" type="button" aria-label="放大查看动物检疫合格证明">↗</button>
+              <figcaption><strong>《动物检疫合格证明》示例</strong><span>图中是铁路托运案例；航空使用同类证明，运输方式和行程信息需按实际承运填写。点击可放大查看。</span></figcaption>
+            </figure>
+          </div>
+          <p class="comparison-context"><strong>代办市场：</strong>淘宝等平台和宠物出行服务商可见跑腿、材料整理或“检疫代办”。授权他人申报本身有正规路径，证明仍应由官方兽医签发并完成规定查验；承诺“宠物无需到场即可出证”的服务与多地公开的临床检查要求冲突，存在合规灰区。平台接入时需要核验签发机构、查验方式和退款责任。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="scale">
+      <div class="section-inner">
+        <header class="section-head">
+          <div class="section-no">04 · 市场规模</div>
+          <div>
+            <h2>航空宠物运输的供给规模</h2>
+            <p class="section-intro">先看行业整体覆盖，再看具体航司开放了多少航线和机场。高铁规模已在前一部分单独说明。</p>
+          </div>
+        </header>
+
+        <div class="scale-block">
+          <div class="scale-block-label"><div><span>行业总体</span><h3>航空供给已经形成一定规模</h3></div></div>
+          <div class="summary-grid summary-grid--three">
+            <article class="summary-item"><b>34 / 52</b><h3>航司支持有氧舱托运</h3><p>约 65% 国内常态化客运航司具备政策基础，实际仍受机型和航班条件限制。</p></article>
+            <article class="summary-item"><b>17 / 52</b><h3>航司试点宠物进客舱</h3><p>约 33% 航司已开放付费增值产品，通常按机场白名单和指定航班执行。</p></article>
+            <article class="summary-item"><b>1100–1350</b><h3>估算进客舱航线池</h3><p>约占全国 4501 条国内单向直达航线的 25%–30%，跨航司重复航线已作区间去重。</p></article>
+          </div>
+          <div class="plain-table-wrap" data-seed-box>
+            <table>
+              <thead><tr><th>市场</th><th>当前规模</th><th>总体规模</th><th>占比</th><th>说明</th></tr></thead>
+              <tbody>
+                <tr><td><strong>有氧舱托运航司</strong></td><td class="number">34 家</td><td class="number">52 家国内客运航司</td><td class="ratio">约 65%</td><td class="muted">航司政策允许不等于每个航班都可办理</td></tr>
+                <tr><td><strong>宠物进客舱航司</strong></td><td class="number">17 家</td><td class="number">52 家国内客运航司</td><td class="ratio">约 33%</td><td class="muted">包含集团子航司，主要采用机场白名单</td></tr>
+                <tr><td><strong>有氧舱托运航线</strong></td><td>行业估算可通行航线</td><td class="number">4501 条国内单向直达航线</td><td class="ratio">约 55%–65%</td><td class="muted">按干线机型、支线占比与拒收政策推算</td></tr>
+                <tr><td><strong>宠物进客舱航线</strong></td><td class="number">约 1100–1350 条</td><td class="number">4501 条国内单向直达航线</td><td class="ratio">约 25%–30%</td><td class="muted">行业汇总估算，航线池不代表每天均有名额</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="scale-block">
+          <div class="scale-block-label"><div><span>航司明细 · 航线口径</span><h3>公开过航线数量的代表航司</h3></div></div>
+          <p class="subsection-note">口径为单向国内自营直达航线，适合比较各航司内部开放程度。</p>
+          <div class="plain-table-wrap" data-seed-box>
+            <table>
+              <thead><tr><th>航司</th><th>可携宠进客舱航线</th><th>国内全部直达航线</th><th>航司内部覆盖率</th></tr></thead>
+              <tbody>
+                <tr><td><strong>南方航空</strong></td><td class="number">870 条</td><td class="number">约 1520 条</td><td class="ratio">约 57%</td></tr>
+                <tr><td><strong>东方航空</strong></td><td class="number">约 630 条</td><td class="number">约 1350 条</td><td class="ratio">约 47%</td></tr>
+                <tr><td><strong>海南航空</strong></td><td class="number">约 450 条</td><td class="number">约 980 条</td><td class="ratio">约 43%</td></tr>
+                <tr><td><strong>吉祥航空</strong></td><td class="number">约 110 条</td><td class="number">约 420 条</td><td class="ratio">约 26%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="scale-block secondary">
+          <div class="scale-block-label"><div><span>航司明细 · 机场口径（补充）</span><h3>未公开完整航线数的航司，看开放机场范围</h3></div></div>
+          <p class="subsection-note">数据按机场统计。两个机场都开放，不代表两地之间的每一条航线都可办理，因此这张表只用于观察服务网络的广度。</p>
+          <div class="plain-table-wrap" data-seed-box>
+            <table>
+              <thead><tr><th>航司</th><th>开放机场</th><th>国内通航机场</th><th>机场覆盖率</th><th>航司</th><th>开放机场</th><th>国内通航机场</th><th>机场覆盖率</th></tr></thead>
+              <tbody>
+                <tr><td>祥鹏航空</td><td>38</td><td>约 75</td><td class="ratio">51%</td><td>天津航空</td><td>39</td><td>约 82</td><td class="ratio">48%</td></tr>
+                <tr><td>首都航空</td><td>33</td><td>约 70</td><td class="ratio">47%</td><td>西部航空</td><td>30</td><td>约 66</td><td class="ratio">45%</td></tr>
+                <tr><td>北部湾航空</td><td>24</td><td>约 55</td><td class="ratio">44%</td><td>金鹏航空</td><td>22</td><td>约 52</td><td class="ratio">42%</td></tr>
+                <tr><td>长安航空</td><td>21</td><td>约 50</td><td class="ratio">42%</td><td>福州航空</td><td>23</td><td>约 58</td><td class="ratio">40%</td></tr>
+                <tr><td>桂林航空</td><td>1</td><td>约 28</td><td class="ratio">4%</td><td colspan="4" class="muted">仅桂林单点试点</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="supply">
+      <div class="section-inner">
+        <header class="section-head">
+          <div class="section-no">05 · 航空供给与合作</div>
+          <div><h2>客舱宠物产品的供给特点</h2><p class="section-intro">开放程度整体在提高，航线、机型、名额和办理规则仍有明确边界。</p></div>
+        </header>
+        <div class="facts">
+          <article class="fact"><h3>核心枢纽与旅游城市优先</h3><p>北京、上海、广州、深圳、杭州、成都、西安等枢纽，以及海口、三亚、丽江等旅游城市更常进入白名单。</p></article>
+          <article class="fact"><h3>主干航线比支线更成熟</h3><p>A320、波音 737 和宽体机更容易具备运输条件。ARJ21/C909 等支线机型通常形成硬约束。</p></article>
+          <article class="fact"><h3>名单仍会动态变化</h3><p>换季、临时换机型、高温管控、代码共享和单班名额，会让“政策支持”与“当天可订”出现差异。</p></article>
+          <article class="fact"><h3>航司产品差异明显</h3><p>单人可带数量、箱包尺寸、是否允许占座、办理时限和材料要求各不相同，合作时需要逐项接入。</p></article>
+        </div>
+
+        <div class="subsection">
+          <h3>如果在平台内引入客舱宠物产品，先找谁？</h3>
+          <p class="subsection-note">覆盖率以各航司国内单向直达航线为分母；其他字段均为国内客舱宠物产品口径。</p>
+          <div class="plain-table-wrap" data-seed-box>
+            <table class="airline-matrix">
+              <thead>
+                <tr>
+                  <th>维度</th>
+                  <th><span class="airline-title">南方航空 <span class="airline-rank one">TOP 1</span></span></th>
+                  <th><span class="airline-title">海南航空 <span class="airline-rank two">TOP 2</span></span></th>
+                  <th><span class="airline-title">东方航空</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>规模与覆盖率</td><td><strong>870 / 约 1520 条</strong><br><span class="ratio">约 57%</span>，45 座机场</td><td><strong>450+ / 约 980 条</strong><br><span class="ratio">约 43%</span>，38 个城市</td><td><strong>约 630 / 约 1350 条</strong><br><span class="ratio">约 47%</span>，36 个国内城市</td></tr>
+                <tr><td>宠物服务申请截止</td><td class="best">起飞前 6 小时，App / 小程序在线申请</td><td>48h 前可在线申请；24h 前可电话 / 售票处申请；进入 24h 后，可在乘机日到机场申请宠物服务</td><td>仅在起飞前 7 天至 24h 内申请</td></tr>
+                <tr><td>每位旅客宠物数</td><td>1 只</td><td class="best">最多 2 只：1 只占座 + 1 只不占座</td><td>1 只</td></tr>
+                <tr><td>每趟航班总宠物数</td><td>最多 4 只</td><td class="best">窄体机最多 4 只；宽体机最多 6 只</td><td>最多 2 只</td></tr>
+                <tr><td>不占座箱包</td><td>35×28×24cm</td><td class="best">40×38×25cm</td><td>35×28×24cm</td></tr>
+                <tr><td>占座箱包</td><td>同规格箱包，可加购主人相邻座位</td><td class="best">60×40×35cm</td><td>55×35×35cm</td></tr>
+                <tr><td>重量</td><td class="best">不设明确 kg 上限，宠物能装入符合 35×28×24cm 要求的箱包即可</td><td>含箱总重 ≤7kg</td><td>不占座建议 ≤10kg；占座建议 ≤18kg</td></tr>
+                <tr><td>宠物准入限制</td><td>仅家庭驯养的小型猫、狗；须满 8 周。短鼻犬猫、危险犬及其杂交品种、怀孕或起飞前 48h 内分娩、传染病症状或近期手术等不受理</td><td>仅家庭驯养的小型猫、狗；含箱总重 ≤7kg，宠物须能在箱内自由站立；仅经济舱、指定国内航线，中转原则上不适用</td><td>仅猫、狗；须满 2 个月。烈性犬及其杂交品种、萨摩耶、怀孕或起飞前 48h 内分娩、传染病症状、近期手术或当天应激无法安抚等不受理</td></tr>
+                <tr><td>基础价格</td><td>&lt;2000km ¥1299<br>≥2000km ¥1499</td><td>¥1430</td><td class="best">¥1288</td></tr>
+                <tr><td>占座额外价格</td><td>按距离加购相邻座位：+¥400 / +¥600</td><td>实时经济舱座位价 + ¥1430，电话 / 售票处购买</td><td>实时经济舱座位价 + ¥1288，拨打 95530 购买</td></tr>
+                <tr><td>适用航班</td><td>指定国内直达航班，排除 C909 执飞</td><td>海南航空 / 大新华实际承运的部分国内航班；不支持中转，海口—三亚除外</td><td>MU / FM 实际承运且挂 MU / FM 航班号的国内直达经济舱</td></tr>
+                <tr><td>要准备的材料</td><td>《动物检疫合格证明》、疫苗注射证明；机场签运输协议</td><td>《动物检疫合格证明》（动物 A 证）、疫苗接种证明、宠物身份证明（如有）；机场签运输协议</td><td class="weak">电子版申请书、《动物检疫合格证明》原件、有效健康声明书 / 狂犬病疫苗证明原件</td></tr>
+                <tr><td>材料提交与核验</td><td>材料随身携带，机场签协议；下单时可查询检疫办理点</td><td>材料须提前办好并随身携带，机场签协议；乘机日现场申请仅指申请宠物服务</td><td class="weak">电子申请、原件现场核验，材料形式最严格</td></tr>
+                <tr><td>到机场时间</td><td>起飞前至少 2 小时</td><td>起飞前至少 2 小时</td><td>起飞前至少 2 小时</td></tr>
+                <tr><td>材料便利性</td><td class="best">材料数量较少，检疫办理点可在下单流程中查询</td><td>材料数量接近南航，宠物身份证明仅在有证件时提供</td><td class="weak">材料最多，同时要求电子申请书和多项原件</td></tr>
+                <tr><td>最突出的用户价值</td><td class="best">覆盖最广、办理最晚、无 kg 上限，客舱不适用时还有同机飞和单独飞</td><td>两宠、大箱包、宠物占座，单班容量更高，临近出发仍可申请服务</td><td>航线规模较大，搜索结果可直接识别“宠物友好”航班</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="decision-note"><strong>合作顺序建议：</strong>首选南航，用最大覆盖、较低办理门槛和完整运输方式建立基础供给；第二家选择海航，补足两宠、大箱包、占座和临近出发时申请宠物服务的需求。东航适合在第二阶段补充城市与班次。</p>
+        </div>
+
+        <div class="subsection" id="paidao">
+          <h3>航空服务商样本：派到把复杂流程打包成一笔订单</h3>
+          <p class="subsection-note">以下来自 2026 年 8 月、杭州到北京的页面实测，宠物为 8kg 腊肠犬。价格比较只计算运输、人票和平台服务费，不把检疫证明代办、箱包与保险计入。同机飞页面没有杭州出发选项，横向比较时将人票统一为杭州样本价 ¥720。</p>
+          <div class="price-layout" style="margin-top:24px">
+            <div class="price-list" data-seed-chart="bar" data-seed-chart-max="2200">
+              <div class="price-item">
+                <div class="price-row"><span>单独飞</span><div class="bar-track"><div class="bar" data-seed-chart-bar data-seed-chart-i="0" data-seed-chart-dir="h" style="width:43%"></div></div><strong data-seed-chart-value data-seed-chart-i="0">¥950</strong></div>
+                <p class="price-formula">航司 / 机场办理费 ¥900 + 平台服务费 ¥50</p>
+              </div>
+              <div class="price-item">
+                <div class="price-row"><span>同机飞</span><div class="bar-track"><div class="bar addon" data-seed-chart-bar data-seed-chart-i="1" data-seed-chart-dir="h" style="width:58%"></div></div><strong data-seed-chart-value data-seed-chart-i="1">约 ¥1,268</strong></div>
+                <p class="price-formula">杭州人票 ¥720 + 宠物航空费 ¥498 + 平台服务费 ¥50</p>
+              </div>
+              <div class="price-item">
+                <div class="price-row"><span>进客舱</span><div class="bar-track"><div class="bar cabin" data-seed-chart-bar data-seed-chart-i="2" data-seed-chart-dir="h" style="width:100%"></div></div><strong data-seed-chart-value data-seed-chart-i="2">¥2,200</strong></div>
+                <p class="price-formula">杭州人票 ¥720 + 宠物票 ¥1,430 + 平台服务费 ¥50</p>
               </div>
             </div>
-          </div>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="rail" data-slide="02.c" id="rail-rules">
-          <header class="section-header">
-            <span class="section-header__no">02.c · 高铁现状</span>
-            <div>
-              <h2 class="section-header__title">办理要带着当日有效的检疫证明</h2>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="list-block" data-item-count="4">
-                <div class="list-row"><span class="list-row__label">运输方式</span><p class="list-row__text">铁路提供 54×43×40cm 专用运输箱，每箱 1 只，放置在列车指定行李车厢；运输途中不能探视。</p></div>
-                <div class="list-row"><span class="list-row__label">预约时间</span><p class="list-row__text">携宠出行至少提前 1 天预约；当天 12:00 前可约次日，12:00 后最早约第三日。爱宠单独行需提前 2–5 天预约。</p></div>
-                <div class="list-row"><span class="list-row__label">办理材料</span><p class="list-row__text">携带宠物、本人有效身份证件、购票证明及承运当日有效的《动物检疫合格证明》。线上预约上传宠物实际照片。</p></div>
-                <div class="list-row"><span class="list-row__label">线下时间</span><p class="list-row__text">开车前至少 2 小时到中铁快运营业部办理；列车到站后建议在 1 小时内领取。</p></div>
-              </div>
+            <div class="revenue-list">
+              <article><h3>订单服务费</h3><p>三种方式均单列每单 ¥50 的平台服务费。</p></article>
+              <article><h3>检疫证明代办</h3><p>单独飞 ¥300、同机飞 ¥400、进客舱 ¥299。咨询中出现“宠物无需到场即可办理”的说法，可能处于灰色地带，需要核实办理主体、查验过程与材料真实性。</p></article>
+              <article><h3>箱包与保险</h3><p>单独飞和同机飞订单继续销售 ¥88 航空箱与 ¥12 保险；商城另售 ¥49 航空箱和 ¥189 飞行礼包。</p></article>
             </div>
           </div>
-        </section>
+          <p class="comparison-context"><strong>同机飞口径：</strong>页面没有杭州出发选项，原始订单为上海出发。为便于比较，这里剔除检疫代办、航空箱和保险，并把人票替换为同一杭州样本价；页面原始订单仍保留在下方截图中。</p>
 
-        <section class="report-section report-slide" data-chapter="rail" data-slide="02.d" id="rail-flow">
-          <header class="section-header">
-            <span class="section-header__no">02.d · 高铁现状</span>
-            <div>
-              <h2 class="section-header__title">12306 自己能从查仓位连到买人票</h2>
-              <p class="section-header__part">爱宠行</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="image-grid evidence-gallery" data-image-kind="strip" data-item-count="1">
-                <figure class="evidence-figure" data-image-kind="strip">
-                  <div class="evidence-window"><img src="assets/rail-ota-flow.jpg" alt="12306 爱宠行从入口、仓位查询到购买人票和提交订单的完整链路"></div>
-                  <figcaption><b>12306「爱宠行」</b><span>进入宠物托运、查询仓位、选择对应人票、锁定仓位并提交订单。</span></figcaption>
-                </figure>
-              </div>
-            </div>
+          <div class="compact-evidence-grid">
+            <figure class="evidence-shot is-offset" data-lightbox-src="assets/paidao/single-total.jpg" data-lightbox-alt="派到单独飞订单费用明细" data-lightbox-group="paidao-evidence">
+              <div class="shot-window" data-seed-box><img src="assets/paidao/single-total.jpg" alt="派到单独飞订单费用明细" loading="lazy" decoding="async" tabindex="0"></div>
+              <button class="gallery-open" type="button" aria-label="放大查看">↗</button>
+              <figcaption><strong>单独飞 · 原单 ¥1,350</strong><span>完整订单含代办、箱包和保险；可比运输价格为 ¥950。</span></figcaption>
+            </figure>
+            <figure class="evidence-shot is-offset" data-lightbox-src="assets/paidao/same-flight-total.jpg" data-lightbox-alt="派到同机飞订单费用明细" data-lightbox-group="paidao-evidence">
+              <div class="shot-window" data-seed-box><img src="assets/paidao/same-flight-total.jpg" alt="派到同机飞订单费用明细" loading="lazy" decoding="async" tabindex="0"></div>
+              <button class="gallery-open" type="button" aria-label="放大查看">↗</button>
+              <figcaption><strong>同机飞 · 原单 ¥1,728</strong><span>页面仅返回上海出发；剔除增值项并统一人票后约 ¥1,268。</span></figcaption>
+            </figure>
+            <figure class="evidence-shot is-offset" data-lightbox-src="assets/paidao/cabin-total.jpg" data-lightbox-alt="派到宠物进客舱订单费用明细" data-lightbox-group="paidao-evidence">
+              <div class="shot-window" data-seed-box><img src="assets/paidao/cabin-total.jpg" alt="派到宠物进客舱订单费用明细" loading="lazy" decoding="async" tabindex="0"></div>
+              <button class="gallery-open" type="button" aria-label="放大查看">↗</button>
+              <figcaption><strong>进客舱 · 原单 ¥2,499</strong><span>完整订单含检疫代办；人票、宠物票和服务费合计 ¥2,200。</span></figcaption>
+            </figure>
+            <figure class="evidence-shot" data-lightbox-src="assets/paidao/guides.jpg" data-lightbox-alt="派到按城市提供的宠物旅行攻略列表" data-lightbox-group="paidao-evidence">
+              <div class="shot-window" data-seed-box><img src="assets/paidao/guides.jpg" alt="派到按城市提供的宠物旅行攻略列表" loading="lazy" decoding="async" tabindex="0"></div>
+              <button class="gallery-open" type="button" aria-label="放大查看">↗</button>
+              <figcaption><strong>城市攻略</strong><span>用内容承接出行灵感和前期决策。</span></figcaption>
+            </figure>
+            <figure class="evidence-shot" data-lightbox-src="assets/paidao/store-home.jpg" data-lightbox-alt="派到商城中的飞行礼包和航空箱" data-lightbox-group="paidao-evidence">
+              <div class="shot-window" data-seed-box><img src="assets/paidao/store-home.jpg" alt="派到商城中的飞行礼包和航空箱" loading="lazy" decoding="async" tabindex="0"></div>
+              <button class="gallery-open" type="button" aria-label="放大查看">↗</button>
+              <figcaption><strong>用品商城</strong><span>礼包 ¥189，航空箱 ¥49 起。</span></figcaption>
+            </figure>
+            <figure class="evidence-shot" data-lightbox-src="assets/paidao/store-kit.jpg" data-lightbox-alt="派到无忧飞行礼包详情" data-lightbox-group="paidao-evidence">
+              <div class="shot-window" data-seed-box><img src="assets/paidao/store-kit.jpg" alt="派到无忧飞行礼包详情" loading="lazy" decoding="async" tabindex="0"></div>
+              <button class="gallery-open" type="button" aria-label="放大查看">↗</button>
+              <figcaption><strong>飞行礼包</strong><span>软包、嘴套与尿垫等行前用品组合销售。</span></figcaption>
+            </figure>
+            <figure class="evidence-shot" data-lightbox-src="assets/paidao/store-crate.jpg" data-lightbox-alt="派到商城航空箱详情" data-lightbox-group="paidao-evidence">
+              <div class="shot-window" data-seed-box><img src="assets/paidao/store-crate.jpg" alt="派到商城航空箱详情" loading="lazy" decoding="async" tabindex="0"></div>
+              <button class="gallery-open" type="button" aria-label="放大查看">↗</button>
+              <figcaption><strong>航空箱</strong><span>直接承接运输前的装备购买。</span></figcaption>
+            </figure>
           </div>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="rail" data-slide="02.e" id="rail-ota-status">
-          <header class="section-header">
-            <span class="section-header__no">02.e · 高铁现状</span>
-            <div>
-              <h2 class="section-header__title">友商已经能查，断在买对应人票</h2>
-              <p class="section-header__part">携程、去哪儿、智行、同程</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="image-grid evidence-gallery" data-image-kind="strip" data-item-count="1">
-                <figure class="evidence-figure" data-image-kind="strip">
-                  <div class="evidence-window"><img src="assets/rail-ota-status.jpg" alt="携程、去哪儿、智行和同程的高铁宠物托运服务与预订衔接对比"></div>
-                  <figcaption><b>友商 OTA 高铁宠物托运链路实测</b><span>四家均已接入查询页面，差异集中在查询后如何承接对应人票。</span></figcaption>
-                </figure>
-              </div>
-            </div>
+          <div class="business-model-note">
+            <article><h3>基础费用之外继续增收</h3><p>¥50 服务费是明确收入，代办、箱包、保险和接送进一步提高单笔订单价值；这些增值项未计入上方运输价格。</p></article>
+            <article><h3>用户为省事付费</h3><p>费用更高，但人票、宠物运输、材料和用品可以一次处理，减少跨渠道沟通。</p></article>
+            <article><h3>平台合作需要划清边界</h3><p>检疫证明等材料只接入官方或授权渠道，同时写清实际办理方、责任与退款规则。</p></article>
           </div>
-        </section>
+        </div>
+      </div>
+    </section>
 
-        <section class="report-section report-slide" data-chapter="rail" data-slide="02.f" id="rail-ota-table">
-          <header class="section-header">
-            <span class="section-header__no">02.f · 高铁现状</span>
-            <div>
-              <h2 class="section-header__title">携程无响应，去哪儿和智行打回首页</h2>
-              <p class="section-header__part">同程这一次查不到车次</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="table-wrap">
-                <table class="data-table">
-                  <thead><tr><th>平台</th><th>接入状态</th><th>查询后衔接</th></tr></thead>
-                  <tbody>
-                    <tr><td>12306</td><td>官方服务</td><td>未购买人票时，可从宠物车次直接进入对应车次购票页</td></tr>
-                    <tr><td>携程</td><td>已接入</td><td>实测跳转购买对应人票时出现无响应</td></tr>
-                    <tr><td>去哪儿</td><td>已接入</td><td>购买人票时跳回首页，车次和日期未被承接</td></tr>
-                    <tr><td>智行</td><td>已接入</td><td>购买人票时跳回首页，需要重新搜索</td></tr>
-                    <tr><td>同程</td><td>已接入</td><td>当前实测查询不到车次，查询链路可能存在故障</td></tr>
-                  </tbody>
-                </table>
-                <p class="media-meta">携程、去哪儿和智行的页面结构与操作流程高度相似，疑似复用同一套服务组件；该判断来自界面对比，尚未得到技术层确认。</p>
-              </div>
-            </div>
+    <section class="section" id="road-market">
+      <div class="section-inner">
+        <header class="section-head">
+          <div class="section-no">06 · 陆运</div>
+          <div><h2>陆运：价格通常更低，手续也更少</h2><p class="section-intro">多数服务商按两端地址、距离、宠物体重或笼具尺寸核价，通常不区分猫狗收费，也多见鸟类、鱼类等其他合规宠物。多数样本不要求《动物检疫合格证明》；拼载价格较低，高配照护和人宠同行会明显更贵，跨省运输通常需要一天或更久。</p></div>
+        </header>
+
+        <div class="road-advantage-band" aria-label="陆运主要优势">
+          <article class="road-advantage"><b>价格通常更低</b><p>京杭拼载询价约 ¥450–1,280，明显低于飞机进客舱；整车专送和人宠同行价格会更高。</p></article>
+          <article class="road-advantage"><b>手续更简单</b><p>本次服务商样本多数不要求检疫证明，用户无需围绕短有效期反复准备材料。</p></article>
+          <article class="road-advantage"><b>宠物类型更广</b><p>滴滴档案覆盖猫、狗、鸟类、鱼类和其他合规宠物；野生、濒危等禁运动物仍不承运。</p></article>
+          <article class="road-advantage"><b>陪伴方式可选</b><p>可让宠物单独运输，也可选择人宠同行；整车“宠物快送”页面同样显示人可跟车。</p></article>
+        </div>
+
+        <div class="road-platform-facts">
+          <article class="road-platform-fact"><h3>智宠行 · ¥450</h3><p>根据两端具体地址、距离和宠物信息核价，本次询价最低，杭州余杭到北京市区次日到达；同时提供机票预订与航空出行服务。</p></article>
+          <article class="road-platform-fact"><h3>易丰 · ¥600+</h3><p>按笼具尺寸和两端详细地址核价，包含上门接宠；杭州余杭到北京朝阳次日到达。</p></article>
+          <article class="road-platform-fact"><h3>宠嗒嗒 · ¥1,280</h3><p>同线路价格更高，包含空调、GPS、服务进度和上门接送，可加购一宠一监控、猫舱等服务。</p></article>
+        </div>
+
+        <div class="subsection">
+          <h3>杭州到北京，三家服务商怎么报价</h3>
+          <p class="subsection-note">三家都需要用户提供具体地址和宠物信息后核价。智宠行本次报价更低，易丰强调上门接宠，宠嗒嗒提供价格更高的照护配置。每个框内可向下滚动查看聊天记录，也可点击右上角查看大图。</p>
+          <div class="provider-grid">
+            <figure class="provider-card" data-lightbox-src="assets/road-providers/zhichongxing.jpg" data-lightbox-alt="智宠行杭州到北京报价咨询" data-lightbox-group="road-providers">
+              <div class="shot-window" data-seed-box><img src="assets/road-providers/zhichongxing.jpg" alt="智宠行杭州到北京报价咨询" loading="lazy" decoding="async" tabindex="0"></div>
+              <button class="gallery-open" type="button" aria-label="放大查看">↗</button>
+              <figcaption><strong>智宠行 · 本次报价最低</strong><span>¥450，次日到；根据两端地址和宠物信息核价，也提供机票预订服务。<a class="service-link" href="https://www.xiaohongshu.com/user/profile/60618293000000000100504e?xsec_token=ABVb92PDhsVKKsS5S-T-04RLuSicpoM5tlpJwgqj4tGTo%3D&amp;xsec_source=pc_search" target="_blank" rel="noopener">查看主页 ↗</a></span></figcaption>
+            </figure>
+            <figure class="provider-card" data-lightbox-src="assets/road-providers/yifeng.jpg" data-lightbox-alt="易丰杭州到北京报价咨询" data-lightbox-group="road-providers">
+              <div class="shot-window" data-seed-box><img src="assets/road-providers/yifeng.jpg" alt="易丰杭州到北京报价咨询" loading="lazy" decoding="async" tabindex="0"></div>
+              <button class="gallery-open" type="button" aria-label="放大查看">↗</button>
+              <figcaption><strong>易丰 · 地址与笼具核价</strong><span>约 ¥600 起，次日到；包含上门接宠，最终价取决于两端地址和航空箱尺寸。</span></figcaption>
+            </figure>
+            <figure class="provider-card" data-lightbox-src="assets/road-providers/chongdada-quote.jpg" data-lightbox-alt="宠嗒嗒杭州到北京报价与服务说明" data-lightbox-group="road-providers">
+              <div class="shot-window" data-seed-box><img src="assets/road-providers/chongdada-quote.jpg" alt="宠嗒嗒杭州到北京报价与服务说明" loading="lazy" decoding="async" tabindex="0"></div>
+              <button class="gallery-open" type="button" aria-label="放大查看">↗</button>
+              <figcaption><strong>宠嗒嗒 · 高配照护</strong><span>限时 ¥1,280，含空调、GPS、进度播报和上门接送；<a class="service-link" href="https://www.xiaohongshu.com/explore/6a5dcb20000000001102f00f?xsec_token=CBNCUExOxGSdsxhwz58PXjgnuf405tMePrsO6lSjtpOvE=&amp;xsec_source=app_share" target="_blank" rel="noopener">查看高级服务 ↗</a></span></figcaption>
+            </figure>
           </div>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="rail" data-slide="02.g" id="rail-summary">
-          <header class="section-header">
-            <span class="section-header__no">02.g · 高铁现状</span>
-            <div>
-              <h2 class="section-header__title">体验差在能不能连续买到人票</h2>
-              <p class="section-header__part">四家都已经能查</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <aside class="callout">
-                <strong>现状总结：</strong>
-                <p>四家 OTA 均已接入宠物托运查询，服务供给来自同一套 12306 / 中铁快运体系。体验差异集中在查询后能否保留车次、日期和乘客信息，并顺利完成“先买人票，再预约宠物仓位”的连续操作。</p>
-              </aside>
-            </div>
+          <div class="plain-table-wrap" data-seed-box style="margin-top:22px">
+            <table>
+              <thead><tr><th>服务商</th><th>京杭询价</th><th>计价方式</th><th>服务侧重点</th></tr></thead>
+              <tbody>
+                <tr><td><strong>智宠行</strong></td><td class="number">¥450</td><td>详细地址 + 距离 + 宠物信息</td><td>本次询价最低，同时承接机票预订与航空出行</td></tr>
+                <tr><td><strong>易丰</strong></td><td class="number">¥600+</td><td>详细地址 + 笼具尺寸</td><td>上门接宠，按实际需求核价</td></tr>
+                <tr><td><strong>宠嗒嗒</strong></td><td class="number">¥1,280</td><td>基础运输 + 可选增购</td><td>监控、GPS、照护和过程信息</td></tr>
+              </tbody>
+            </table>
           </div>
-        </section>
+        </div>
 
-        <section class="report-slide is-chapter-cover" data-chapter="air" data-slide="03" id="air">
-          <header class="chapter-cover">
-            <span class="chapter-cover__no">03</span>
-            <span class="chapter-cover__kicker">航空方式</span>
-            <h2 class="chapter-cover__title">“坐飞机”包含三套不同流程</h2>
-            <p class="chapter-cover__lead">市场上的“宠物航空”可能指单独飞、同机托运或进客舱。三者在候机地点、等待时间、接宠位置和收费方式上都不同。</p>
-          </header>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="air" data-slide="03.a" id="air-methods">
-          <header class="section-header">
-            <span class="section-header__no">03.a · 航空方式</span>
-            <div>
-              <h2 class="section-header__title">单独飞、同机托运和进客舱不是同一套手续</h2>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="start">
-            <div class="page-region" data-size="fill" data-align="start">
-              <div class="table-wrap">
-                <table class="data-table">
-                  <thead><tr><th>维度</th><th>单独飞</th><th>同机飞</th><th>进客舱</th></tr></thead>
-                  <tbody>
-                    <tr><td>怎么走</td><td>货运流程，主人不随行；服务商通常负责订舱、文件、机场送宠和目的地接宠</td><td>主人乘坐同一航班，宠物在有氧货舱；人走客运，宠物走货运或特殊行李，两端仍需额外交接</td><td>宠物在客舱软箱内随主人出行；航司付费增值，规则仍以白名单和航班为单位</td></tr>
-                    <tr><td>家长随行</td><td>没有家长随行</td><td>与家长同一航班</td><td>与家长全程不分开</td></tr>
-                    <tr><td>乘机位置</td><td>有氧舱托运</td><td>宠物在有氧舱，家长在客舱</td><td>与家长同在客舱</td></tr>
-                    <tr><td>值机地方</td><td>货站楼</td><td>航站楼</td><td>航站楼</td></tr>
-                    <tr><td>候机时长</td><td>4–5 小时</td><td>2–3 小时</td><td>2–3 小时</td></tr>
-                    <tr><td>接宠位置</td><td>货站楼</td><td>行李转盘 / 超重柜台</td><td>—</td></tr>
-                    <tr><td>接宠时间</td><td>2–3 小时；北京 / 上海 3–4 小时</td><td>1–2 小时</td><td>—</td></tr>
-                    <tr><td>宠物限重</td><td>具体看城市和航司</td><td>宠 + 笼 ≤32kg</td><td>具体看航司</td></tr>
-                  </tbody>
-                </table>
-                <p class="media-meta">单独飞和同机托运也需要《动物检疫合格证明》。</p>
-              </div>
-            </div>
+        <div class="subsection" id="didi-platform">
+          <h3>滴滴：人宠同行、整车快送和服务商托运放在同一入口</h3>
+          <p class="subsection-note">“携宠出行”明确提供人宠同行；“宠物快送”面向宠物独行，但整车产品也写明“大宠或多宠，人可跟车”。两者使用的小面、中面整车运力和报价接近，供给存在重合，入口分别强调打车场景与送宠场景。平台另聚合三家专业托运服务商，提供价格更低的拼载方案。</p>
+          <div class="road-platform-facts" style="margin-top:22px">
+            <article class="road-platform-fact"><h3>同行与快送有重合</h3><p>“携宠出行”默认人宠同乘；“宠物快送”默认送宠，也允许人跟车。核心差别在入口场景与服务承诺。</p></article>
+            <article class="road-platform-fact"><h3>价格随体重分档</h3><p>同一路线从 10kg 档升到 30kg 档，三家服务商分别上涨约 ¥350、¥420、¥500，涨幅约四到六成。</p></article>
+            <article class="road-platform-fact"><h3>准入不只猫狗</h3><p>宠物档案可选鸟类、鱼类和其他宠物；平台同时提示野生动物、濒危动物等禁止运输。</p></article>
           </div>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="air" data-slide="03.b" id="air-friction">
-          <header class="section-header">
-            <span class="section-header__no">03.b · 航空方式</span>
-            <div>
-              <h2 class="section-header__title">最麻烦的一步通常是办检疫证明</h2>
-              <p class="section-header__part">三种方式前半段大致相同</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="card-grid" data-item-count="4" style="--component-columns: 4">
-                <article class="report-card">
-                  <h3 class="report-card__title">先满足属地材料</h3>
-                  <p class="report-card__body">杭州拱墅样本要身份证或居住证明，还要官方免疫证；城区和城市口径可能不同。</p>
-                </article>
-                <article class="report-card">
-                  <h3 class="report-card__title">宠物通常要到场</h3>
-                  <p class="report-card__body">官方兽医临床检查；杭州样本还要求指定医院疫病筛查，报告仅 3 天有效。</p>
-                </article>
-                <article class="report-card">
-                  <h3 class="report-card__title">有效期很短</h3>
-                  <p class="report-card__body">杭州案例 5 天；各地常见最长 5–7 天；航司还可能要求起飞前 3–5 天内签发。</p>
-                </article>
-                <article class="report-card">
-                  <h3 class="report-card__title">时间必须卡准</h3>
-                  <p class="report-card__body">证明要覆盖承运日，行程与启运信息要一致。办早过期，办晚可能赶不上申报点。</p>
-                </article>
-              </div>
-            </div>
+          <div class="road-evidence-grid">
+            <figure class="evidence-shot" data-lightbox-src="assets/road-didi/pet-profile.png" data-lightbox-alt="滴滴宠物档案支持猫狗鸟类鱼类和其他宠物" data-lightbox-group="didi-quotes">
+              <div class="shot-window" data-seed-box><img src="assets/road-didi/pet-profile.png" alt="滴滴宠物档案支持的类型" loading="lazy" decoding="async" tabindex="0"></div>
+              <button class="gallery-open" type="button" aria-label="放大查看">↗</button>
+              <figcaption><strong>宠物档案 · 类型更广</strong><span>可选狗、猫、鸟类、鱼类和其他合规宠物。</span></figcaption>
+            </figure>
+            <figure class="evidence-shot" data-lightbox-src="assets/road-didi/pet-delivery.png" data-lightbox-alt="滴滴宠物快送页面，宠物独行且人可跟车" data-lightbox-group="didi-quotes">
+              <div class="shot-window" data-seed-box><img src="assets/road-didi/pet-delivery.png" alt="滴滴宠物快送页面" loading="lazy" decoding="async" tabindex="0"></div>
+              <button class="gallery-open" type="button" aria-label="放大查看">↗</button>
+              <figcaption><strong>宠物快送 · 默认送宠</strong><span>整车产品也标注大宠或多宠场景允许人跟车。</span></figcaption>
+            </figure>
+            <figure class="evidence-shot" data-lightbox-src="assets/road-didi/beijing-10kg-providers.jpg" data-lightbox-alt="滴滴北京方向，10kg以内三家服务商报价" data-lightbox-group="didi-quotes">
+              <div class="shot-window" data-seed-box><img src="assets/road-didi/beijing-10kg-providers.jpg" alt="10kg以内服务商报价" loading="lazy" decoding="async" tabindex="0"></div>
+              <button class="gallery-open" type="button" aria-label="放大查看">↗</button>
+              <figcaption><strong>10kg 内 · 服务商托运</strong><span>三档报价 ¥625、¥780、¥1280。</span></figcaption>
+            </figure>
           </div>
-        </section>
+          <p class="decision-note"><strong>平台机会：</strong>统一宠物档案和路线信息后，用户可以直接比较服务商拼载、整车快送与人宠同行。下一步需要把宠物类型、是否可跟车、笼具、时效、监控、保险、接送和异常责任做成统一字段，减少下单后的二次确认。</p>
+        </div>
+      </div>
+    </section>
 
-        <section class="report-section report-slide" data-chapter="air" data-slide="03.c" id="air-species">
-          <header class="section-header">
-            <span class="section-header__no">03.c · 航空方式</span>
-            <div>
-              <h2 class="section-header__title">犬要核狂犬疫苗，猫常要猫三联</h2>
-              <p class="section-header__part">订票前先排除品种限制</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="card-grid" data-item-count="2" style="--component-columns: 2">
-                <article class="report-card">
-                  <h3 class="report-card__title">犬类</h3>
-                  <p class="report-card__body">接种已满 21 天且在有效期内；部分航司还核小动物疫苗注射证明。短鼻犬、烈性犬等须订票前排除。</p>
-                </article>
-                <article class="report-card">
-                  <h3 class="report-card__title">猫类</h3>
-                  <p class="report-card__body">部分航司申请时要求猫三联；申报点也可能核其他有效免疫。材料跟随出发地申报点和航司。</p>
-                </article>
-              </div>
-            </div>
+    <section class="section" id="problems">
+      <div class="section-inner">
+        <header class="section-head">
+          <div class="section-no">07 · 出行痛点</div>
+          <div><h2>跨城带宠出行的三个主要问题</h2><p class="section-intro">用户需要在航司、铁路、服务商、客服和线下办理点之间来回确认，主要问题集中在资格、价格和手续。</p></div>
+        </header>
+        <div class="problems">
+          <article class="problem"><h3>资质问题</h3><p>航司、车次、服务商、宠物品种与体重都有各自门槛；检疫证明、疫苗记录和承运资质又分散在不同渠道，用户很难一次确认。</p></article>
+          <article class="problem"><h3>价格混乱</h3><p>人票、宠物费、运输费、上门接送、代办、箱包和保险分开报价；同一路线也会因重量、是否同行和照护等级出现数倍差价。</p></article>
+          <article class="problem"><h3>用户麻烦</h3><p>反复填写宠物信息、跨平台询价、电话确认、准备短有效期证明，再自行串起交接和出发时间。</p></article>
+        </div>
+        <div class="next-step">
+          <div class="next-step-intro">
+            <span>下一步可做</span>
+            <h3>先减少反复询问和线下核对</h3>
+            <p>把出发前必须确认的信息收拢到同一条流程里，再连接不同运输方式的查询和下单。</p>
           </div>
-        </section>
+          <ol class="next-step-list">
+            <li><span class="step-index">01</span><div><h3>共用一份宠物档案</h3><p>出发地、目的地、日期、品种、体重、箱包和疫苗日期只填一次，航空、高铁和陆运查询直接复用。</p></div></li>
+            <li><span class="step-index">02</span><div><h3>查询前先校验</h3><p>提前判断品种、体重、箱包与材料是否符合要求，能线上提交的材料尽量在出发前完成。</p></div></li>
+            <li><span class="step-index">03</span><div><h3>报价带上履约条件</h3><p>同时列清人票、宠物服务、接送和增值项，并说明时效、交接、保障与异常责任。</p></div></li>
+          </ol>
+        </div>
+      </div>
+    </section>
+  </main>
 
-        <section class="report-section report-slide" data-chapter="air" data-slide="03.d" id="air-steps">
-          <header class="section-header">
-            <span class="section-header__no">03.d · 航空方式</span>
-            <div>
-              <h2 class="section-header__title">三种方式前半段要走同一组步骤</h2>
-              <p class="section-header__part">客舱和托运的差别出在订位、箱包和交接</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="steps" data-item-count="6">
-                <article class="step">
-                  <span class="step__index">01</span>
-                  <div>
-                    <h3 class="step__title">先确认这班能不能运</h3>
-                    <p class="step__body">查航司、机场、机型、品种和当班名额。客舱看白名单与名额；货舱还要有氧舱、温度和装载。</p>
-                  </div>
-                </article>
-                <article class="step">
-                  <span class="step__index">02</span>
-                  <div>
-                    <h3 class="step__title">订人票并申请宠物服务</h3>
-                    <p class="step__body">进客舱 / 同机托运先选人票再申请同一航班；单独飞不需要主人买人票，向货运或服务商订舱。截止时间和收费因航司而异。</p>
-                  </div>
-                </article>
-                <article class="step">
-                  <span class="step__index">03</span>
-                  <div>
-                    <h3 class="step__title">准备疫苗本和免疫证明</h3>
-                    <p class="step__body">核对姓名、接种日期、种类和有效期；办证明通常要宠物到场。</p>
-                  </div>
-                </article>
-                <article class="step">
-                  <span class="step__index">04</span>
-                  <div>
-                    <h3 class="step__title">临近出发办理《动物检疫合格证明》</h3>
-                    <p class="step__body">带宠物、证件或属地居住证明、免疫记录及当地筛查报告，接受临床检查。货主、启运地、到达地和运输日期要与行程一致。</p>
-                  </div>
-                </article>
-                <article class="step">
-                  <span class="step__index">05</span>
-                  <div>
-                    <h3 class="step__title">按运输方式准备箱包和用品</h3>
-                    <p class="step__body">客舱用规定软包，犬类通常还要口套、牵引绳和尿垫；货舱用硬质航空箱并完成固定、饮水。</p>
-                  </div>
-                </article>
-                <article class="step">
-                  <span class="step__index">06</span>
-                  <div>
-                    <h3 class="step__title">提前到机场核验和交接</h3>
-                    <p class="step__body">进客舱通常提前至少 2 小时到人工柜台；同机 / 单独托运到货运或特殊行李柜台交宠，落地再领取。</p>
-                  </div>
-                </article>
-              </div>
-            </div>
-          </div>
-        </section>
+  <footer class="notes">
+    <h2>数据口径说明</h2>
+    <ol>
+      <li>航空航线采用单向国内自营直达航线口径；高铁采用每日图定 G/D/C 动车组车次口径，两者适合分别观察各自市场阶段。</li>
+      <li>有氧舱托运航线覆盖率 55%–65%、宠物进客舱航线覆盖率 25%–30% 为行业汇总估算区间。估算考虑航司政策、机型、支线占比、机场白名单和跨航司重复线路。</li>
+      <li>航线或机场进入开放名单，不代表每个日期、每一班次均可办理；实际还受机型、高温、代码共享和宠物名额影响。</li>
+      <li>竞品价格来自 2026 年 8 月用户询价与页面截图，可能随日期、体重、线路和服务包变化。</li>
+    </ol>
+  </footer>
 
-        <section class="report-section report-slide" data-chapter="air" data-slide="03.e" id="air-certificate">
-          <header class="section-header">
-            <span class="section-header__no">03.e · 航空方式</span>
-            <div>
-              <h2 class="section-header__title">证明上的行程必须按实际承运来填</h2>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="image-grid evidence-gallery" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit" data-item-count="1">
-                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit">
-                  <div class="evidence-window"><img src="assets/process/animal-quarantine-certificate.jpg" alt="动物检疫合格证明示例"></div>
-                  <figcaption><b>《动物检疫合格证明》示例</b><span>图中是铁路托运案例；航空使用同类证明，运输方式和行程信息需按实际承运填写。</span></figcaption>
-                </figure>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="air" data-slide="03.f" id="air-proxy">
-          <header class="section-header">
-            <span class="section-header__no">03.f · 航空方式</span>
-            <div>
-              <h2 class="section-header__title">说宠物不用到场就能出证，和公开要求冲突</h2>
-              <p class="section-header__part">授权申报本身有正规路径</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <aside class="callout">
-                <strong>代办市场：</strong>
-                <p>淘宝等平台和宠物出行服务商可见跑腿、材料整理或“检疫代办”。授权他人申报本身有正规路径，证明仍应由官方兽医签发并完成规定查验；承诺“宠物无需到场即可出证”的服务与多地公开的临床检查要求冲突，存在合规灰区。平台接入时需要核验签发机构、查验方式和退款责任。</p>
-              </aside>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-slide is-chapter-cover" data-chapter="supply" data-slide="04" id="supply">
-          <header class="chapter-cover">
-            <span class="chapter-cover__no">04</span>
-            <span class="chapter-cover__kicker">供给规模</span>
-            <h2 class="chapter-cover__title">航空供给已经形成一定规模</h2>
-            <p class="chapter-cover__lead">先看行业整体覆盖，再看具体航司开放了多少航线和机场。政策允许不等于每个航班都可办理。</p>
-          </header>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="supply" data-slide="04.a" id="scale-industry">
-          <header class="section-header">
-            <span class="section-header__no">04.a · 供给规模</span>
-            <div>
-              <h2 class="section-header__title">六成多航司能托运，三成试点进客舱</h2>
-              <p class="section-header__part">政策允许不等于每个航班都可办理</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="card-grid" data-item-count="3" style="--component-columns: 3">
-                <article class="report-card">
-                  <b class="stat-value">34 / 52</b>
-                  <h3 class="report-card__title">航司支持有氧舱托运</h3>
-                  <p class="report-card__body">约 65% 国内常态化客运航司具备政策基础，仍受机型和航班条件限制。</p>
-                </article>
-                <article class="report-card">
-                  <b class="stat-value">17 / 52</b>
-                  <h3 class="report-card__title">航司试点宠物进客舱</h3>
-                  <p class="report-card__body">约 33% 已开放进客舱付费增值，通常按机场白名单和指定航班执行。</p>
-                </article>
-                <article class="report-card">
-                  <b class="stat-value">1100–1350</b>
-                  <h3 class="report-card__title">估算进客舱航线池</h3>
-                  <p class="report-card__body">约占全国 4501 条国内单向直达航线的 25%–30%，跨航司重复航线已作区间去重。</p>
-                </article>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="supply" data-slide="04.b" id="scale-industry-table">
-          <header class="section-header">
-            <span class="section-header__no">04.b · 供给规模</span>
-            <div>
-              <h2 class="section-header__title">航司开了，不等于航线都能办</h2>
-              <p class="section-header__part">行业汇总估算</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="table-wrap">
-                <table class="data-table">
-                  <thead><tr><th>市场</th><th>当前规模</th><th>总体规模</th><th>占比</th><th>说明</th></tr></thead>
-                  <tbody>
-                    <tr><td>有氧舱托运航司</td><td>34 家</td><td>52 家国内客运航司</td><td>约 65%</td><td>航司政策允许不等于每个航班都可办理</td></tr>
-                    <tr><td>宠物进客舱航司</td><td>17 家</td><td>52 家国内客运航司</td><td>约 33%</td><td>包含集团子航司，主要采用机场白名单</td></tr>
-                    <tr><td>有氧舱托运航线</td><td>行业估算可通行航线</td><td>4501 条国内单向直达航线</td><td>约 55%–65%</td><td>按干线机型、支线占比与拒收政策推算</td></tr>
-                    <tr><td>宠物进客舱航线</td><td>约 1100–1350 条</td><td>4501 条国内单向直达航线</td><td>约 25%–30%</td><td>航线池不代表每天均有名额</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="supply" data-slide="04.c" id="scale-airlines">
-          <header class="section-header">
-            <span class="section-header__no">04.c · 供给规模</span>
-            <div>
-              <h2 class="section-header__title">南航内部覆盖最宽，吉祥大约只有四分之一</h2>
-              <p class="section-header__part">单向国内自营直达</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="table-wrap">
-                <table class="data-table">
-                  <thead><tr><th>航司</th><th>可携宠进客舱航线</th><th>国内全部直达航线</th><th>航司内部覆盖率</th></tr></thead>
-                  <tbody>
-                    <tr><td>南方航空</td><td>870 条</td><td>约 1520 条</td><td>约 57%</td></tr>
-                    <tr><td>东方航空</td><td>约 630 条</td><td>约 1350 条</td><td>约 47%</td></tr>
-                    <tr><td>海南航空</td><td>约 450 条</td><td>约 980 条</td><td>约 43%</td></tr>
-                    <tr><td>吉祥航空</td><td>约 110 条</td><td>约 420 条</td><td>约 26%</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="supply" data-slide="04.d" id="scale-airports">
-          <header class="section-header">
-            <span class="section-header__no">04.d · 供给规模</span>
-            <div>
-              <h2 class="section-header__title">没公布航线数的，先看开了多少机场</h2>
-              <p class="section-header__part">按机场统计</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="start">
-            <div class="page-region" data-size="fill" data-align="start">
-              <div class="table-wrap">
-                <table class="data-table">
-                  <thead><tr><th>航司</th><th>开放机场</th><th>国内通航机场</th><th>机场覆盖率</th></tr></thead>
-                  <tbody>
-                    <tr><td>祥鹏航空</td><td>38</td><td>约 75</td><td>51%</td></tr>
-                    <tr><td>天津航空</td><td>39</td><td>约 82</td><td>48%</td></tr>
-                    <tr><td>首都航空</td><td>33</td><td>约 70</td><td>47%</td></tr>
-                    <tr><td>西部航空</td><td>30</td><td>约 66</td><td>45%</td></tr>
-                    <tr><td>北部湾航空</td><td>24</td><td>约 55</td><td>44%</td></tr>
-                    <tr><td>金鹏航空</td><td>22</td><td>约 52</td><td>42%</td></tr>
-                    <tr><td>长安航空</td><td>21</td><td>约 50</td><td>42%</td></tr>
-                    <tr><td>福州航空</td><td>23</td><td>约 58</td><td>40%</td></tr>
-                    <tr><td>桂林航空</td><td>1</td><td>约 28</td><td>4%</td></tr>
-                  </tbody>
-                </table>
-                <p class="media-meta">桂林为单点试点。两机场都开放，不代表两地之间每条航线都可办理。</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="supply" data-slide="04.e" id="supply-facts">
-          <header class="section-header">
-            <span class="section-header__no">04.e · 供给规模</span>
-            <div>
-              <h2 class="section-header__title">政策支持，不等于当天能订</h2>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="card-grid" data-item-count="4" style="--component-columns: 2">
-                <article class="report-card">
-                  <h3 class="report-card__title">核心枢纽与旅游城市优先</h3>
-                  <p class="report-card__body">北京、上海、广州、深圳、杭州、成都、西安，以及海口、三亚、丽江更常进白名单。</p>
-                </article>
-                <article class="report-card">
-                  <h3 class="report-card__title">主干航线比支线更成熟</h3>
-                  <p class="report-card__body">A320、波音 737 和宽体机更容易具备条件。ARJ21 / C909 等支线机型通常是硬约束。</p>
-                </article>
-                <article class="report-card">
-                  <h3 class="report-card__title">名单仍会动态变化</h3>
-                  <p class="report-card__body">换季、临时换机型、高温、代码共享和单班名额，会让“政策支持”与“当天可订”不一致。</p>
-                </article>
-                <article class="report-card">
-                  <h3 class="report-card__title">航司产品差异明显</h3>
-                  <p class="report-card__body">单人可带数量、箱包尺寸、是否占座、办理时限和材料各不相同，合作时要逐项接入。</p>
-                </article>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-slide is-chapter-cover" data-chapter="partners" data-slide="05" id="partners">
-          <header class="chapter-cover">
-            <span class="chapter-cover__no">05</span>
-            <span class="chapter-cover__kicker">合作顺序</span>
-            <h2 class="chapter-cover__title">首选南航，第二家选择海航</h2>
-            <p class="chapter-cover__lead">首选南航，用最大覆盖、较低办理门槛和完整运输方式建立基础供给；第二家选择海航。东航适合在第二阶段补充城市与班次。</p>
-          </header>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="partners" data-slide="05.a" id="supply-matrix">
-          <header class="section-header">
-            <span class="section-header__no">05.a · 合作顺序</span>
-            <div>
-              <h2 class="section-header__title">南航覆盖最广、办理最晚，海航能带两只</h2>
-              <p class="section-header__part">国内客舱产品</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="start">
-            <div class="page-region" data-size="fill" data-align="start">
-              <div class="table-wrap">
-                <table class="data-table">
-                  <thead><tr><th>维度</th><th>南方航空</th><th>海南航空</th><th>东方航空</th></tr></thead>
-                  <tbody>
-                    <tr><td>可办航线 / 国内直达</td><td>870 / 约 1520</td><td>450+ / 约 980</td><td>约 630 / 约 1350</td></tr>
-                    <tr><td>覆盖率</td><td>约 57%</td><td>约 43%</td><td>约 47%</td></tr>
-                    <tr><td>开放范围</td><td>45 座机场</td><td>38 个城市</td><td>36 个国内城市</td></tr>
-                    <tr><td>申请截止</td><td>起飞前 6 小时，App / 小程序</td><td>48h 前在线；24h 前电话 / 售票处；进入 24h 后可在乘机日到机场申请服务</td><td>仅起飞前 7 天至 24h</td></tr>
-                    <tr><td>每位旅客宠物数</td><td>1 只</td><td>最多 2 只：1 占座 + 1 不占座</td><td>1 只</td></tr>
-                    <tr><td>每趟航班总宠物数</td><td>最多 4 只</td><td>窄体最多 4；宽体最多 6</td><td>最多 2 只</td></tr>
-                    <tr><td>不占座箱包</td><td>35×28×24cm</td><td>40×38×25cm</td><td>35×28×24cm</td></tr>
-                    <tr><td>占座箱包</td><td>同规格，可加购相邻座</td><td>60×40×35cm</td><td>55×35×35cm</td></tr>
-                    <tr><td>重量</td><td>不设明确 kg 上限，能装入 35×28×24cm 即可</td><td>含箱总重 ≤7kg</td><td>不占座建议 ≤10kg；占座建议 ≤18kg</td></tr>
-                    <tr><td>准入</td><td>小型猫狗，满 8 周；短鼻、危险犬及杂交、孕或 48h 内分娩、传染病或近期手术不受理</td><td>小型猫狗，含箱 ≤7kg，须能在箱内站立；仅经济舱、指定国内航线，中转原则上不适用</td><td>猫狗，满 2 个月；烈性犬及杂交、萨摩耶、孕或 48h 内分娩、传染病、近期手术或当天应激无法安抚不受理</td></tr>
-                    <tr><td>基础价格</td><td>&lt;2000km ¥1299；≥2000km ¥1499</td><td>¥1430</td><td>¥1288</td></tr>
-                    <tr><td>占座额外</td><td>按距离 +¥400 / +¥600</td><td>实时经济舱座位价 + ¥1430，电话 / 售票处</td><td>实时经济舱座位价 + ¥1288，95530</td></tr>
-                    <tr><td>适用航班</td><td>指定国内直达，排除 C909</td><td>海航 / 大新华实际承运的部分国内航班；不支持中转，海口—三亚除外</td><td>MU / FM 实际承运且挂 MU / FM 的国内直达经济舱</td></tr>
-                    <tr><td>材料</td><td>检疫证明、疫苗注射证明；机场签协议</td><td>动物 A 证、疫苗证明、宠物身份证明（如有）；机场签协议</td><td>电子申请书、检疫证明原件、健康声明 / 狂犬疫苗原件</td></tr>
-                    <tr><td>核验</td><td>材料随身，机场签协议；下单可查检疫点</td><td>材料须提前办好并随身携带；乘机日现场申请仅指申请宠物服务</td><td>电子申请、原件现场核验</td></tr>
-                    <tr><td>到机场</td><td>起飞前至少 2 小时</td><td>起飞前至少 2 小时</td><td>起飞前至少 2 小时</td></tr>
-                    <tr><td>材料便利性</td><td>材料较少，检疫点可在下单流程查询</td><td>接近南航，身份证明仅在有证件时提供</td><td>材料最多，同时要电子申请书和多项原件</td></tr>
-                    <tr><td>最突出的用户价值</td><td>覆盖最广、办理最晚、无 kg 上限，客舱不适用时还有同机飞和单独飞</td><td>两宠、大箱包、占座，单班容量更高，临近出发仍可申请</td><td>航线规模较大，搜索结果可直接识别“宠物友好”航班</td></tr>
-                  </tbody>
-                </table>
-                <p class="media-meta">覆盖率以各航司国内单向直达航线为分母。</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="partners" data-slide="05.b" id="supply-order">
-          <header class="section-header">
-            <span class="section-header__no">05.b · 合作顺序</span>
-            <div>
-              <h2 class="section-header__title">首选南航，第二家选海航</h2>
-              <p class="section-header__part">东航放到第二阶段</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <aside class="callout">
-                <strong>合作顺序建议：</strong>
-                <p>首选南航建立基础供给；第二家选海航补两宠、大箱、占座和临近出发；东航放在第二阶段补城市与班次。</p>
-              </aside>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-slide is-chapter-cover" data-chapter="paidao" data-slide="06" id="paidao">
-          <header class="chapter-cover">
-            <span class="chapter-cover__no">06</span>
-            <span class="chapter-cover__kicker">派到</span>
-            <h2 class="chapter-cover__title">派到把复杂流程打包成一笔订单</h2>
-            <p class="chapter-cover__lead">人票、宠物运输、材料和用品可以一次处理。</p>
-          </header>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="paidao" data-slide="06.a" id="paidao-price">
-          <header class="section-header">
-            <span class="section-header__no">06.a · 派到</span>
-            <div>
-              <h2 class="section-header__title">进客舱这一单大约两千二，单独飞九百五</h2>
-              <p class="section-header__part">杭州样本；同机飞原单是上海出发</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="bar-compare" data-item-count="3">
-                <div class="bar-compare__item">
-                  <div class="bar-compare__row">
-                    <span class="bar-compare__label">单独飞</span>
-                    <div class="bar-compare__track"><div class="bar-compare__fill" style="width:43%"></div></div>
-                    <strong class="bar-compare__value">¥950</strong>
-                  </div>
-                  <p class="bar-compare__note">航司 / 机场办理费 ¥900 + 平台服务费 ¥50</p>
-                </div>
-                <div class="bar-compare__item">
-                  <div class="bar-compare__row">
-                    <span class="bar-compare__label">同机飞</span>
-                    <div class="bar-compare__track"><div class="bar-compare__fill" data-tone="warning" style="width:58%"></div></div>
-                    <strong class="bar-compare__value">约 ¥1,268</strong>
-                  </div>
-                  <p class="bar-compare__note">杭州人票 ¥720 + 宠物航空费 ¥498 + 平台服务费 ¥50</p>
-                </div>
-                <div class="bar-compare__item">
-                  <div class="bar-compare__row">
-                    <span class="bar-compare__label">进客舱</span>
-                    <div class="bar-compare__track"><div class="bar-compare__fill" data-tone="danger" style="width:100%"></div></div>
-                    <strong class="bar-compare__value">¥2,200</strong>
-                  </div>
-                  <p class="bar-compare__note">杭州人票 ¥720 + 宠物票 ¥1,430 + 平台服务费 ¥50</p>
-                </div>
-              </div>
-              <p class="media-meta">同机飞页面没有杭州出发选项，原始订单为上海出发。为便于比较，剔除检疫代办、航空箱和保险，并把人票替换为同一杭州样本价。</p>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="paidao" data-slide="06.b" id="paidao-addons">
-          <header class="section-header">
-            <span class="section-header__no">06.b · 派到</span>
-            <div>
-              <h2 class="section-header__title">五十元服务费之外，代办和箱包继续加价</h2>
-              <p class="section-header__part">未计入上方运输价格</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="list-block" data-item-count="3">
-                <div class="list-row"><span class="list-row__label">订单服务费</span><p class="list-row__text">三种方式均单列每单 ¥50。</p></div>
-                <div class="list-row"><span class="list-row__label">检疫证明代办</span><p class="list-row__text">单独飞 ¥300、同机飞 ¥400、进客舱 ¥299。咨询中出现“宠物无需到场即可办理”，可能处于灰色地带，需要核实办理主体、查验过程与材料真实性。</p></div>
-                <div class="list-row"><span class="list-row__label">箱包与保险</span><p class="list-row__text">单独飞和同机飞继续销售 ¥88 航空箱与 ¥12 保险；商城另售 ¥49 航空箱和 ¥189 飞行礼包。</p></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="paidao" data-slide="06.c" id="paidao-orders">
-          <header class="section-header">
-            <span class="section-header__no">06.c · 派到</span>
-            <div>
-              <h2 class="section-header__title">订单把人票、宠物费和服务费写在一起</h2>
-              <p class="section-header__part">派到</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="image-grid evidence-gallery" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit" data-item-count="3">
-                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit">
-                  <div class="evidence-window"><img src="assets/paidao/single-total.jpg" alt="派到单独飞订单费用明细"></div>
-                  <figcaption><b>单独飞</b><span>订单费用明细</span></figcaption>
-                </figure>
-                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit">
-                  <div class="evidence-window"><img src="assets/paidao/same-flight-total.jpg" alt="派到同机飞订单费用明细"></div>
-                  <figcaption><b>同机飞</b><span>订单费用明细</span></figcaption>
-                </figure>
-                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit">
-                  <div class="evidence-window"><img src="assets/paidao/cabin-total.jpg" alt="派到宠物进客舱订单费用明细"></div>
-                  <figcaption><b>进客舱</b><span>订单费用明细</span></figcaption>
-                </figure>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="paidao" data-slide="06.d" id="paidao-store">
-          <header class="section-header">
-            <span class="section-header__no">06.d · 派到</span>
-            <div>
-              <h2 class="section-header__title">商城还在卖航空箱和飞行礼包</h2>
-              <p class="section-header__part">派到</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="image-grid evidence-gallery" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit" data-item-count="4">
-                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit">
-                  <div class="evidence-window"><img src="assets/paidao/guides.jpg" alt="派到按城市提供的宠物旅行攻略列表"></div>
-                  <figcaption><b>旅行攻略</b><span>按城市提供</span></figcaption>
-                </figure>
-                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit">
-                  <div class="evidence-window"><img src="assets/paidao/store-home.jpg" alt="派到商城中的飞行礼包和航空箱"></div>
-                  <figcaption><b>商城首页</b><span>飞行礼包和航空箱</span></figcaption>
-                </figure>
-                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit">
-                  <div class="evidence-window"><img src="assets/paidao/store-kit.jpg" alt="派到无忧飞行礼包详情"></div>
-                  <figcaption><b>飞行礼包</b><span>无忧飞行礼包详情</span></figcaption>
-                </figure>
-                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit">
-                  <div class="evidence-window"><img src="assets/paidao/store-crate.jpg" alt="派到商城航空箱详情"></div>
-                  <figcaption><b>航空箱</b><span>商城航空箱详情</span></figcaption>
-                </figure>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="paidao" data-slide="06.e" id="paidao-model">
-          <header class="section-header">
-            <span class="section-header__no">06.e · 派到</span>
-            <div>
-              <h2 class="section-header__title">用户为省事付钱，材料却必须划清谁来办</h2>
-              <p class="section-header__part">派到样本</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="card-grid is-highlight" data-item-count="3" style="--component-columns: 3">
-                <article class="report-card">
-                  <h3 class="report-card__title">基础费用之外继续增收</h3>
-                  <p class="report-card__body">¥50 服务费是明确收入，代办、箱包、保险和接送进一步提高单笔订单价值；这些增值项未计入上方运输价格。</p>
-                </article>
-                <article class="report-card">
-                  <h3 class="report-card__title">用户为省事付费</h3>
-                  <p class="report-card__body">费用更高，但人票、宠物运输、材料和用品可以一次处理，减少跨渠道沟通。</p>
-                </article>
-                <article class="report-card">
-                  <h3 class="report-card__title">平台合作需要划清边界</h3>
-                  <p class="report-card__body">检疫证明等材料只接入官方或授权渠道，同时写清实际办理方、责任与退款规则。</p>
-                </article>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-slide is-chapter-cover" data-chapter="road" data-slide="07" id="road">
-          <header class="chapter-cover">
-            <span class="chapter-cover__no">07</span>
-            <span class="chapter-cover__kicker">陆运</span>
-            <h2 class="chapter-cover__title">陆运：价格通常更低，手续也更少</h2>
-            <p class="chapter-cover__lead">多数服务商按两端地址、距离、宠物体重或笼具尺寸核价，通常不区分猫狗收费，也多见鸟类、鱼类等其他合规宠物。多数样本不要求检疫证明；拼载更便宜，高配和同行更贵，跨省通常要一天或更久。</p>
-          </header>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="road" data-slide="07.a" id="road-advantages">
-          <header class="section-header">
-            <span class="section-header__no">07.a · 陆运</span>
-            <div>
-              <h2 class="section-header__title">拼载更便宜，还少办一张检疫证明</h2>
-              <p class="section-header__part">相对飞机进客舱</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="card-grid" data-item-count="4" style="--component-columns: 4">
-                <article class="report-card">
-                  <h3 class="report-card__title">价格通常更低</h3>
-                  <p class="report-card__body">京杭拼载询价约 ¥450–1,280，明显低于飞机进客舱；整车专送和人宠同行会更高。</p>
-                </article>
-                <article class="report-card">
-                  <h3 class="report-card__title">手续更简单</h3>
-                  <p class="report-card__body">本次服务商样本多数不要求检疫证明，用户无需围绕短有效期反复准备材料。</p>
-                </article>
-                <article class="report-card">
-                  <h3 class="report-card__title">宠物类型更广</h3>
-                  <p class="report-card__body">滴滴档案覆盖猫、狗、鸟类、鱼类和其他合规宠物；野生、濒危等仍不承运。</p>
-                </article>
-                <article class="report-card">
-                  <h3 class="report-card__title">陪伴方式可选</h3>
-                  <p class="report-card__body">可单独运输，也可人宠同行；整车“宠物快送”同样显示人可跟车。</p>
-                </article>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="road" data-slide="07.b" id="road-quotes">
-          <header class="section-header">
-            <span class="section-header__no">07.b · 陆运</span>
-            <div>
-              <h2 class="section-header__title">智宠行这次报价最低</h2>
-              <p class="section-header__part">杭州余杭出发，次日到达</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="card-grid" data-item-count="3" style="--component-columns: 3">
-                <article class="report-card">
-                  <b class="stat-value">¥450</b>
-                  <h3 class="report-card__title">智宠行</h3>
-                  <p class="report-card__body">按两端地址、距离和宠物信息核价，本次最低；同时提供机票预订与航空出行。</p>
-                </article>
-                <article class="report-card">
-                  <b class="stat-value">¥600+</b>
-                  <h3 class="report-card__title">易丰</h3>
-                  <p class="report-card__body">按笼具尺寸和两端详细地址核价，含上门接宠；余杭到北京朝阳。</p>
-                </article>
-                <article class="report-card">
-                  <b class="stat-value">¥1,280</b>
-                  <h3 class="report-card__title">宠嗒嗒</h3>
-                  <p class="report-card__body">含空调、GPS、服务进度和上门接送，可加购一宠一监控、猫舱。</p>
-                </article>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="road" data-slide="07.c" id="road-quote-table">
-          <header class="section-header">
-            <span class="section-header__no">07.c · 陆运</span>
-            <div>
-              <h2 class="section-header__title">三家都要先问地址再核价</h2>
-              <p class="section-header__part">杭州到北京</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="table-wrap">
-                <table class="data-table">
-                  <thead><tr><th>服务商</th><th>京杭询价</th><th>计价方式</th><th>服务侧重点</th></tr></thead>
-                  <tbody>
-                    <tr><td>智宠行</td><td>¥450</td><td>详细地址 + 距离 + 宠物信息</td><td>本次询价最低，同时承接机票预订与航空出行</td></tr>
-                    <tr><td>易丰</td><td>¥600+</td><td>详细地址 + 笼具尺寸</td><td>上门接宠，按实际需求核价</td></tr>
-                    <tr><td>宠嗒嗒</td><td>¥1,280</td><td>基础运输 + 可选增购</td><td>监控、GPS、照护和过程信息</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="road" data-slide="07.d" id="road-providers">
-          <header class="section-header">
-            <span class="section-header__no">07.d · 陆运</span>
-            <div>
-              <h2 class="section-header__title">这些价是聊天问出来的</h2>
-              <p class="section-header__part">杭州到北京</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="image-grid evidence-gallery" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit" data-item-count="3">
-                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit">
-                  <div class="evidence-window"><img src="assets/road-providers/zhichongxing.jpg" alt="智宠行杭州到北京报价咨询"></div>
-                  <figcaption><b>智宠行</b><span>¥450，次日到</span></figcaption>
-                </figure>
-                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit">
-                  <div class="evidence-window"><img src="assets/road-providers/yifeng.jpg" alt="易丰杭州到北京报价咨询"></div>
-                  <figcaption><b>易丰</b><span>约 ¥600 起，次日到，含上门接宠</span></figcaption>
-                </figure>
-                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit">
-                  <div class="evidence-window"><img src="assets/road-providers/chongdada-quote.jpg" alt="宠嗒嗒杭州到北京报价与服务说明"></div>
-                  <figcaption><b>宠嗒嗒</b><span>限时 ¥1,280，含空调、GPS、进度播报和上门接送</span></figcaption>
-                </figure>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="road" data-slide="07.e" id="didi-facts">
-          <header class="section-header">
-            <span class="section-header__no">07.e · 陆运</span>
-            <div>
-              <h2 class="section-header__title">人宠同行和宠物快送其实用同一套运力</h2>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="card-grid" data-item-count="4" style="--component-columns: 2">
-                <article class="report-card">
-                  <h3 class="report-card__title">同行与快送有重合</h3>
-                  <p class="report-card__body">“携宠出行”默认人宠同乘；“宠物快送”默认送宠，也允许人跟车。核心差别在入口场景与服务承诺。</p>
-                </article>
-                <article class="report-card">
-                  <h3 class="report-card__title">价格随体重分档</h3>
-                  <p class="report-card__body">同一路线从 10kg 升到 30kg，三家分别上涨约 ¥350、¥420、¥500，涨幅约四到六成。</p>
-                </article>
-                <article class="report-card">
-                  <h3 class="report-card__title">准入不只猫狗</h3>
-                  <p class="report-card__body">档案可选鸟类、鱼类和其他宠物；野生、濒危等禁止运输。</p>
-                </article>
-                <article class="report-card">
-                  <h3 class="report-card__title">入口场景不同</h3>
-                  <p class="report-card__body">“携宠出行”明确人宠同行；“宠物快送”面向独行，整车也写明大宠或多宠人可跟车。平台另聚合三家专业托运，提供更低拼载。</p>
-                </article>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="road" data-slide="07.f" id="didi-shots">
-          <header class="section-header">
-            <span class="section-header__no">07.f · 陆运</span>
-            <div>
-              <h2 class="section-header__title">档案已经能选鸟和鱼</h2>
-              <p class="section-header__part">滴滴</p>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="image-grid evidence-gallery" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit" data-item-count="3">
-                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit">
-                  <div class="evidence-window"><img src="assets/road-didi/pet-profile.png" alt="滴滴宠物档案支持的类型"></div>
-                  <figcaption><b>宠物档案</b><span>可选猫、狗、鸟类、鱼类和其他合规宠物</span></figcaption>
-                </figure>
-                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit">
-                  <div class="evidence-window"><img src="assets/road-didi/pet-delivery.png" alt="滴滴宠物快送页面"></div>
-                  <figcaption><b>宠物快送</b><span>默认送宠，整车也允许人跟车</span></figcaption>
-                </figure>
-                <figure class="evidence-figure" data-image-kind="shot" data-image-ratio="0.46:1" data-image-fit="fit">
-                  <div class="evidence-window"><img src="assets/road-didi/beijing-10kg-providers.jpg" alt="10kg以内服务商报价"></div>
-                  <figcaption><b>10kg 内报价</b><span>三档 ¥625、¥780、¥1280</span></figcaption>
-                </figure>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-slide is-chapter-cover" data-chapter="problems" data-slide="08" id="problems">
-          <header class="chapter-cover">
-            <span class="chapter-cover__no">08</span>
-            <span class="chapter-cover__kicker">出行痛点</span>
-            <h2 class="chapter-cover__title">跨城带宠出行的三个主要问题</h2>
-            <p class="chapter-cover__lead">用户需要在航司、铁路、服务商、客服和线下办理点之间来回确认，主要问题集中在资格、价格和手续。</p>
-          </header>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="problems" data-slide="08.a" id="problems-three">
-          <header class="section-header">
-            <span class="section-header__no">08.a · 出行痛点</span>
-            <div>
-              <h2 class="section-header__title">用户要在航司、铁路、服务商和办理点之间来回确认</h2>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="card-grid" data-item-count="3" style="--component-columns: 3">
-                <article class="report-card">
-                  <h3 class="report-card__title">资质问题</h3>
-                  <p class="report-card__body">航司、车次、服务商、品种与体重各有门槛；检疫证明、疫苗记录和承运资质又分散在不同渠道，很难一次确认。</p>
-                </article>
-                <article class="report-card">
-                  <h3 class="report-card__title">价格混乱</h3>
-                  <p class="report-card__body">人票、宠物费、运输费、上门接送、代办、箱包和保险分开报价；同一路线也会因重量、是否同行和照护等级出现数倍差价。</p>
-                </article>
-                <article class="report-card">
-                  <h3 class="report-card__title">用户麻烦</h3>
-                  <p class="report-card__body">反复填宠物信息、跨平台询价、电话确认、准备短有效期证明，再自行串起交接和出发时间。</p>
-                </article>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-section report-slide" data-chapter="problems" data-slide="08.b" id="problems-next">
-          <header class="section-header">
-            <span class="section-header__no">08.b · 出行痛点</span>
-            <div>
-              <h2 class="section-header__title">先把出发前必须问的信息收拢到一条流程</h2>
-            </div>
-          </header>
-          <div class="page-regions" data-regions="1" data-align="center">
-            <div class="page-region" data-size="fill" data-align="center">
-              <div class="steps" data-item-count="3">
-                <article class="step">
-                  <span class="step__index">01</span>
-                  <div>
-                    <h3 class="step__title">共用一份宠物档案</h3>
-                    <p class="step__body">出发地、目的地、日期、品种、体重、箱包和疫苗日期只填一次，航空、高铁和陆运查询直接复用。统一档案和路线后，用户也可以直接比较服务商拼载、整车快送与人宠同行。</p>
-                  </div>
-                </article>
-                <article class="step">
-                  <span class="step__index">02</span>
-                  <div>
-                    <h3 class="step__title">查询前先校验</h3>
-                    <p class="step__body">提前判断品种、体重、箱包与材料是否符合要求，能线上提交的尽量在出发前完成。</p>
-                  </div>
-                </article>
-                <article class="step">
-                  <span class="step__index">03</span>
-                  <div>
-                    <h3 class="step__title">报价带上履约条件</h3>
-                    <p class="step__body">同时列清人票、宠物服务、接送和增值项，并说明时效、交接、保障、监控、保险与异常责任，减少下单后的二次确认。</p>
-                  </div>
-                </article>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="report-slide" data-chapter="notes" data-slide="09" id="notes">
-          <footer class="report-notes">
-            <h2>数据口径说明</h2>
-            <ol>
-              <li>航空航线采用单向国内自营直达航线口径；高铁采用每日图定 G/D/C 动车组车次口径，两者适合分别观察各自市场阶段。</li>
-              <li>有氧舱托运航线覆盖率 55%–65%、宠物进客舱航线覆盖率 25%–30% 为行业汇总估算区间。估算考虑航司政策、机型、支线占比、机场白名单和跨航司重复线路。</li>
-              <li>航线或机场进入开放名单，不代表每个日期、每一班次均可办理；实际还受机型、高温、代码共享和宠物名额影响。</li>
-              <li>竞品价格来自 2026 年 8 月用户询价与页面截图，可能随日期、体重、线路和服务包变化。</li>
-            </ol>
-          </footer>
-        </section>
+  <dialog class="lightbox" id="galleryLightbox" aria-label="查看大图">
+    <div class="lightbox-frame">
+      <button class="lightbox-close" type="button" aria-label="关闭大图">×</button>
+      <button class="lightbox-nav lightbox-prev" type="button" aria-label="上一张">‹</button>
+      <div class="lightbox-viewport" id="lightboxViewport">
+        <div class="lightbox-canvas" id="lightboxCanvas">
+          <img id="lightboxImage" src="" alt="" draggable="false">
+        </div>
+      </div>
+      <button class="lightbox-nav lightbox-next" type="button" aria-label="下一张">›</button>
+      <div class="lightbox-count" aria-live="polite"></div>
+      <div class="lightbox-zoom-controls" aria-label="大图缩放">
+        <button class="zoom-out" type="button" aria-label="缩小">−</button>
+        <button class="zoom-reset" type="button" aria-label="还原缩放">100%</button>
+        <button class="zoom-in" type="button" aria-label="放大">+</button>
       </div>
     </div>
+  </dialog>
 
-    <div class="report-pager" data-report-pager>
-      <button class="button subtle" type="button" data-slide-prev>上一屏</button>
-      <span class="report-pager__label" data-slide-label aria-live="polite">00</span>
-      <button class="button subtle" type="button" data-slide-next>下一屏</button>
-    </div>
-  </div>
+  <script>
+    const lightbox = document.querySelector('#galleryLightbox');
+    const lightboxImage = document.querySelector('#lightboxImage');
+    const lightboxViewport = document.querySelector('#lightboxViewport');
+    const lightboxCanvas = document.querySelector('#lightboxCanvas');
+    const lightboxClose = lightbox.querySelector('.lightbox-close');
+    const lightboxPrev = lightbox.querySelector('.lightbox-prev');
+    const lightboxNext = lightbox.querySelector('.lightbox-next');
+    const lightboxCount = lightbox.querySelector('.lightbox-count');
+    const zoomOut = lightbox.querySelector('.zoom-out');
+    const zoomReset = lightbox.querySelector('.zoom-reset');
+    const zoomIn = lightbox.querySelector('.zoom-in');
+    let activeLightboxItems = [];
+    let activeLightboxIndex = 0;
+    let activeGallery = null;
+    let zoomScale = 1;
+    let baseImageWidth = 0;
+    let baseImageHeight = 0;
+    let isDragging = false;
+    let didDrag = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let dragStartScrollLeft = 0;
+    let dragStartScrollTop = 0;
 
-  <script src="lib/design-data.js"></script>
-  <script src="lib/theme-runtime.js"></script>
-  <script src="lib/template.js"></script>
+    function calculateBaseImageSize() {
+      if (!lightboxImage.naturalWidth || !lightboxImage.naturalHeight) return false;
+      const viewportWidth = lightboxViewport.clientWidth;
+      const viewportHeight = lightboxViewport.clientHeight;
+      if (!viewportWidth || !viewportHeight) return false;
+      const fitScale = Math.min(
+        viewportWidth / lightboxImage.naturalWidth,
+        viewportHeight / lightboxImage.naturalHeight,
+        1
+      );
+      baseImageWidth = lightboxImage.naturalWidth * fitScale;
+      baseImageHeight = lightboxImage.naturalHeight * fitScale;
+      return true;
+    }
+
+    function updateZoomLayout(preserveCenter = false) {
+      if (!baseImageWidth || !baseImageHeight) {
+        if (!calculateBaseImageSize()) return;
+      }
+      const viewportWidth = lightboxViewport.clientWidth;
+      const viewportHeight = lightboxViewport.clientHeight;
+      const oldCanvasWidth = Math.max(lightboxCanvas.scrollWidth, viewportWidth);
+      const oldCanvasHeight = Math.max(lightboxCanvas.scrollHeight, viewportHeight);
+      const centerRatioX = preserveCenter
+        ? (lightboxViewport.scrollLeft + viewportWidth / 2) / oldCanvasWidth
+        : .5;
+      const centerRatioY = preserveCenter
+        ? (lightboxViewport.scrollTop + viewportHeight / 2) / oldCanvasHeight
+        : .5;
+      const imageWidth = baseImageWidth * zoomScale;
+      const imageHeight = baseImageHeight * zoomScale;
+      const canvasWidth = Math.max(viewportWidth, imageWidth);
+      const canvasHeight = Math.max(viewportHeight, imageHeight);
+
+      lightboxCanvas.style.width = `${canvasWidth}px`;
+      lightboxCanvas.style.height = `${canvasHeight}px`;
+      lightboxImage.style.width = `${imageWidth}px`;
+      lightboxImage.style.height = `${imageHeight}px`;
+      lightboxViewport.classList.toggle('is-zoomed', zoomScale > 1);
+      zoomReset.textContent = `${Math.round(zoomScale * 100)}%`;
+      zoomOut.disabled = zoomScale <= 1;
+      zoomIn.disabled = zoomScale >= 8;
+
+      lightboxViewport.scrollLeft = Math.max(0, centerRatioX * canvasWidth - viewportWidth / 2);
+      lightboxViewport.scrollTop = Math.max(0, centerRatioY * canvasHeight - viewportHeight / 2);
+    }
+
+    function resetZoom() {
+      zoomScale = 1;
+      baseImageWidth = 0;
+      baseImageHeight = 0;
+      isDragging = false;
+      lightboxViewport.classList.remove('is-dragging');
+      if (!calculateBaseImageSize()) return;
+      updateZoomLayout(false);
+    }
+
+    function changeZoom(delta) {
+      const nextScale = Math.min(8, Math.max(1, zoomScale + delta));
+      zoomScale = nextScale;
+      updateZoomLayout(true);
+    }
+
+    function showLightboxImage(index) {
+      if (!activeLightboxItems.length) return;
+      activeLightboxIndex = (index + activeLightboxItems.length) % activeLightboxItems.length;
+      const item = activeLightboxItems[activeLightboxIndex];
+      lightboxImage.src = item.src;
+      lightboxImage.alt = item.alt;
+      lightboxCount.textContent = `${activeLightboxIndex + 1} / ${activeLightboxItems.length}`;
+      resetZoom();
+
+      if (activeGallery) {
+        const mainImage = activeGallery.querySelector('.gallery-main');
+        const thumbnails = activeGallery.querySelectorAll('.gallery-thumb');
+        mainImage.src = item.src;
+        mainImage.alt = item.alt;
+        thumbnails.forEach((thumbnail, thumbnailIndex) => {
+          thumbnail.classList.toggle('is-active', thumbnailIndex === activeLightboxIndex);
+        });
+      }
+    }
+
+    function openLightbox(gallery) {
+      activeGallery = gallery;
+      lightbox.classList.remove('can-zoom');
+      const thumbnails = [...gallery.querySelectorAll('.gallery-thumb')];
+      activeLightboxItems = thumbnails.map((thumbnail) => ({
+        src: thumbnail.dataset.src,
+        alt: thumbnail.dataset.alt
+      }));
+      const selectedIndex = Math.max(0, thumbnails.findIndex((thumbnail) => thumbnail.classList.contains('is-active')));
+      showLightboxImage(selectedIndex);
+      lightbox.showModal();
+      requestAnimationFrame(resetZoom);
+    }
+
+    function openStandaloneLightbox(figure) {
+      activeGallery = null;
+      lightbox.classList.add('can-zoom');
+      const group = figure.dataset.lightboxGroup || 'standalone';
+      const figures = [...document.querySelectorAll('[data-lightbox-src]')].filter((item) => (
+        (item.dataset.lightboxGroup || 'standalone') === group
+      ));
+      activeLightboxItems = figures.map((item) => ({
+        src: item.dataset.lightboxSrc,
+        alt: item.dataset.lightboxAlt
+      }));
+      const selectedIndex = Math.max(0, figures.indexOf(figure));
+      showLightboxImage(selectedIndex);
+      lightbox.showModal();
+      requestAnimationFrame(resetZoom);
+    }
+
+    document.querySelectorAll('[data-gallery]').forEach((gallery) => {
+      const mainImage = gallery.querySelector('.gallery-main');
+      const openButton = gallery.querySelector('.gallery-open');
+      const thumbnails = gallery.querySelectorAll('.gallery-thumb');
+
+      thumbnails.forEach((thumbnail) => {
+        thumbnail.addEventListener('click', () => {
+          mainImage.src = thumbnail.dataset.src;
+          mainImage.alt = thumbnail.dataset.alt;
+          thumbnails.forEach((item) => item.classList.remove('is-active'));
+          thumbnail.classList.add('is-active');
+        });
+      });
+
+      openButton.addEventListener('click', () => openLightbox(gallery));
+      mainImage.addEventListener('click', () => openLightbox(gallery));
+      mainImage.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openLightbox(gallery);
+        }
+      });
+    });
+
+    document.querySelectorAll('[data-lightbox-src]').forEach((figure) => {
+      const image = figure.querySelector('img');
+      const openButton = figure.querySelector('.gallery-open');
+      if (openButton) openButton.addEventListener('click', () => openStandaloneLightbox(figure));
+      if (!figure.classList.contains('provider-card')) {
+        image.addEventListener('click', () => openStandaloneLightbox(figure));
+      }
+      image.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openStandaloneLightbox(figure);
+        }
+      });
+    });
+
+    document.querySelectorAll('.compact-evidence-grid .evidence-shot').forEach((figure) => {
+      const shotWindow = figure.querySelector('.shot-window');
+      const image = figure.querySelector('img');
+      if (!shotWindow || !image) return;
+      const setStartPosition = () => {
+        if (!figure.classList.contains('is-offset')) return;
+        const availableScroll = Math.max(0, shotWindow.scrollHeight - shotWindow.clientHeight);
+        shotWindow.scrollTop = Math.round(availableScroll * .16);
+      };
+      if (image.complete) requestAnimationFrame(setStartPosition);
+      else image.addEventListener('load', () => requestAnimationFrame(setStartPosition), { once: true });
+    });
+
+    lightboxPrev.addEventListener('click', () => showLightboxImage(activeLightboxIndex - 1));
+    lightboxNext.addEventListener('click', () => showLightboxImage(activeLightboxIndex + 1));
+    zoomOut.addEventListener('click', () => changeZoom(-1));
+    zoomIn.addEventListener('click', () => changeZoom(1));
+    zoomReset.addEventListener('click', resetZoom);
+    lightboxImage.addEventListener('click', () => {
+      if (!lightbox.classList.contains('can-zoom')) return;
+      if (didDrag) {
+        didDrag = false;
+        return;
+      }
+      if (zoomScale > 1) resetZoom();
+      else changeZoom(1);
+    });
+    lightboxViewport.addEventListener('pointerdown', (event) => {
+      if (!lightbox.classList.contains('can-zoom') || zoomScale <= 1) return;
+      isDragging = true;
+      didDrag = false;
+      dragStartX = event.clientX;
+      dragStartY = event.clientY;
+      dragStartScrollLeft = lightboxViewport.scrollLeft;
+      dragStartScrollTop = lightboxViewport.scrollTop;
+      lightboxViewport.classList.add('is-dragging');
+      lightboxViewport.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    });
+    lightboxViewport.addEventListener('pointermove', (event) => {
+      if (!isDragging) return;
+      if (Math.abs(event.clientX - dragStartX) > 4 || Math.abs(event.clientY - dragStartY) > 4) didDrag = true;
+      lightboxViewport.scrollLeft = dragStartScrollLeft - (event.clientX - dragStartX);
+      lightboxViewport.scrollTop = dragStartScrollTop - (event.clientY - dragStartY);
+    });
+    function stopDragging(event) {
+      if (!isDragging) return;
+      isDragging = false;
+      lightboxViewport.classList.remove('is-dragging');
+      if (event.pointerId !== undefined && lightboxViewport.hasPointerCapture(event.pointerId)) {
+        lightboxViewport.releasePointerCapture(event.pointerId);
+      }
+    }
+    lightboxViewport.addEventListener('pointerup', stopDragging);
+    lightboxViewport.addEventListener('pointercancel', stopDragging);
+    lightboxImage.addEventListener('load', () => {
+      if (lightbox.open) requestAnimationFrame(resetZoom);
+    });
+    lightboxClose.addEventListener('click', () => {
+      resetZoom();
+      lightbox.close();
+    });
+    lightbox.addEventListener('click', (event) => {
+      if (event.target === lightbox) lightbox.close();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (!lightbox.open) return;
+      if (event.key === 'ArrowLeft') showLightboxImage(activeLightboxIndex - 1);
+      if (event.key === 'ArrowRight') showLightboxImage(activeLightboxIndex + 1);
+    });
+  </script>
+  <script src="lib/editor/seed-edit.js?v=2" defer></script>
 </body>
 </html>

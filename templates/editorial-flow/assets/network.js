@@ -1,6 +1,7 @@
 (function () {
   const host = document.querySelector('.hotel-city-network');
-  if (!host) return;
+  const tableHost = document.querySelector('.network-node-table') || host;
+  if (!host && !tableHost) return;
 
   const MODE_LABEL = { flight: '方式 A', rail: '方式 B' };
 
@@ -37,29 +38,31 @@
   };
 
   const data = window.NETWORK_DATA || window.PET_TRAVEL_NETWORK || DEMO;
-  const originList = host.querySelector('#originList');
-  const destinationList = host.querySelector('#destinationList');
-  const connectionArea = host.querySelector('#connectionArea');
-  const networkSvg = host.querySelector('#networkSvg');
-  const networkStatus = host.querySelector('#networkStatus');
-  const originSummary = host.querySelector('#originSummary');
-  const connectionEmpty = host.querySelector('#connectionEmpty');
-  const routeDetail = host.querySelector('#routeDetail');
-  const rows = host.querySelector('#top20Rows');
-  const search = host.querySelector('#citySearch');
-  const typeSelect = host.querySelector('#cityType');
-  const analysisLead = host.querySelector('#analysisLead');
-  const anyCoverageStat = host.querySelector('#anyCoverageStat');
-  const flightCoverageStat = host.querySelector('#flightCoverageStat');
-  const railCoverageStat = host.querySelector('#railCoverageStat');
-  const anyCoverageText = host.querySelector('#anyCoverageText');
-  const flightCoverageText = host.querySelector('#flightCoverageText');
-  const railCoverageText = host.querySelector('#railCoverageText');
-  const analysisConclusion = host.querySelector('#analysisConclusion');
-  const originLabel = host.querySelector('.city-column.origins .column-label');
-  const sampleDateText = host.querySelector('#sampleDateText');
-  const networkStage = host.querySelector('#networkStage');
-  if (!originList || !destinationList || !networkSvg || !data) return;
+  const q = (root, sel) => root?.querySelector(sel);
+  const originList = q(host, '#originList');
+  const destinationList = q(host, '#destinationList');
+  const connectionArea = q(host, '#connectionArea');
+  const networkSvg = q(host, '#networkSvg');
+  const networkStatus = q(host, '#networkStatus');
+  const originSummary = q(host, '#originSummary');
+  const connectionEmpty = q(host, '#connectionEmpty');
+  const routeDetail = q(host, '#routeDetail');
+  const rows = q(tableHost, '#top20Rows');
+  const search = q(tableHost, '#citySearch');
+  const typeSelect = q(tableHost, '#cityType');
+  const analysisLead = q(host, '#analysisLead');
+  const anyCoverageStat = q(host, '#anyCoverageStat');
+  const flightCoverageStat = q(host, '#flightCoverageStat');
+  const railCoverageStat = q(host, '#railCoverageStat');
+  const anyCoverageText = q(host, '#anyCoverageText');
+  const flightCoverageText = q(host, '#flightCoverageText');
+  const railCoverageText = q(host, '#railCoverageText');
+  const analysisConclusion = q(host, '#analysisConclusion');
+  const originLabel = q(host, '.city-column.origins .column-label');
+  const sampleDateText = q(host, '#sampleDateText');
+  const networkStage = q(host, '#networkStage');
+  const hasNetwork = !!(originList && destinationList && networkSvg && data);
+  if (!hasNetwork && !rows) return;
 
   let selectedOrigin = data.origins[0];
   let selectedDestination = null;
@@ -242,7 +245,7 @@
     });
     typeSelect.dataset.filled = '1';
   }
-  host.querySelectorAll('.mode-filter button').forEach((button) => button.addEventListener('click', () => {
+  host?.querySelectorAll('.mode-filter button').forEach((button) => button.addEventListener('click', () => {
     selectedMode = button.dataset.mode;
     host.querySelectorAll('.mode-filter button').forEach((item) => item.classList.toggle('active', item === button));
     selectedDestination = null;
@@ -251,8 +254,10 @@
   }));
   search?.addEventListener('input', renderTable);
   typeSelect?.addEventListener('change', renderTable);
-  window.addEventListener('resize', () => requestAnimationFrame(renderLines));
-  renderAll();
+  if (hasNetwork) {
+    window.addEventListener('resize', () => requestAnimationFrame(renderLines));
+    renderAll();
+    renderAnalysis();
+  }
   renderTable();
-  renderAnalysis();
 })();

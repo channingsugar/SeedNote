@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Universal editor demo</title>
+  <link rel="stylesheet" href="editor/seed-edit.css">
+  <style>
+    :root {
+      --c-text: #171717;
+      --c-accent: #0071e3;
+      --s-stack: 24px;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 720px;
+      padding: 32px 20px 80px;
+      color: var(--c-text);
+      font: 16px/1.5 system-ui, sans-serif;
+    }
+    h1 { font-size: 22px; }
+    .stack { display: grid; gap: var(--s-stack); }
+    .pulse {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: var(--c-accent);
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      from { transform: scale(.85); opacity: .7; }
+      to { transform: scale(1.08); opacity: 1; }
+    }
+    .bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      height: 120px;
+      padding: 8px;
+      background: #f5f5f5;
+    }
+    .bars .col {
+      flex: 1;
+      background: var(--c-accent);
+      min-height: 8px;
+    }
+    figure { margin: 0; }
+    img { display: block; width: 100%; height: auto; background: #eee; }
+    table { width: 100%; border-collapse: collapse; }
+    td, th { border: 1px solid #d2d4d9; padding: 8px; text-align: left; }
+  </style>
+</head>
+<body>
+  <div class="stack">
+    <h1>任意 HTML 可编辑演示</h1>
+    <p>右键文字、图、表、柱和圆点。颜色 / 间距 / 动画走悬浮面板。</p>
+    <figure data-seed-box>
+      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='200'%3E%3Crect fill='%23dbeafe' width='640' height='200'/%3E%3Ctext x='50%25' y='54%25' text-anchor='middle' font-size='28' fill='%23334155'%3Eimage%3C/text%3E%3C/svg%3E" alt="占位图">
+    </figure>
+    <div data-seed-chart="bar-v" data-seed-chart-max="100">
+      <div class="bars">
+        <div class="col" data-seed-chart-bar data-seed-chart-i="0" data-seed-chart-dir="v" style="height:40%"></div>
+        <div class="col" data-seed-chart-bar data-seed-chart-i="1" data-seed-chart-dir="v" style="height:70%"></div>
+        <div class="col" data-seed-chart-bar data-seed-chart-i="2" data-seed-chart-dir="v" style="height:55%"></div>
+      </div>
+      <p>
+        <span data-seed-chart-value data-seed-chart-i="0">40</span> /
+        <span data-seed-chart-value data-seed-chart-i="1">70</span> /
+        <span data-seed-chart-value data-seed-chart-i="2">55</span>
+      </p>
+    </div>
+    <table>
+      <thead><tr><th>项</th><th>值</th></tr></thead>
+      <tbody>
+        <tr><td>A</td><td>12</td></tr>
+        <tr><td>B</td><td>34</td></tr>
+      </tbody>
+    </table>
+    <div class="pulse" aria-label="动画圆点"></div>
+  </div>
+  <script src="editor/seed-edit.js" defer></script>
+</body>
+</html>

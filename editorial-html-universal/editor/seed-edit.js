@@ -3,7 +3,8 @@
     '.theme-control', '.report-chrome', '.report-chrome-hotspot', '.document-nav',
     '.report-pager',     '.seed-edit-menu', '.seed-edit-done', '.seed-edit-svg-input',
     '.seed-edit-color', '.seed-edit-media', '.seed-edit-handle', '.seed-edit-handle-h',
-    '.seed-edit-ghost', '.seed-edit-grip', '.seed-edit-bold', '.topbar', 'nav.toc', '.tools',
+    '.seed-edit-panel',
+    '.topbar', 'nav.toc', '.tools',
   ].join(', ');
 
   const BLOCK_TAGS = new Set([
@@ -18,13 +19,17 @@
     'IFRAME', 'CANVAS',
   ]);
 
+  const FILE_ORIGIN = location.protocol === 'file:';
+
   const slugOf = () => {
-    const parts = location.pathname.replace(/\/index\.html?$/i, '').split('/').filter(Boolean);
-    return parts[parts.length - 1] || 'report';
+    const path = location.pathname.replace(/\/index\.html?$/i, '');
+    const parts = path.split('/').filter(Boolean);
+    const tail = parts.slice(-2).join('/') || parts[parts.length - 1] || 'report';
+    return FILE_ORIGIN ? `file::${path || tail}` : tail;
   };
 
   const openDb = () => new Promise((resolve, reject) => {
-    const req = indexedDB.open('seed-report-edit', 1);
+    const req = indexedDB.open('seed-edit-state-v2', 1);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains('state')) db.createObjectStore('state');
@@ -48,7 +53,7 @@
 
   const isSvgText = (node) => node instanceof SVGTextElement || node instanceof SVGTSpanElement;
 
-    const isChrome = (node) => !!(node && (node.closest?.(CHROME) || node.closest?.('.seed-edit-menu, .seed-edit-done, .seed-edit-bold, .seed-edit-svg-input')));
+  const isChrome = (node) => !!(node && (node.closest?.(CHROME) || node.closest?.('.seed-edit-menu, .seed-edit-done, .seed-edit-svg-input')));
 
   const slideOf = (node) =>
     node.closest?.('.report-slide, .chapter, section[id], article[id]') || document.body;
@@ -70,6 +75,7 @@
 
   const fromPath = (path) => {
     const parts = (path || '').split('>').filter(Boolean);
+    if (!parts.length) return null;
     let n = document.documentElement;
     for (const part of parts) {
       const m = part.match(/^([A-Za-z0-9-]+)(?:\[(\d+)\])?$/);
@@ -80,6 +86,7 @@
       n = same[idx];
       if (!n) return null;
     }
+    if (n === document.documentElement || n === document.body || n === document.head) return null;
     return n;
   };
 
@@ -115,9 +122,6 @@
 
     if (start.closest?.('svg') && !start.closest?.('text, tspan, foreignObject')) return null;
     if (start.closest?.('img, video')) return null;
-
-    const finding = start.closest?.('.finding');
-    if (finding && !isChrome(finding)) return finding;
 
     if (node.nodeType === 3) {
       const parent = node.parentElement;
@@ -155,43 +159,46 @@
     return null;
   };
 
-  const COMPONENT_SEL = [
-    '.shot-grid', '.shot-stack', '.shot-plan', '.shot', '.brand-concept-film', 'figure.shot', '.gallery-stage',
-    '.transport-cards',
-    '.plain-table-wrap', '.table-wrap', '.hotel-ranking-block', '.network-node-table',
-    '.plain-grid', '.info-grid', '.stat-grid', '.stat-row',
-    '.rail-growth-chart', '.venn-wrap', '.ansoff-wrap', '.hotel-funnel-chart',
-    '.network-shell', '.hotel-city-network',
-    '.market-formula', '.finding', '.pain-text-list', '.point',
+  const RESIZE_SEL = [
+    '[data-seed-box]', '[data-seed-resize]',
+    '.shot', '.brand-concept-film', 'figure.shot', '.gallery-stage',
+    '.plain-table-wrap', '.table-wrap', '.hotel-ranking-scroll',
+    '.rail-growth-chart', '.venn-wrap', '.ansoff-wrap', '.ansoff-grid', '.hotel-funnel-chart',
+    'figure',
   ].join(', ');
 
   const mediaBoxOf = (el) => {
     if (!el) return null;
-    return el.closest('.shot, .brand-concept-film, figure, .gallery-stage') || el.parentElement;
+    if (el.matches?.('img, video')) return el.closest('[data-seed-box], figure, .shot, .brand-concept-film, .gallery-stage') || el;
+    return el.closest('[data-seed-box], .shot, .brand-concept-film, figure, .gallery-stage') || el.parentElement;
   };
 
   const resizeBoxOf = (el) => {
     if (!el || el.nodeType === 3) el = el?.parentElement;
     if (!el || isChrome(el)) return null;
-    const shell = el.closest('.network-shell');
-    if (shell) return shell;
-    const rank = el.closest('.hotel-ranking-block');
-    if (rank) return rank;
-    const nodeTable = el.closest('.network-node-table');
-    if (nodeTable) return nodeTable;
-    const shot = el.closest('.shot, figure.shot');
-    if (shot) return shot.closest('.shot-grid, .shot-stack, .shot-plan, .transport-cards') || shot;
-    const gallery = el.closest('.gallery-stage');
-    if (gallery) return gallery.closest('.transport-cards') || gallery;
-    const ansoff = el.closest('.ansoff-wrap, .ansoff-grid');
-    if (ansoff) return ansoff.closest('.ansoff-wrap') || ansoff;
-    const table = el.closest('.plain-table-wrap, .table-wrap');
-    if (table) return table.closest('.hotel-ranking-block') || table;
-    const host = el.closest(COMPONENT_SEL);
-    return host || null;
+    const marked = el.closest('[data-seed-box], [data-seed-resize]');
+    if (marked) return marked;
+    const table = el.closest('table');
+    if (table) return table.closest('[data-seed-box], figure, .plain-table-wrap, .table-wrap') || table;
+    const media = el.closest('img, video, canvas, figure');
+    if (media) {
+      if (media.closest('.icon, .gallery-open, .tool')) return null;
+      return media.closest('[data-seed-box], figure, .shot, .gallery-stage') || media;
+    }
+    const svg = el.closest('svg');
+    if (svg) {
+      if (svg.closest('.icon, .gallery-open, .topbar, button') || svg.getAttribute('width') === '0') return null;
+      return svg.closest('[data-seed-box], figure, .rail-growth-chart, .venn-wrap, .ansoff-wrap, .hotel-funnel-chart') || svg;
+    }
+    return el.closest(RESIZE_SEL);
   };
 
-  const isMediaBox = (box) => !!(box && box.matches('.shot, .shot-grid, .shot-stack, .shot-plan, .gallery-stage, .brand-concept-film, figure.shot, .transport-cards'));
+  const isMediaBox = (box) => {
+    if (!box) return false;
+    if (box.matches('table, .plain-table-wrap, .table-wrap, .hotel-ranking-scroll')) return false;
+    if (box.querySelector('table') && !box.querySelector('img, video')) return false;
+    return !!(box.matches('img, video') || box.querySelector('img, video'));
+  };
 
   const readLayout = (box) => ({
     align: box?.dataset.align || 'left',
@@ -212,162 +219,16 @@
     } else {
       box.style.removeProperty('width');
     }
-    const frame = box.matches('.shot-grid, .shot-stack, .transport-cards, .ansoff-wrap, .info-grid, .stat-grid, .plain-grid, .market-formula')
-      ? box
-      : (box.querySelector('.shot__frame') || box);
-    const rankScroll = box.matches('.hotel-ranking-block')
-      ? box.querySelector('.hotel-ranking-scroll')
-      : (box.matches('.hotel-ranking-scroll') ? box : null);
-    const isGridBox = box.matches('.plain-grid, .info-grid, .stat-grid, .ansoff-wrap, .shot-grid, .shot-stack, .market-formula');
-    const isRankBlock = box.matches('.hotel-ranking-block');
-    const isNodeTable = box.matches('.network-node-table');
-    const isNetworkShell = box.matches('.network-shell');
-    const isTableBox = box.matches('.plain-table-wrap, .table-wrap');
-    const isFunnel = box.matches('.hotel-funnel-chart');
-    const isChartBox = box.matches('.rail-growth-chart, .venn-wrap, .hotel-funnel-chart');
+    const frame = box.querySelector('.shot__frame') || box;
     if (layout.height) {
       const h = Math.round(layout.height);
       box.style.height = `${h}px`;
-      box.style.maxHeight = 'none';
-      if (isRankBlock || isNetworkShell || isTableBox || isNodeTable || isFunnel) box.style.minHeight = `${h}px`;
-      else box.style.removeProperty('min-height');
-      if (frame !== box && !isNetworkShell && !isGridBox) {
-        frame.style.height = `${h}px`;
-        frame.style.maxHeight = 'none';
-      }
-      if (isRankBlock || isNetworkShell || isGridBox || isMediaBox(box) || isChartBox || isTableBox || isNodeTable) {
-        box.style.overflow = 'hidden';
-      } else {
-        box.style.overflow = 'auto';
-      }
-      if (isTableBox) {
-        box.style.display = 'flex';
-        box.style.flexDirection = 'column';
-        box.style.overflowX = 'auto';
-        box.style.overflowY = 'hidden';
-      }
-      if (isNodeTable) {
-        box.style.display = 'flex';
-        box.style.flexDirection = 'column';
-        const wrap = box.querySelector('.table-wrap');
-        if (wrap) {
-          wrap.style.flex = '1 1 auto';
-          wrap.style.minHeight = '0';
-          wrap.style.height = 'auto';
-          wrap.style.overflow = 'auto';
-        }
-      }
-      if (isFunnel) {
-        box.style.display = 'flex';
-        box.style.flexDirection = 'column';
-        const scroll = box.querySelector('.hotel-funnel-chart-scroll');
-        if (scroll) {
-          scroll.style.flex = '1 1 auto';
-          scroll.style.minHeight = '0';
-          scroll.style.height = 'auto';
-          scroll.style.overflow = 'hidden';
-        }
-        const svg = box.querySelector('svg');
-        if (svg) {
-          svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-          svg.style.width = '100%';
-          svg.style.height = '100%';
-          svg.style.minWidth = '0';
-          svg.style.minHeight = '0';
-        }
-      }
-      if (rankScroll) {
-        rankScroll.style.maxHeight = 'none';
-        rankScroll.style.overflow = 'auto';
-        if (isRankBlock) {
-          rankScroll.style.height = 'auto';
-          rankScroll.style.minHeight = '0';
-          rankScroll.style.flex = '1 1 auto';
-        }
-      }
-      if (isNetworkShell) {
-        box.style.display = 'flex';
-        box.style.flexDirection = 'column';
-        const stage = box.querySelector('.network-stage');
-        if (stage) {
-          stage.style.minHeight = '0';
-          stage.style.flex = '1 1 auto';
-          stage.style.height = 'auto';
-          stage.style.overflow = 'hidden';
-          stage.style.gridTemplateRows = 'minmax(0, 1fr)';
-        }
-        box.querySelectorAll('.connection-area, #networkSvg').forEach((el) => {
-          el.style.removeProperty('height');
-          el.style.removeProperty('min-height');
-          el.style.removeProperty('max-height');
-          el.style.removeProperty('width');
-          el.style.removeProperty('overflow');
-        });
-      }
+      if (frame !== box) frame.style.height = `${h}px`;
+      if (!isMediaBox(box)) box.style.overflow = 'auto';
     } else {
       box.style.removeProperty('height');
-      box.style.removeProperty('min-height');
-      box.style.removeProperty('max-height');
-      if (frame !== box) {
-        frame.style.removeProperty('height');
-        frame.style.removeProperty('max-height');
-      }
+      if (frame !== box) frame.style.removeProperty('height');
       if (!isMediaBox(box)) box.style.removeProperty('overflow');
-      if (rankScroll) {
-        rankScroll.style.removeProperty('height');
-        rankScroll.style.removeProperty('min-height');
-        rankScroll.style.removeProperty('max-height');
-        rankScroll.style.removeProperty('overflow');
-        rankScroll.style.removeProperty('flex');
-      }
-      if (isNetworkShell) {
-        box.style.removeProperty('display');
-        box.style.removeProperty('flex-direction');
-        const stage = box.querySelector('.network-stage');
-        if (stage) {
-          stage.style.removeProperty('min-height');
-          stage.style.removeProperty('flex');
-          stage.style.removeProperty('height');
-          stage.style.removeProperty('overflow');
-          stage.style.removeProperty('grid-template-rows');
-        }
-      }
-      if (isTableBox) {
-        box.style.removeProperty('display');
-        box.style.removeProperty('flex-direction');
-        box.style.removeProperty('overflow-x');
-        box.style.removeProperty('overflow-y');
-      }
-      if (isNodeTable) {
-        box.style.removeProperty('display');
-        box.style.removeProperty('flex-direction');
-        const wrap = box.querySelector('.table-wrap');
-        if (wrap) {
-          wrap.style.removeProperty('flex');
-          wrap.style.removeProperty('min-height');
-          wrap.style.removeProperty('height');
-          wrap.style.removeProperty('overflow');
-        }
-      }
-      if (isFunnel) {
-        box.style.removeProperty('display');
-        box.style.removeProperty('flex-direction');
-        const scroll = box.querySelector('.hotel-funnel-chart-scroll');
-        if (scroll) {
-          scroll.style.removeProperty('flex');
-          scroll.style.removeProperty('min-height');
-          scroll.style.removeProperty('height');
-          scroll.style.removeProperty('overflow');
-        }
-        const svg = box.querySelector('svg');
-        if (svg) {
-          svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-          svg.style.removeProperty('width');
-          svg.style.removeProperty('height');
-          svg.style.removeProperty('min-width');
-          svg.style.removeProperty('min-height');
-        }
-      }
     }
     if (fit === 'fill' && !layout.height) {
       const ratio = box.dataset.seedRatio;
@@ -376,27 +237,25 @@
       frame.style.removeProperty('aspect-ratio');
     }
     layoutChartHeight(box);
-    layoutFunnelHeight(box);
-    if (isNetworkShell || isChartBox) {
-      requestAnimationFrame(() => {
-        window.dispatchEvent(new Event('resize'));
-        requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
-      });
-    }
   };
 
   const readMarkup = (node) => (isSvgText(node) ? node.textContent : node.innerHTML);
 
   const writeMarkup = (node, value) => {
-    if (isSvgText(node)) node.textContent = value;
-    else node.innerHTML = value;
+    if (!node || node === document.documentElement || node === document.body || node === document.head) return;
+    if (node.matches?.('html, head, body')) return;
+    if (isSvgText(node)) {
+      node.textContent = value;
+      return;
+    }
+    if (node.children.length > 2 && String(value || '').length < Math.max(24, (node.innerHTML || '').length / 5)) return;
+    node.innerHTML = value;
   };
 
   const VARIANT_SPECS = [
     {
       group: 'stat',
       sel: '.stat-card:not(.is-pair)',
-      title: '类型',
       items: [
         { id: 'plain', label: '数字卡' },
         { id: 'note', label: '标注卡' },
@@ -427,7 +286,6 @@
           id: 'pos',
           title: '编号位置',
           when: 'index-on',
-          side: true,
           items: [
             { id: 'pos-top', label: '顶部' },
             { id: 'pos-left', label: '左侧' },
@@ -437,7 +295,6 @@
           id: 'type',
           title: '编号类型',
           when: 'index-on',
-          side: true,
           items: [
             { id: 'type-num', label: '数字' },
             { id: 'type-alpha', label: '字母' },
@@ -449,20 +306,9 @@
           id: 'size',
           title: '编号字号',
           when: 'index-on',
-          side: true,
           items: [
             { id: 'no-lg', label: '大' },
             { id: 'no-sm', label: '小' },
-          ],
-        },
-        {
-          id: 'cols',
-          title: '列数',
-          when: 'grid',
-          items: [
-            { id: 'cols-2', label: '2' },
-            { id: 'cols-3', label: '3' },
-            { id: 'cols-4', label: '4' },
           ],
         },
       ],
@@ -488,6 +334,7 @@
       group: 'shot',
       sel: '.shot',
       items: [
+        { id: 'photo', label: '照片' },
         { id: 'crop', label: '裁切' },
         { id: 'scroll', label: '可滚动' },
         { id: 'wide', label: '宽图' },
@@ -530,7 +377,7 @@
     const cur = grid.getAttribute('data-layout') || '';
     if (cur === 'split' || cur === '2') grid.dataset.seedLeftLayout = cur;
     if (kind === 'left') {
-      const fallback = grid.getAttribute('data-cols') === '2' ? 'split' : '2';
+      const fallback = grid.hasAttribute('data-cols') ? 'split' : '2';
       grid.setAttribute('data-layout', grid.dataset.seedLeftLayout || fallback);
       return;
     }
@@ -554,18 +401,6 @@
   const writeInfoPos = (grid, pos) => {
     grid.setAttribute('data-pos', pos);
     if (infoShapeOf(grid) === 'grid') writeInfoKind(grid, pos === 'left' ? 'left' : 'cols');
-  };
-
-  const infoColsOf = (grid) => {
-    const n = Number(grid.getAttribute('data-cols') || 0);
-    if (n === 2 || n === 3 || n === 4) return n;
-    return 3;
-  };
-
-  const writeInfoCols = (grid, n) => {
-    const cols = n === 2 || n === 3 || n === 4 ? n : 3;
-    grid.setAttribute('data-cols', String(cols));
-    if (infoShapeOf(grid) === 'grid' && infoPosOf(grid) !== 'left') writeInfoKind(grid, 'cols');
   };
 
   const writeInfoNo = (grid, lg) => {
@@ -686,12 +521,7 @@
     const spec = specOf(host);
     if (!spec) return null;
     if (spec.group === 'stat') {
-      const grid = host.closest('.stat-grid');
-      return {
-        group: 'stat',
-        variant: host.getAttribute('data-variant') === 'note' ? 'note' : 'plain',
-        cols: grid?.getAttribute('data-cols') || '',
-      };
+      return { group: 'stat', variant: host.getAttribute('data-variant') === 'note' ? 'note' : 'plain' };
     }
     if (spec.group === 'info') {
       return {
@@ -704,20 +534,11 @@
         labels: infoLabelsOf(host),
         seedIndexType: host.dataset.seedIndexType || '',
         seedLeftLayout: host.dataset.seedLeftLayout || '',
-        cols: infoColsOf(host),
       };
     }
     if (spec.group === 'plain') return { group: 'plain', surface: host.getAttribute('data-surface') || 'plain' };
     if (spec.group === 'point') return { group: 'point', soft: host.classList.contains('is-soft') };
-    if (spec.group === 'shot') {
-      const kind = host.getAttribute('data-kind') || 'crop';
-      const grid = host.closest('.shot-grid');
-      return {
-        group: 'shot',
-        kind: kind === 'photo' ? 'crop' : kind,
-        shotCols: grid?.getAttribute('data-cols') || '',
-      };
-    }
+    if (spec.group === 'shot') return { group: 'shot', kind: host.getAttribute('data-kind') || 'photo' };
     return { group: spec.group };
   };
 
@@ -725,11 +546,6 @@
     if (!host || !snap) return;
     if (snap.group === 'stat') {
       writeStatVariant(host, snap.variant === 'note' ? 'note' : 'plain');
-      const grid = host.closest('.stat-grid');
-      if (grid && 'cols' in snap) {
-        if (snap.cols) grid.setAttribute('data-cols', snap.cols);
-        else grid.removeAttribute('data-cols');
-      }
       return;
     }
     if (snap.group === 'info') {
@@ -745,7 +561,6 @@
         ? 'off'
         : (snap.index === 'on' ? (snap.type || 'num') : (snap.index || snap.type || 'num'));
       writeInfoIndex(host, indexKind, snap.labels);
-      if (snap.cols) writeInfoCols(host, snap.cols);
       return;
     }
     if (snap.group === 'plain') {
@@ -757,14 +572,7 @@
       host.classList.toggle('is-soft', !!snap.soft);
       return;
     }
-    if (snap.group === 'shot') {
-      if (snap.kind) host.setAttribute('data-kind', snap.kind === 'photo' ? 'crop' : snap.kind);
-      const grid = host.closest('.shot-grid');
-      if (grid && 'shotCols' in snap) {
-        if (snap.shotCols) grid.setAttribute('data-cols', snap.shotCols);
-        else grid.removeAttribute('data-cols');
-      }
-    }
+    if (snap.group === 'shot' && snap.kind) host.setAttribute('data-kind', snap.kind);
   };
 
   const applyVariantId = (host, id) => {
@@ -772,12 +580,7 @@
     if (!spec) return;
     const before = snapshotVariant(host);
     if (spec.group === 'stat') {
-      if (id === 'cols-2' || id === 'cols-3' || id === 'cols-4') {
-        const grid = host.closest('.stat-grid') || (host.matches('.stat-grid') ? host : null);
-        if (grid) grid.setAttribute('data-cols', id.slice(5));
-      } else {
-        writeStatVariant(host, id);
-      }
+      writeStatVariant(host, id);
     } else if (spec.group === 'info') {
       if (id === 'no-lg') writeInfoNo(host, true);
       else if (id === 'no-sm') writeInfoNo(host, false);
@@ -792,24 +595,13 @@
       else if (id === 'layout-row') writeInfoShape(host, 'row');
       else if (id === 'pos-top') writeInfoPos(host, 'top');
       else if (id === 'pos-left') writeInfoPos(host, 'left');
-      else if (id === 'cols-2') writeInfoCols(host, 2);
-      else if (id === 'cols-3') writeInfoCols(host, 3);
-      else if (id === 'cols-4') writeInfoCols(host, 4);
       else writeInfoKind(host, id);
     } else if (spec.group === 'plain') {
       restoreVariant(host, { group: 'plain', surface: id });
     } else if (spec.group === 'point') {
       restoreVariant(host, { group: 'point', soft: id === 'soft' });
     } else if (spec.group === 'shot') {
-      if (id === 'cols-1' || id === 'cols-2' || id === 'cols-3' || id === 'cols-4') {
-        const grid = host.closest('.shot-grid');
-        if (grid) {
-          if (id === 'cols-1') grid.removeAttribute('data-cols');
-          else grid.setAttribute('data-cols', id.slice(5));
-        }
-      } else {
-        host.setAttribute('data-kind', id === 'photo' ? 'crop' : id);
-      }
+      restoreVariant(host, { group: 'shot', kind: id });
     }
     return { before, after: snapshotVariant(host) };
   };
@@ -817,11 +609,7 @@
   const variantActiveIds = (host) => {
     const snap = snapshotVariant(host);
     if (!snap) return [];
-    if (snap.group === 'stat') {
-      const ids = [snap.variant || 'plain'];
-      if (snap.cols) ids.push(`cols-${snap.cols}`);
-      return ids;
-    }
+    if (snap.group === 'stat') return [snap.variant || 'plain'];
     if (snap.group === 'info') {
       const shape = snap.layout === 'row' ? 'row' : (snap.layout === 'stack' || snap.layout === 'label') ? 'stack' : 'grid';
       const type = snap.type === 'alpha' || snap.type === 'q' || snap.type === 'label' ? snap.type : 'num';
@@ -832,16 +620,11 @@
         `pos-${pos}`,
         `type-${type}`,
         snap.no === 'lg' ? 'no-lg' : 'no-sm',
-        `cols-${snap.cols || 3}`,
       ];
     }
     if (snap.group === 'plain') return [snap.surface || 'plain'];
     if (snap.group === 'point') return [snap.soft ? 'soft' : 'tint'];
-    if (snap.group === 'shot') {
-      const ids = [snap.kind === 'photo' ? 'crop' : (snap.kind || 'crop')];
-      if (snap.shotCols) ids.push(`cols-${snap.shotCols}`);
-      return ids;
-    }
+    if (snap.group === 'shot') return [snap.kind || 'photo'];
     return [];
   };
 
@@ -1013,48 +796,6 @@
     remapChart(svg);
   };
 
-  const scaleFunnelPathY = (d, sy) => (d || '').replace(
-    /([ML])\s*([-\d.]+)[,\s]+([-\d.]+)/gi,
-    (_, cmd, x, y) => `${cmd}${x} ${(parseFloat(y) * sy).toFixed(1)}`
-  );
-
-  const layoutFunnelHeight = (box) => {
-    if (!box?.matches?.('.hotel-funnel-chart')) return;
-    const svg = box.querySelector('svg');
-    if (!svg) return;
-    if (!svg.dataset.seedFunnelH) {
-      const vb = svg.viewBox.baseVal;
-      svg.dataset.seedFunnelW = String(vb.width || 1200);
-      svg.dataset.seedFunnelH = String(vb.height || 300);
-      svg.querySelectorAll('path.funnel-line').forEach((el) => {
-        el.dataset.seedD = el.getAttribute('d') || '';
-      });
-      svg.querySelectorAll(':scope > g').forEach((el) => {
-        el.dataset.seedT = el.getAttribute('transform') || '';
-      });
-    }
-    const origW = +svg.dataset.seedFunnelW;
-    const origH = +svg.dataset.seedFunnelH;
-    const cssH = box.clientHeight || origH;
-    const cssW = box.clientWidth || origW;
-    const vbH = box.style.height
-      ? Math.max(origH, origW * (cssH / Math.max(cssW, 1)))
-      : origH;
-    const sy = vbH / origH;
-    svg.setAttribute('viewBox', `0 0 ${origW} ${vbH}`);
-    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-    svg.querySelectorAll('path.funnel-line').forEach((el) => {
-      el.setAttribute('d', scaleFunnelPathY(el.dataset.seedD, sy));
-    });
-    svg.querySelectorAll(':scope > g').forEach((el) => {
-      const t = el.dataset.seedT || '';
-      el.setAttribute('transform', t.replace(
-        /translate\(\s*([-\d.]+)[,\s]+([-\d.]+)\s*\)/i,
-        (_, x, y) => `translate(${x} ${(parseFloat(y) * sy).toFixed(1)})`
-      ));
-    });
-  };
-
   const syncChartValueLegacy = (svg) => {
     const scale = readChartScale(svg);
     if (!scale) return;
@@ -1139,245 +880,201 @@
     }
   };
 
-  const ITEM_SPECS = [
-    { host: '.pain-detail-list', item: ':scope > li' },
-    { host: '.info-grid', item: ':scope > .info' },
-    { host: '.stat-grid', item: ':scope > .stat-card' },
-    { host: '.plain-grid', item: ':scope > .plain' },
-    { host: '.stat-row', item: ':scope > article' },
-    { host: '.pain-text-list', item: ':scope > .pain-topic' },
-    { host: '.transport-cards', item: ':scope > .transport-card' },
-    { host: '.shot-grid', item: ':scope > .shot' },
-    { host: '.market-formula', item: ':scope > .market-factor:not(.market-result)' },
-  ];
-
-  const BLOCK_KIND_SEL = [
-    ['.slide-head', '章头'],
-    ['.subsection', '小节'],
-    ['.research-lead', '导语'],
-    ['.source-note', '来源'],
-    ['hr.rule', '分割线'],
-    ['.info-grid', '编号信息'],
-    ['.stat-grid', '数字信息'],
-    ['.plain-grid', '无编号信息'],
-    ['.stat-row', '横排数字'],
-    ['.point', '观点'],
-    ['.pain-text-list', '议题格'],
-    ['.finding', '重点文本'],
-    ['.shot-grid', '图'],
-    ['.shot-stack', '图'],
-    ['.shot', '图'],
-    ['.plain-table-wrap', '表格'],
-    ['.market-formula', '公式'],
-    ['.rail-growth-chart', '折线图'],
-    ['.ansoff-wrap', '四象限矩阵'],
-    ['.ansoff-grid', '四象限矩阵'],
-    ['.hotel-funnel-chart', '漏斗图'],
-    ['.hotel-city-network', '关系网络'],
-    ['.network-node-table', '节点表'],
-    ['.hotel-ranking-block', '排行榜'],
-    ['.transport-cards', '图文卡'],
-    ['.venn-wrap', '韦恩图'],
-    ['.chapter-cover', '封面'],
-  ];
-
-  const BLOCK_TEMPLATES = [
-    { id: 'head', label: '章头', html: '<header class="slide-head"><div class="kicker">题域</div><h2>判断句写在这里</h2></header><hr class="rule">' },
-    { id: 'sub', label: '小节标题', html: '<div class="subsection"><h3>小节标题</h3></div>' },
-    { id: 'lead', label: '导语', html: '<div class="research-lead"><p>待填。写清边界、这一节接下来用什么证据。</p></div>' },
-    { id: 'source', label: '来源', html: '<p class="source-note">来源：待填</p>' },
-    { id: 'rule', label: '分割线', html: '<hr class="rule">' },
-    { id: 'formula', label: '公式', html: '<div class="market-formula" aria-label="公式"><div class="market-factor"><div class="market-number"><span>A</span><i>单位</i></div><div class="market-factor-label">因子：基数</div></div><div class="market-operator" aria-hidden="true">×</div><div class="market-factor"><div class="market-number"><span>B</span><i>%</i></div><div class="market-factor-label">因子：转化率</div></div><div class="market-operator" aria-hidden="true">=</div><div class="market-factor market-result"><div class="market-number"><span>N</span><i>次</i></div><div class="market-factor-label">结果</div></div></div>' },
-    { id: 'stat-row', label: '横排数字', html: '<div class="stat-row" data-cols="3"><article><div class="market-number"><span>0</span><i></i></div><h3>指标名称</h3></article><article><div class="market-number"><span>0</span><i></i></div><h3>指标名称</h3></article><article><div class="market-number"><span>0</span><i></i></div><h3>指标名称</h3></article></div>' },
-    { id: 'stat', label: '数字信息', html: '<div class="stat-grid"><article class="stat-card"><span class="stat-card__kicker">口径</span><strong class="stat-card__num">0</strong><h3>标题</h3><p>待填。</p></article><article class="stat-card"><span class="stat-card__kicker">口径</span><strong class="stat-card__num">0</strong><h3>标题</h3><p>待填。</p></article></div>' },
-    { id: 'info', label: '编号信息', html: '<div class="info-grid" data-layout="2"><article class="info"><span class="info__no">01</span><h3>要点标题</h3><p>待填。写清这条在论证什么。</p></article><article class="info"><span class="info__no">02</span><h3>要点标题</h3><p>待填。</p></article></div>' },
-    { id: 'plain', label: '无编号信息', html: '<div class="plain-grid" data-surface="tint"><article class="plain"><b>要点标题</b><p>待填。</p></article><article class="plain"><b>要点标题</b><p>待填。</p></article></div>' },
-    { id: 'point', label: '观点', html: '<aside class="point"><span>观点</span><p>待填。一句立场。</p></aside>' },
-    { id: 'pain', label: '议题格', html: '<div class="pain-text-list"><article class="pain-topic"><header class="pain-topic-head"><h3><span class="pain-topic-index">01</span>议题名称</h3><p class="pain-topic-summary">一句概括：这一格要回答什么问题。</p></header><div class="pain-topic-body"><ul class="pain-detail-list"><li>待填</li></ul></div></article></div>' },
-    { id: 'finding', label: '重点文本', html: '<article class="finding"><h3>重点标题</h3><p>待填。整块可编辑，选中文字可加粗。</p><div class="finding-sub"><b>① 分点标题</b><p>待填。</p></div></article>' },
-    { id: 'table', label: '表格', html: '<div class="plain-table-wrap"><table class="airline-matrix"><thead><tr><th>维度</th><th>对象 A</th><th>对象 B</th></tr></thead><tbody><tr><td>指标</td><td>待填</td><td>待填</td></tr></tbody></table></div>' },
-    { id: 'chart', label: '折线图', html: '<figure class="rail-growth-chart" aria-label="折线图"><div class="rail-growth-chart-scroll"><svg viewBox="0 0 640 220" role="img"><line class="chart-grid" x1="56" y1="170" x2="600" y2="170"/><line class="chart-axis" x1="56" y1="30" x2="56" y2="170"/><line class="chart-line" x1="80" y1="150" x2="320" y2="110"/><line class="chart-line" x1="320" y1="110" x2="560" y2="50"/><circle class="chart-point" cx="80" cy="150" r="4"/><circle class="chart-point" cx="320" cy="110" r="4"/><circle class="chart-point" cx="560" cy="50" r="4"/><text class="chart-value" x="80" y="140" text-anchor="middle">10</text><text class="chart-value" x="320" y="100" text-anchor="middle">40</text><text class="chart-value" x="560" y="40" text-anchor="middle">90</text><text class="chart-date" x="80" y="198" text-anchor="middle">T1</text><text class="chart-date" x="320" y="198" text-anchor="middle">T2</text><text class="chart-date" x="560" y="198" text-anchor="end">T3</text></svg></div></figure>' },
-    { id: 'ansoff', label: '四象限矩阵', html: '<div class="ansoff-wrap"><div class="ansoff-grid" aria-label="四象限矩阵"><div class="ansoff-corner"></div><div class="ansoff-col-head"><span class="ansoff-kicker">横轴 · 低</span><span class="ansoff-title">象限 · 左</span></div><div class="ansoff-col-head"><span class="ansoff-kicker">横轴 · 高</span><span class="ansoff-title">象限 · 右</span></div><div class="ansoff-row-head"><span class="ansoff-kicker">纵轴 · 高</span></div><div class="ansoff-cell"><span class="cell-tag">I</span><h4>象限名称</h4><p>待填。</p></div><div class="ansoff-cell"><span class="cell-tag">II</span><h4>象限名称</h4><p>待填。</p></div><div class="ansoff-row-head"><span class="ansoff-kicker">纵轴 · 低</span></div><div class="ansoff-cell"><span class="cell-tag">III</span><h4>象限名称</h4><p>待填。</p></div><div class="ansoff-cell"><span class="cell-tag">IV</span><h4>象限名称</h4><p>待填。</p></div></div></div>' },
-    { id: 'rank', label: '排行榜', html: '<section class="hotel-ranking-block"><div class="hotel-ranking-head"><div><h4>排行榜标题</h4><p>待填。</p></div></div><div class="hotel-ranking-scroll"><table><thead><tr><th>#</th><th>名称</th><th>分值</th></tr></thead><tbody><tr><td class="rank">1</td><td class="hotel-name">对象 01</td><td class="score total">0</td></tr><tr><td class="rank">2</td><td class="hotel-name">对象 02</td><td class="score total">0</td></tr></tbody></table></div></section>' },
-    { id: 'shot', label: '图', html: '<figure class="shot" data-kind="photo"><div class="shot__frame"><img alt=""></div><figcaption><b>图片标题</b><span>一句说明。右键替换图片。</span></figcaption></figure>' },
-    { id: 'transport', label: '图文卡', html: '<div class="transport-cards"><article class="transport-card"><div class="transport-card-copy"><h3>方案名称</h3><p>一句对比。</p><div class="transport-facts"><div class="transport-fact"><span>属性</span><strong>待填</strong></div></div></div></article></div>' },
-  ];
-
-  const markupRootOf = () =>
-    document.querySelector('[data-report-slides]')
-    || document.querySelector('.report-slides')
-    || null;
-
-  const stackOf = (node) => node?.closest?.('.flow-stack') || null;
-
-  const blockOf = (node) => {
-    const stack = stackOf(node);
-    if (!stack || !node) return null;
-    let n = node.nodeType === 1 ? node : node.parentElement;
-    while (n && n.parentElement !== stack) n = n.parentElement;
-    return n && n.parentElement === stack ? n : null;
+  const parsePx = (raw) => {
+    const n = parseFloat(String(raw || '').trim());
+    return Number.isFinite(n) ? n : 0;
   };
 
-  const itemMatchOf = (node) => {
-    if (!node?.closest) return null;
-    for (const spec of ITEM_SPECS) {
-      const host = node.closest(spec.host);
-      if (!host) continue;
-      const itemSel = spec.item.replace(':scope > ', '');
-      const item = node.closest(itemSel);
-      if (item && host.contains(item) && item.parentElement === host) return { spec, host, item };
-      if (host === node || host.contains(node)) return { spec, host, item: null };
+  const rgbToHex = (raw) => {
+    const hex = hexInputValue(raw);
+    if (hex) return hex;
+    const m = String(raw || '').match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+    if (!m) return '';
+    const h = (n) => Number(n).toString(16).padStart(2, '0');
+    return `#${h(m[1])}${h(m[2])}${h(m[3])}`;
+  };
+
+  const isColorLike = (val) => /^(#|rgb|hsl|oklch|lab|color\()|^(transparent|currentcolor)$/i.test(String(val || '').trim());
+
+  const isSizeLike = (val) => /^-?[\d.]+(px|rem|em|vh|vw|%)$/.test(String(val || '').trim());
+
+  const rootVarsOf = () => {
+    const found = [];
+    const seen = new Set();
+    const take = (style) => {
+      if (!style) return;
+      for (let i = 0; i < style.length; i += 1) {
+        const name = style[i];
+        if (!name?.startsWith('--') || seen.has(name)) continue;
+        seen.add(name);
+        found.push({ name, value: style.getPropertyValue(name).trim() });
+      }
+    };
+    take(document.documentElement.style);
+    for (const sheet of document.styleSheets) {
+      let rules;
+      try { rules = sheet.cssRules; } catch { continue; }
+      for (const rule of rules) {
+        if (!(rule instanceof CSSStyleRule)) continue;
+        if (!/:root\b|^html$/i.test(rule.selectorText || '')) continue;
+        take(rule.style);
+      }
+    }
+    return found;
+  };
+
+  const styleTargetOf = (node) => {
+    const start = node?.nodeType === 3 ? node.parentElement : node;
+    if (!start || isChrome(start)) return null;
+    return start;
+  };
+
+  const boxTargetOf = (node) => {
+    let n = node?.nodeType === 3 ? node.parentElement : node;
+    if (!n || isChrome(n)) return null;
+    while (n && n !== document.documentElement) {
+      if (isChrome(n)) return null;
+      const d = getComputedStyle(n).display;
+      if (n.matches?.('img, video, svg, table, figure, section, article, aside, header, footer, main, li, p, h1, h2, h3, h4, h5, h6')
+        || d === 'block' || d === 'flex' || d === 'grid' || d === 'table' || d === 'inline-block') {
+        return n;
+      }
+      n = n.parentElement;
+    }
+    return node?.nodeType === 1 ? node : node?.parentElement;
+  };
+
+  const animTargetOf = (node) => {
+    let n = node?.nodeType === 3 ? node.parentElement : node;
+    while (n && n !== document.documentElement) {
+      if (isChrome(n)) return null;
+      const cs = getComputedStyle(n);
+      const names = (cs.animationName || '').replace(/\s/g, '');
+      if (names && names !== 'none') return n;
+      const td = cs.transitionDuration || '';
+      if (td && td.split(',').some((x) => parseFloat(x) > 0)) return n;
+      if (n.getAnimations?.({}).length) return n;
+      n = n.parentElement;
     }
     return null;
   };
 
-  const headingAnchorOf = (node) => {
-    if (!node?.closest) return null;
-    const head = node.closest('.slide-head, .chapter-cover');
-    if (head) return head;
-    const sub = node.closest('.subsection');
-    if (sub) {
-      const title = sub.querySelector(':scope > h2, :scope > h3');
-      if (node === sub) return sub;
-      if (title && (node === title || title.contains(node))) return sub;
-      return null;
+  const readAnim = (el) => {
+    const cs = getComputedStyle(el);
+    const names = (cs.animationName || '').trim();
+    const isAnim = names && names !== 'none';
+    return {
+      kind: isAnim ? 'animation' : 'transition',
+      name: isAnim ? names : (cs.transitionProperty || ''),
+      duration: isAnim ? cs.animationDuration : cs.transitionDuration,
+      delay: isAnim ? cs.animationDelay : cs.transitionDelay,
+      easing: isAnim ? cs.animationTimingFunction : cs.transitionTimingFunction,
+      iterate: isAnim ? cs.animationIterationCount : '1',
+      direction: isAnim ? cs.animationDirection : 'normal',
+      play: isAnim ? cs.animationPlayState : 'running',
+    };
+  };
+
+  const writeAnim = (el, next) => {
+    if (!el || !next) return;
+    const set = (cssProp, key) => {
+      if (next[key] == null || next[key] === '') return;
+      el.style.setProperty(cssProp, next[key]);
+    };
+    if (next.kind === 'transition') {
+      set('transition-duration', 'duration');
+      set('transition-delay', 'delay');
+      set('transition-timing-function', 'easing');
+      return;
     }
-    const heading = node.closest('h2, h3');
-    if (!heading) return null;
-    if (heading.parentElement?.matches?.('.flow-stack, .flow-lab')) return heading;
-    return null;
+    set('animation-duration', 'duration');
+    set('animation-delay', 'delay');
+    set('animation-timing-function', 'easing');
+    set('animation-iteration-count', 'iterate');
+    set('animation-direction', 'direction');
+    set('animation-play-state', 'play');
   };
 
-  const isHeadingStart = (el) => {
-    if (!el?.matches) return false;
-    if (el.matches('.slide-head, .subsection, .chapter-cover')) return true;
-    if (el.matches('h2, h3')) return true;
-    if (el.matches('.flow-lab') && el.querySelector(':scope > .slide-head, :scope > .subsection, :scope > h2, :scope > h3, :scope > .chapter-cover')) return true;
-    return false;
+  const firstCssItem = (raw) => String(raw || '').split(',')[0].trim();
+
+  const COLOR_PROPS = [
+    { id: 'color', label: '文字' },
+    { id: 'background-color', label: '背景' },
+    { id: 'border-color', label: '边框' },
+    { id: 'fill', label: '填充' },
+    { id: 'stroke', label: '描边' },
+  ];
+
+  const scaleFromSvg = (svg) => {
+    const fromTicks = readChartScale(svg);
+    if (fromTicks) return fromTicks;
+    const vb = svg.viewBox?.baseVal;
+    const h = vb?.height || svg.clientHeight || 0;
+    if (!h) return null;
+    return { y0: h * 0.88, yMax: h * 0.12, v0: 0, vMax: 0 };
   };
 
-  const headingGroupOf = (node) => {
-    const anchor = headingAnchorOf(node);
-    if (!anchor) return null;
-    const lab = anchor.closest('.flow-lab');
-    if (lab) return { anchor, nodes: [lab] };
-    const start = anchor;
-    const parent = start.parentElement;
-    if (!parent) return { anchor, nodes: [start] };
-    const kids = [...parent.children];
-    const i = kids.indexOf(start);
-    if (i < 0) return { anchor, nodes: [start] };
-    const nodes = [];
-    for (let j = i; j < kids.length; j += 1) {
-      const el = kids[j];
-      if (j > i && isHeadingStart(el)) break;
-      nodes.push(el);
-    }
-    return { anchor, nodes };
-  };
-
-  const clipTitle = (text) => {
-    const t = (text || '').replace(/\s+/g, ' ').trim();
-    return t.length > 36 ? `${t.slice(0, 36)}…` : t;
-  };
-
-  const blockTitleOf = (el) => {
-    if (!el) return '组件';
-    if (el.matches?.('.flow-lab') && el.dataset.lab) return el.dataset.lab;
-    if (el.matches?.('.slide-head')) return clipTitle(el.querySelector('h2')?.textContent) || '章头';
-    if (el.matches?.('.subsection')) return clipTitle(el.querySelector('h3')?.textContent) || '小节';
-    if (el.matches?.('h2, h3')) return clipTitle(el.textContent) || '标题';
-    if (el.matches?.('hr.rule')) return el.classList.contains('is-soft') ? '分割线 · 弱' : '分割线';
-    for (const [sel, label] of BLOCK_KIND_SEL) {
-      if (el.matches(sel)) {
-        const inner = el.querySelector('h2, h3, h4, figcaption b, b, .kicker');
-        const text = clipTitle(inner?.textContent);
-        return text && text !== label ? `${label} · ${text}` : label;
+  const remapSeedChart = (node) => {
+    const host = node?.closest?.('[data-seed-chart]') || (node?.matches?.('[data-seed-chart]') ? node : null);
+    const svg = node?.closest?.('svg') || host?.querySelector?.('svg') || (node?.tagName === 'SVG' ? node : null);
+    if (svg) remapChart(svg);
+    if (!host) return;
+    const valueEls = [...host.querySelectorAll('[data-seed-chart-value]')];
+    if (!valueEls.length) return;
+    const nums = valueEls.map((el) => parseChartNumber(el.textContent)).filter((n) => n != null);
+    const explicit = parseChartNumber(host.getAttribute('data-seed-chart-max'));
+    const max = explicit || niceMax(Math.max(...nums, 0));
+    const kind = host.getAttribute('data-seed-chart') || 'bar';
+    const svgEl = host.matches?.('svg') ? host : host.querySelector('svg');
+    const scale = svgEl ? scaleFromSvg(svgEl) : null;
+    if (scale && !explicit) scale.vMax = max;
+    valueEls.forEach((el, i) => {
+      const v = parseChartNumber(el.textContent);
+      if (v == null) return;
+      const idx = el.getAttribute('data-seed-chart-i');
+      const series = el.getAttribute('data-seed-chart-series') || '';
+      const match = (sel) => {
+        let q = sel;
+        if (series) q += `[data-seed-chart-series="${CSS.escape(series)}"]`;
+        if (idx != null) q += `[data-seed-chart-i="${CSS.escape(idx)}"]`;
+        return host.querySelector(q);
+      };
+      let bar = match('[data-seed-chart-bar]');
+      if (!bar) bar = el.closest('[data-seed-chart-bar]') || host.querySelectorAll('[data-seed-chart-bar]')[i];
+      if (bar) {
+        const pct = Math.max(0, Math.min(100, (v / (max || 1)) * 100));
+        const dir = bar.getAttribute('data-seed-chart-dir') || ((kind === 'bar-v' || kind === 'col') ? 'v' : 'h');
+        if (dir === 'v') bar.style.height = `${pct}%`;
+        else bar.style.width = `${pct}%`;
       }
-    }
-    const fallback = clipTitle(el.querySelector?.('h2, h3, h4, b')?.textContent);
-    return fallback || '组件';
-  };
-
-  const itemTitleOf = (item) => {
-    if (!item) return '条目';
-    if (item.matches('.market-factor')) return clipTitle(item.querySelector('.market-factor-label')?.textContent) || '因子';
-    if (item.matches('li')) return clipTitle(item.textContent) || '条目';
-    const title = item.querySelector('h3, h4, b, .hotel-name, figcaption b');
-    return clipTitle(title?.textContent) || clipTitle(item.textContent) || '条目';
-  };
-
-  const nearestStack = (node, clientY) => {
-    const hit = stackOf(node);
-    if (hit) return hit;
-    const stacks = [...document.querySelectorAll('.flow-stack')];
-    if (!stacks.length) return null;
-    let best = stacks[0];
-    let bestDist = Infinity;
-    stacks.forEach((stack) => {
-      const box = stack.getBoundingClientRect();
-      const mid = (box.top + box.bottom) / 2;
-      const dist = Math.abs(clientY - mid);
-      if (dist < bestDist) {
-        best = stack;
-        bestDist = dist;
+      let point = match('[data-seed-chart-point]');
+      if (!point) point = host.querySelectorAll('[data-seed-chart-point]')[i];
+      if (point && scale && point.hasAttribute('cy')) {
+        const y = valueToY({ ...scale, vMax: scale.vMax || max }, v);
+        const oldY = +point.getAttribute('cy');
+        const oldX = +point.getAttribute('cx');
+        point.setAttribute('cy', y.toFixed(1));
+        const lineRoot = svgEl || host;
+        lineRoot.querySelectorAll('line').forEach((line) => {
+          if (nearEq(+line.getAttribute('x1'), oldX) && nearEq(+line.getAttribute('y1'), oldY)) {
+            line.setAttribute('y1', y.toFixed(1));
+          }
+          if (nearEq(+line.getAttribute('x2'), oldX) && nearEq(+line.getAttribute('y2'), oldY)) {
+            line.setAttribute('y2', y.toFixed(1));
+          }
+        });
       }
-    });
-    return best;
-  };
-
-  const insertPointFromY = (parent, clientY) => {
-    const kids = [...parent.children].filter((el) => el.nodeType === 1 && !el.matches?.('.seed-edit-ghost'));
-    for (const el of kids) {
-      const box = el.getBoundingClientRect();
-      if (clientY < box.top + box.height / 2) return { parent, before: el };
-    }
-    return { parent, before: null };
-  };
-
-  const htmlToNodes = (html) => {
-    const wrap = document.createElement('div');
-    wrap.innerHTML = html.trim();
-    return [...wrap.childNodes].filter((n) => n.nodeType === 1);
-  };
-
-  const placeNodes = (nodes, parent, before) => {
-    if (!parent) return;
-    nodes.forEach((n) => {
-      if (before && before.parentNode === parent) parent.insertBefore(n, before);
-      else parent.appendChild(n);
-    });
-  };
-
-  const isBlankHit = (node) => {
-    if (!node || isChrome(node)) return false;
-    if (node.closest?.('.seed-edit-menu, .seed-edit-done, .seed-edit-bold, .seed-edit-media, .seed-edit-handle, .seed-edit-handle-h')) return false;
-    if (node.matches?.('.flow-stack, .report-slide, .report-section, .report-stage, .report-slides, .report-shell, body, html')) return true;
-    return false;
-  };
-
-  const captureMarkup = () => {
-    const root = markupRootOf();
-    if (!root) return '';
-    return root.innerHTML;
-  };
-
-  const stripSortAttrs = (root) => {
-    (root || document).querySelectorAll('[data-seed-sort-title]').forEach((el) => el.removeAttribute('data-seed-sort-title'));
-    (root || document).querySelectorAll('.is-seed-drag, .is-seed-item-host').forEach((el) => {
-      el.classList.remove('is-seed-drag', 'is-seed-item-host');
     });
   };
 
   const mount = () => {
     if (document.documentElement.dataset.seedEditMounted) return;
     document.documentElement.dataset.seedEditMounted = '1';
-    document.documentElement.classList.add('seed-edit-on');
 
     const slug = slugOf();
     const objectUrls = new Map();
-    const originals = { texts: {}, media: {}, variants: {} };
-    const state = { texts: {}, media: {}, variants: {}, markup: '' };
+    const originals = { texts: {}, media: {}, variants: {}, styles: {}, vars: {}, anims: {} };
+    const state = { texts: {}, media: {}, variants: {}, styles: {}, vars: {}, anims: {} };
     const history = [];
     let histAt = -1;
     let applyingHist = false;
@@ -1385,54 +1082,36 @@
     let activeText = null;
     let beforeEdit = '';
     let svgInput = null;
-    let restoredMarkup = false;
-    let sorting = false;
-    let menuInsertAt = null;
-    let menuHeading = null;
-    let menuItemHit = null;
-    let menuBlock = null;
 
     const menu = document.createElement('div');
     menu.className = 'seed-edit-menu';
     menu.hidden = true;
     menu.innerHTML = [
-      '<div class="seed-edit-menu__main">',
       '<button type="button" data-edit-text-action>编辑</button>',
       '<button type="button" data-edit-image-action>替换</button>',
-      '<button type="button" data-edit-layout-action>尺寸</button>',
-      '<div class="seed-edit-menu__rule" data-edit-struct-rule hidden></div>',
-      '<button type="button" data-edit-add-item hidden>新增一条</button>',
-      '<div class="seed-edit-menu__insert" data-edit-insert hidden>',
-      '<button type="button" data-edit-insert-toggle>新增组件</button>',
-      '<div class="seed-edit-menu__sub" data-edit-insert-list hidden></div>',
-      '</div>',
-      '<div class="seed-edit-menu__rule" data-edit-delete-rule hidden></div>',
-      '<button type="button" data-edit-del-item hidden>删除本条</button>',
-      '<button type="button" data-edit-del-group hidden>删除本组</button>',
-      '<button type="button" data-edit-del-block hidden>删除组件</button>',
-      '</div>',
-      '<div class="seed-edit-menu__side" data-edit-variant-side hidden></div>',
+      '<div class="seed-edit-menu__label" data-edit-look-label>外观</div>',
+      '<button type="button" data-edit-layout-action>调整</button>',
+      '<button type="button" data-edit-color-action>颜色</button>',
+      '<button type="button" data-edit-space-action>间距</button>',
+      '<div class="seed-edit-menu__label" data-edit-anim-label>动画</div>',
+      '<button type="button" data-edit-anim-action>动画参数</button>',
     ].join('');
     document.body.appendChild(menu);
-    const menuMain = menu.querySelector('.seed-edit-menu__main');
-    const menuSide = menu.querySelector('[data-edit-variant-side]');
     const textBtn = menu.querySelector('[data-edit-text-action]');
     const imageBtn = menu.querySelector('[data-edit-image-action]');
     const layoutBtn = menu.querySelector('[data-edit-layout-action]');
-    const structRule = menu.querySelector('[data-edit-struct-rule]');
-    const deleteRule = menu.querySelector('[data-edit-delete-rule]');
-    const addItemBtn = menu.querySelector('[data-edit-add-item]');
-    const delItemBtn = menu.querySelector('[data-edit-del-item]');
-    const delGroupBtn = menu.querySelector('[data-edit-del-group]');
-    const delBlockBtn = menu.querySelector('[data-edit-del-block]');
-    const insertWrap = menu.querySelector('[data-edit-insert]');
-    const insertToggle = menu.querySelector('[data-edit-insert-toggle]');
-    const insertList = menu.querySelector('[data-edit-insert-list]');
-    insertList.innerHTML = BLOCK_TEMPLATES.map((t) => `<button type="button" data-edit-insert-id="${t.id}">${t.label}</button>`).join('');
+    const colorBtn = menu.querySelector('[data-edit-color-action]');
+    const spaceBtn = menu.querySelector('[data-edit-space-action]');
+    const animBtn = menu.querySelector('[data-edit-anim-action]');
+    const lookLabel = menu.querySelector('[data-edit-look-label]');
+    const animLabel = menu.querySelector('[data-edit-anim-label]');
     let menuText = null;
     let menuMedia = null;
     let menuVariant = null;
     let menuResize = null;
+    let menuStyle = null;
+    let menuSpace = null;
+    let menuAnim = null;
 
     const mediaBar = document.createElement('div');
     mediaBar.className = 'seed-edit-media';
@@ -1462,19 +1141,20 @@
     document.body.appendChild(handleH);
     let activeBox = null;
 
+    const panel = document.createElement('div');
+    panel.className = 'seed-edit-panel';
+    panel.hidden = true;
+    document.body.appendChild(panel);
+    let panelMode = '';
+    let panelTarget = null;
+    let panelBefore = null;
+
     const doneBtn = document.createElement('button');
     doneBtn.className = 'seed-edit-done';
     doneBtn.type = 'button';
     doneBtn.hidden = true;
     doneBtn.textContent = '完成';
     document.body.appendChild(doneBtn);
-    const boldBtn = document.createElement('button');
-    boldBtn.className = 'seed-edit-bold';
-    boldBtn.type = 'button';
-    boldBtn.hidden = true;
-    boldBtn.textContent = '加粗';
-    boldBtn.setAttribute('aria-label', '选中文字加粗');
-    document.body.appendChild(boldBtn);
     const colorPick = document.createElement('input');
     colorPick.type = 'color';
     colorPick.className = 'seed-edit-color';
@@ -1485,154 +1165,72 @@
 
     const hideMenu = () => {
       menu.hidden = true;
-      insertList.hidden = true;
-      menuSide.hidden = true;
-      menu.classList.remove('is-split');
       menuText = null;
       menuMedia = null;
       menuVariant = null;
       menuResize = null;
-      menuInsertAt = null;
-      menuHeading = null;
-      menuItemHit = null;
-      menuBlock = null;
+      menuStyle = null;
+      menuSpace = null;
+      menuAnim = null;
     };
 
     const paintVariantMenu = (host) => {
       menu.querySelectorAll('[data-edit-variant], [data-edit-variant-rule], [data-edit-variant-label]').forEach((el) => el.remove());
-      menuSide.replaceChildren();
-      menuSide.hidden = true;
-      menu.classList.remove('is-split');
       const spec = specOf(host);
       if (!spec) return;
       const rule = document.createElement('div');
       rule.className = 'seed-edit-menu__rule';
       rule.setAttribute('data-edit-variant-rule', '');
-      menuMain.append(rule);
+      menu.append(rule);
       const active = new Set(variantActiveIds(host));
-      const appendLabel = (parent, title) => {
-        const label = document.createElement('div');
-        label.className = 'seed-edit-menu__label';
-        label.setAttribute('data-edit-variant-label', '');
-        label.textContent = title;
-        parent.append(label);
-      };
-      const appendItem = (parent, item) => {
+      const appendItem = (item) => {
         if (item.rule) {
           const split = document.createElement('div');
           split.className = 'seed-edit-menu__rule';
           split.setAttribute('data-edit-variant-rule', '');
-          parent.append(split);
+          menu.append(split);
         }
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.dataset.editVariant = item.id;
         btn.textContent = item.label;
         btn.classList.toggle('is-on', active.has(item.id));
-        parent.append(btn);
+        menu.append(btn);
       };
       if (spec.sections) {
         const indexOn = !active.has('index-off');
-        const gridOn = active.has('layout-grid') && active.has('pos-top');
         spec.sections.forEach((section) => {
           if (section.when === 'index-on' && !indexOn) return;
-          if (section.when === 'grid' && !gridOn) return;
-          const parent = section.side ? menuSide : menuMain;
-          appendLabel(parent, section.title);
-          (section.items || []).forEach((item) => appendItem(parent, item));
+          const label = document.createElement('div');
+          label.className = 'seed-edit-menu__label';
+          label.setAttribute('data-edit-variant-label', '');
+          label.textContent = section.title;
+          menu.append(label);
+          (section.items || []).forEach(appendItem);
         });
-        if (menuSide.childElementCount) {
-          menuSide.hidden = false;
-          menu.classList.add('is-split');
-        }
-      } else {
-        if (spec.title) appendLabel(menuMain, spec.title);
-        (spec.items || []).forEach((item) => appendItem(menuMain, item));
+        return;
       }
-      if (spec.group === 'shot') {
-        const grid = host.closest('.shot-grid');
-        const count = grid ? grid.querySelectorAll('.shot').length : 0;
-        if (grid && count >= 2) {
-          const cols = grid.getAttribute('data-cols') || '1';
-          appendLabel(menuMain, '列数');
-          [
-            { id: 'cols-1', label: '1' },
-            { id: 'cols-2', label: '2' },
-            { id: 'cols-3', label: '3' },
-            { id: 'cols-4', label: '4' },
-          ].forEach((item) => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.dataset.editVariant = item.id;
-            btn.textContent = item.label;
-            btn.classList.toggle('is-on', cols === item.id.slice(5));
-            menuMain.append(btn);
-          });
-        }
-      }
-      if (spec.group === 'stat') {
-        const grid = host.closest('.stat-grid') || (host.matches('.stat-grid') ? host : null);
-        if (grid) {
-          const cols = grid.getAttribute('data-cols') || '3';
-          appendLabel(menuMain, '列数');
-          [
-            { id: 'cols-2', label: '2' },
-            { id: 'cols-3', label: '3' },
-            { id: 'cols-4', label: '4' },
-          ].forEach((item) => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.dataset.editVariant = item.id;
-            btn.textContent = item.label;
-            btn.classList.toggle('is-on', cols === item.id.slice(5));
-            menuMain.append(btn);
-          });
-        }
-      }
+      (spec.items || []).forEach(appendItem);
     };
 
-    const showMenu = (event, { text, media, variant, resize, heading, itemHit, block, insertAt } = {}) => {
+    const showMenu = (event, { text, media, variant, resize, style, space, anim }) => {
       menuText = text || null;
       menuMedia = media || null;
       menuVariant = variant || null;
       menuResize = resize || null;
-      menuHeading = heading || null;
-      menuItemHit = itemHit || null;
-      menuBlock = block || null;
-      menuInsertAt = insertAt || null;
+      menuStyle = style || null;
+      menuSpace = space || null;
+      menuAnim = anim || null;
       textBtn.hidden = !menuText;
       imageBtn.hidden = !menuMedia;
       layoutBtn.hidden = !(menuMedia || menuResize);
-      const canAddItem = !!(menuItemHit?.host);
-      const canDelItem = !!(menuItemHit?.item && menuItemHit.host && menuItemHit.host.querySelectorAll(menuItemHit.spec.item).length > 1);
-      const canDelGroup = !!(menuHeading?.nodes?.length);
-      const canDelBlock = !!(menuBlock && !canDelGroup && !menuItemHit);
-      const canInsert = !!menuInsertAt;
-      addItemBtn.hidden = !canAddItem;
-      delItemBtn.hidden = !canDelItem;
-      delGroupBtn.hidden = !canDelGroup;
-      delBlockBtn.hidden = !canDelBlock;
-      insertWrap.hidden = !canInsert;
-      insertList.hidden = true;
-      const hasPrimary = !textBtn.hidden || !imageBtn.hidden || !layoutBtn.hidden;
-      structRule.hidden = !(hasPrimary && (canAddItem || canInsert));
+      colorBtn.hidden = !menuStyle;
+      spaceBtn.hidden = !menuSpace;
+      animBtn.hidden = !menuAnim;
+      lookLabel.hidden = layoutBtn.hidden && colorBtn.hidden && spaceBtn.hidden;
+      animLabel.hidden = animBtn.hidden;
       paintVariantMenu(menuVariant);
-      const hasDelete = canDelItem || canDelGroup || canDelBlock;
-      deleteRule.hidden = !hasDelete;
-      if (hasDelete) {
-        menuMain.append(deleteRule);
-        if (!delItemBtn.hidden) menuMain.append(delItemBtn);
-        if (!delGroupBtn.hidden) menuMain.append(delGroupBtn);
-        if (!delBlockBtn.hidden) menuMain.append(delBlockBtn);
-      }
-      const hasAction = hasPrimary || menuVariant
-        || canAddItem || canDelItem || canDelGroup || canDelBlock || canInsert;
-      if (!hasAction) return;
-      for (const el of menuMain.children) {
-        if (el.hidden) continue;
-        if (el.classList.contains('seed-edit-menu__rule')) el.hidden = true;
-        else break;
-      }
+      if (textBtn.hidden && imageBtn.hidden && layoutBtn.hidden && colorBtn.hidden && spaceBtn.hidden && animBtn.hidden && !menuVariant) return;
       menu.hidden = false;
       const box = menu.getBoundingClientRect();
       const pad = 8;
@@ -1641,21 +1239,21 @@
     };
 
     const persist = async () => {
-      const root = markupRootOf();
-      if (root) state.markup = root.innerHTML;
+      if (FILE_ORIGIN) return;
       await idbSet('state', slug, {
         texts: state.texts,
         media: state.media,
         variants: state.variants,
+        styles: state.styles,
+        vars: state.vars,
+        anims: state.anims,
         images: state.media,
-        markup: state.markup,
       });
     };
 
     const nodeByKey = (key) => {
       const live = document.querySelector(`[data-edit-key="${CSS.escape(key)}"]`);
       if (live) return live;
-      if (restoredMarkup) return null;
       const path = (key || '').split('::').slice(2).join('::');
       const node = fromPath(path);
       if (node) node.dataset.editKey = key;
@@ -1671,8 +1269,7 @@
     };
 
     const runHistory = async (dir) => {
-      if (activeText || sorting) return;
-      if (activeBox) stopMediaAdjust();
+      if (activeText || activeBox) return;
       if (dir === 'undo') {
         if (histAt < 0) return;
         applyingHist = true;
@@ -1690,419 +1287,6 @@
       persist();
     };
 
-    const infoIndexType = (grid) => grid.getAttribute('data-index') || 'num';
-
-    const renumberInfo = (grid) => {
-      if (!grid?.matches?.('.info-grid')) return;
-      const type = infoIndexType(grid);
-      if (type === 'off' || type === 'label') return;
-      [...grid.querySelectorAll(':scope > .info')].forEach((item, i) => {
-        const no = item.querySelector(':scope > .info__no');
-        if (!no) return;
-        if (type === 'alpha') no.textContent = String.fromCharCode(65 + (i % 26));
-        else if (type === 'q') no.textContent = `Q${i + 1}`;
-        else no.textContent = String(i + 1).padStart(2, '0');
-      });
-    };
-
-    const renumberPain = (host) => {
-      if (!host?.matches?.('.pain-text-list')) return;
-      [...host.querySelectorAll(':scope > .pain-topic')].forEach((item, i) => {
-        const no = item.querySelector('.pain-topic-index');
-        if (no) no.textContent = String(i + 1).padStart(2, '0');
-      });
-    };
-
-    const renumberFinding = (host) => {
-      if (!host?.matches?.('.finding')) return;
-      const marks = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳';
-      [...host.querySelectorAll(':scope > .finding-sub')].forEach((item, i) => {
-        const title = item.querySelector(':scope > b');
-        if (!title) return;
-        const rest = (title.textContent || '').replace(/^[①-⑳]\s*/, '').trim() || '新分点';
-        title.textContent = `${marks[i] || `${i + 1}.`} ${rest}`;
-      });
-    };
-
-    const syncFormula = (host) => {
-      if (!host?.matches?.('.market-formula')) return;
-      const factors = [...host.querySelectorAll(':scope > .market-factor:not(.market-result)')];
-      const result = host.querySelector(':scope > .market-result');
-      host.querySelectorAll(':scope > .market-operator').forEach((el) => el.remove());
-      factors.forEach((factor, i) => {
-        const op = document.createElement('div');
-        op.className = 'market-operator';
-        op.setAttribute('aria-hidden', 'true');
-        op.textContent = i === factors.length - 1 ? '=' : '×';
-        const before = factor.nextSibling;
-        host.insertBefore(op, before);
-      });
-      if (result) host.appendChild(result);
-    };
-
-    const resetClonedItem = (node, spec, host) => {
-      node.querySelectorAll('[data-edit-key]').forEach((el) => el.removeAttribute('data-edit-key'));
-      if (spec.host === '.info-grid') {
-        const title = node.querySelector('h3');
-        const body = node.querySelector('p');
-        if (title) title.textContent = '新标题';
-        if (body) body.textContent = '待填';
-      } else if (spec.host === '.stat-grid') {
-        const num = node.querySelector('.stat-card__num');
-        const title = node.querySelector('h3');
-        const body = node.querySelector('p');
-        if (num) num.childNodes.forEach((n) => { if (n.nodeType === 3) n.textContent = '0'; });
-        if (title) title.textContent = '新标题';
-        if (body) body.textContent = '待填';
-      } else if (spec.host === '.plain-grid') {
-        const title = node.querySelector('b');
-        const body = node.querySelector('p');
-        if (title) title.textContent = '新标题';
-        if (body) body.textContent = '待填';
-      } else if (spec.host === '.pain-text-list') {
-        const title = node.querySelector('h3');
-        const idx = title?.querySelector('.pain-topic-index');
-        if (title) {
-          const label = document.createTextNode('议题名称');
-          title.textContent = '';
-          if (idx) title.append(idx, label);
-          else title.textContent = '议题名称';
-        }
-        const summary = node.querySelector('.pain-topic-summary');
-        if (summary) summary.textContent = '一句概括。';
-      } else if (spec.host === '.transport-cards') {
-        const title = node.querySelector('h3');
-        const body = node.querySelector('p');
-        if (title) title.textContent = '方案名称';
-        if (body) body.textContent = '待填';
-      } else if (spec.host === '.finding') {
-        const title = node.querySelector(':scope > b');
-        if (title) title.textContent = '① 新分点';
-        const body = node.querySelector('p');
-        const lines = node.querySelector('.stat-lines');
-        if (lines) lines.remove();
-        if (body) body.textContent = '待填';
-        else {
-          const p = document.createElement('p');
-          p.textContent = '待填';
-          node.append(p);
-        }
-      } else if (spec.host === '.market-formula') {
-        const num = node.querySelector('.market-number span');
-        const unit = node.querySelector('.market-number i');
-        const label = node.querySelector('.market-factor-label');
-        if (num) num.textContent = 'X';
-        if (unit) unit.textContent = '单位';
-        if (label) label.textContent = '因子：新因子';
-        node.classList.remove('market-result');
-      } else if (spec.host === '.pain-detail-list' || node.matches?.('li')) {
-        node.textContent = '待填';
-      } else if (spec.host === '.stat-row') {
-        const title = node.querySelector('h3');
-        const num = node.querySelector('.market-number span');
-        if (title) title.textContent = '指标名称';
-        if (num) num.textContent = '0';
-      } else if (spec.host === '.shot-grid') {
-        const title = node.querySelector('figcaption b');
-        const cap = node.querySelector('figcaption span');
-        if (title) title.textContent = '图片标题';
-        if (cap) cap.textContent = '待填';
-      }
-      if (host) {
-        renumberInfo(host);
-        renumberPain(host);
-        renumberFinding(host);
-        syncFormula(host);
-      }
-    };
-
-    const defaultItemHtml = (spec) => {
-      if (spec.host === '.info-grid') return '<article class="info"><span class="info__no">01</span><h3>新标题</h3><p>待填</p></article>';
-      if (spec.host === '.stat-grid') return '<article class="stat-card"><span class="stat-card__kicker">口径</span><strong class="stat-card__num">0</strong><h3>新标题</h3><p>待填</p></article>';
-      if (spec.host === '.plain-grid') return '<article class="plain"><b>新标题</b><p>待填</p></article>';
-      if (spec.host === '.stat-row') return '<article><div class="market-number"><span>0</span><i></i></div><h3>指标名称</h3></article>';
-      if (spec.host === '.pain-text-list') return '<article class="pain-topic"><header class="pain-topic-head"><h3><span class="pain-topic-index">01</span>议题名称</h3><p class="pain-topic-summary">一句概括。</p></header><div class="pain-topic-body"><ul class="pain-detail-list"><li>待填</li></ul></div></article>';
-      if (spec.host === '.finding') return '<div class="finding-sub"><b>① 新分点</b><p>待填</p></div>';
-      if (spec.host === '.market-formula') return '<div class="market-factor"><div class="market-number"><span>X</span><i>单位</i></div><div class="market-factor-label">因子：新因子</div></div>';
-      if (spec.host === '.pain-detail-list') return '<li>待填</li>';
-      if (spec.host === '.shot-grid') return '<figure class="shot" data-kind="photo"><div class="shot__frame"><img alt=""></div><figcaption><b>图片标题</b><span>待填</span></figcaption></figure>';
-      if (spec.host === '.transport-cards') return '<article class="transport-card"><div class="transport-card-copy"><h3>方案名称</h3><p>待填</p></div></article>';
-      return '<div>待填</div>';
-    };
-
-    const syncHost = (el) => {
-      if (!el) return;
-      const info = el.matches?.('.info-grid') ? el : el.closest?.('.info-grid');
-      const pain = el.matches?.('.pain-text-list') ? el : el.closest?.('.pain-text-list');
-      const finding = el.matches?.('.finding') ? el : el.closest?.('.finding');
-      const formula = el.matches?.('.market-formula') ? el : el.closest?.('.market-formula');
-      if (info) renumberInfo(info);
-      if (pain) renumberPain(pain);
-      if (finding) renumberFinding(finding);
-      if (formula) syncFormula(formula);
-    };
-
-    const recordRemove = (nodes) => {
-      const snap = nodes.map((el) => ({
-        el,
-        parent: el.parentElement,
-        before: el.nextSibling,
-      }));
-      const parents = [...new Set(snap.map((s) => s.parent).filter(Boolean))];
-      nodes.forEach((el) => el.remove());
-      parents.forEach(syncHost);
-      record({
-        undo: () => {
-          snap.forEach(({ el, parent, before }) => {
-            if (!parent) return;
-            parent.insertBefore(el, before);
-          });
-          parents.forEach(syncHost);
-        },
-        redo: () => {
-          nodes.forEach((el) => el.remove());
-          parents.forEach(syncHost);
-        },
-      });
-      persist();
-    };
-
-    const recordInsert = (nodes, parent, before) => {
-      placeNodes(nodes, parent, before);
-      syncHost(parent);
-      record({
-        undo: () => {
-          nodes.forEach((n) => n.remove());
-          syncHost(parent);
-        },
-        redo: () => {
-          placeNodes(nodes, parent, before);
-          syncHost(parent);
-        },
-      });
-      persist();
-    };
-
-    const recordMove = (el, fromParent, fromBefore, toParent, toBefore) => {
-      record({
-        undo: () => {
-          if (!fromParent) return;
-          if (fromBefore && fromBefore.parentNode === fromParent) fromParent.insertBefore(el, fromBefore);
-          else fromParent.appendChild(el);
-          syncHost(fromParent);
-          if (toParent !== fromParent) syncHost(toParent);
-        },
-        redo: () => {
-          if (!toParent) return;
-          if (toBefore && toBefore.parentNode === toParent) toParent.insertBefore(el, toBefore);
-          else toParent.appendChild(el);
-          syncHost(toParent);
-          if (toParent !== fromParent) syncHost(fromParent);
-        },
-      });
-      persist();
-    };
-
-    const addItemAt = (hit) => {
-      if (!hit?.host) return;
-      const items = [...hit.host.querySelectorAll(hit.spec.item)];
-      const src = hit.item || items[items.length - 1];
-      const node = src ? src.cloneNode(true) : htmlToNodes(defaultItemHtml(hit.spec))[0];
-      if (!node) return;
-      resetClonedItem(node, hit.spec, null);
-      let before = hit.item ? hit.item.nextSibling : null;
-      if (hit.spec.host === '.market-formula') {
-        before = hit.host.querySelector(':scope > .market-result') || null;
-      }
-      recordInsert([node], hit.host, before);
-    };
-
-    const removeItem = (hit) => {
-      if (!hit?.item || !hit.host) return;
-      const items = [...hit.host.querySelectorAll(hit.spec.item)];
-      if (items.length <= 1) return;
-      recordRemove([hit.item]);
-    };
-
-    const removeGroup = (group) => {
-      if (!group?.nodes?.length) return;
-      recordRemove(group.nodes);
-    };
-
-    const removeBlock = (block) => {
-      if (!block) return;
-      recordRemove([block]);
-    };
-
-    const insertBlock = (id, at) => {
-      const spec = BLOCK_TEMPLATES.find((t) => t.id === id);
-      if (!spec || !at?.parent) return;
-      const nodes = htmlToNodes(spec.html);
-      if (!nodes.length) return;
-      recordInsert(nodes, at.parent, at.before || null);
-    };
-
-    const ghost = document.createElement('div');
-    ghost.className = 'seed-edit-ghost';
-    ghost.hidden = true;
-    document.body.appendChild(ghost);
-    const grip = document.createElement('button');
-    grip.className = 'seed-edit-grip';
-    grip.type = 'button';
-    grip.hidden = true;
-    grip.setAttribute('aria-label', '拖动排序');
-    document.body.appendChild(grip);
-    let gripTarget = null;
-    let gripMode = 'block';
-
-    const placeGrip = (el, mode) => {
-      if (!el || sorting || activeText || activeBox) {
-        grip.hidden = true;
-        gripTarget = null;
-        return;
-      }
-      gripTarget = el;
-      gripMode = mode;
-      const box = el.getBoundingClientRect();
-      grip.hidden = false;
-      const gw = grip.offsetWidth || 24;
-      grip.style.left = `${Math.max(2, box.left - gw + 8)}px`;
-      grip.style.top = `${Math.max(4, box.top + 6)}px`;
-    };
-
-    const pointerNearGrip = (event) => {
-      if (event.target === grip || event.target.closest?.('.seed-edit-grip')) return true;
-      if (!gripTarget || grip.hidden) return false;
-      const g = grip.getBoundingClientRect();
-      const t = gripTarget.getBoundingClientRect();
-      const left = Math.min(g.left, t.left) - 10;
-      const right = Math.max(g.right, t.left + 20);
-      const top = Math.min(g.top, t.top) - 8;
-      const bottom = Math.max(g.bottom, t.top + 56);
-      return event.clientX >= left && event.clientX <= right
-        && event.clientY >= top && event.clientY <= bottom;
-    };
-
-    const clearSortAttrs = () => {
-      stripSortAttrs(document);
-      document.documentElement.classList.remove('is-seed-sorting', 'is-seed-sorting-items');
-      ghost.hidden = true;
-      ghost.classList.remove('is-item');
-      grip.hidden = true;
-      gripTarget = null;
-      sorting = false;
-    };
-
-    const enterBlockSort = (stack) => {
-      sorting = true;
-      document.documentElement.classList.add('is-seed-sorting');
-      [...stack.children].forEach((el) => {
-        if (el.nodeType !== 1) return;
-        el.dataset.seedSortTitle = blockTitleOf(el);
-      });
-    };
-
-    const enterItemSort = (host) => {
-      sorting = true;
-      host.classList.add('is-seed-item-host');
-      document.documentElement.classList.add('is-seed-sorting-items');
-      const spec = ITEM_SPECS.find((s) => host.matches(s.host));
-      const items = spec ? [...host.querySelectorAll(spec.item)] : [...host.children];
-      items.forEach((el) => {
-        el.dataset.seedSortTitle = itemTitleOf(el);
-      });
-    };
-
-    const flowAxisOf = (parent, kids) => {
-      const sample = kids.length >= 2
-        ? kids
-        : [...parent.children].filter((n) => n.nodeType === 1);
-      if (sample.length >= 2) {
-        const a = sample[0].getBoundingClientRect();
-        const b = sample[1].getBoundingClientRect();
-        return Math.abs(b.left - a.left) >= Math.abs(b.top - a.top) ? 'x' : 'y';
-      }
-      const cs = getComputedStyle(parent);
-      if (cs.display.includes('flex') && String(cs.flexDirection).startsWith('row')) return 'x';
-      if (cs.display === 'grid') {
-        const cols = cs.gridTemplateColumns.split(' ').filter((t) => t && t !== 'none');
-        if (cols.length > 1) return 'x';
-      }
-      return 'y';
-    };
-
-    const liveReorder = (el, parent, clientX, clientY) => {
-      const kids = [...parent.children].filter((n) => {
-        if (n.nodeType !== 1 || n === el) return false;
-        if (parent.matches?.('.market-formula')) return n.matches('.market-factor:not(.market-result)');
-        return true;
-      });
-      if (!kids.length) {
-        parent.appendChild(el);
-        return;
-      }
-      let best = kids[0];
-      let bestDist = Infinity;
-      kids.forEach((kid) => {
-        const box = kid.getBoundingClientRect();
-        const cx = box.left + box.width / 2;
-        const cy = box.top + box.height / 2;
-        const dist = (clientX - cx) ** 2 + (clientY - cy) ** 2;
-        if (dist < bestDist) {
-          bestDist = dist;
-          best = kid;
-        }
-      });
-      const box = best.getBoundingClientRect();
-      const after = flowAxisOf(parent, kids) === 'x'
-        ? clientX > box.left + box.width / 2
-        : clientY > box.top + box.height / 2;
-      if (after) {
-        let next = best.nextElementSibling;
-        if (next === el) next = next.nextElementSibling;
-        if (next) parent.insertBefore(el, next);
-        else parent.appendChild(el);
-      } else {
-        parent.insertBefore(el, best);
-      }
-    };
-
-    const startSortDrag = (el, parent, event, mode) => {
-      if (sorting || activeText || activeBox) return;
-      event.preventDefault();
-      const fromParent = parent;
-      const fromBefore = el.nextSibling;
-      if (mode === 'item') enterItemSort(parent);
-      else enterBlockSort(parent);
-      el.classList.add('is-seed-drag');
-      grip.hidden = true;
-      ghost.textContent = el.dataset.seedSortTitle || (mode === 'item' ? itemTitleOf(el) : blockTitleOf(el));
-      ghost.classList.remove('is-item');
-      ghost.hidden = false;
-      ghost.style.left = `${event.clientX + 12}px`;
-      ghost.style.top = `${event.clientY - 18}px`;
-      const onMove = (move) => {
-        ghost.style.left = `${move.clientX + 12}px`;
-        ghost.style.top = `${move.clientY - 18}px`;
-        liveReorder(el, parent, move.clientX, move.clientY);
-      };
-      const onUp = () => {
-        document.removeEventListener('pointermove', onMove);
-        document.removeEventListener('pointerup', onUp);
-        el.classList.remove('is-seed-drag');
-        const toParent = el.parentElement;
-        const toBefore = el.nextSibling;
-        const moved = fromParent !== toParent || fromBefore !== toBefore;
-        clearSortAttrs();
-        if (moved) {
-          syncHost(parent);
-          recordMove(el, fromParent, fromBefore, toParent, toBefore);
-        }
-      };
-      document.addEventListener('pointermove', onMove);
-      document.addEventListener('pointerup', onUp);
-    };
-
     const writeTextState = (key, value) => {
       const node = nodeByKey(key);
       if (!node) return;
@@ -2110,6 +1294,7 @@
       if (originals.texts[key] === value) delete state.texts[key];
       else state.texts[key] = value;
       syncChartValue(node);
+      remapSeedChart(node);
       applyTokenValue(node);
     };
 
@@ -2120,6 +1305,387 @@
       const key = `${base}::${kind}::${pathOf(node)}`;
       node.dataset.editKey = key;
       return key;
+    };
+
+    const hidePanel = () => {
+      panel.hidden = true;
+      panel.innerHTML = '';
+      panelMode = '';
+      panelTarget = null;
+      panelBefore = null;
+    };
+
+    const placePanel = (anchor, event) => {
+      panel.hidden = false;
+      const box = panel.getBoundingClientRect();
+      const pad = 8;
+      const x = event?.clientX ?? (anchor?.getBoundingClientRect?.().right || pad);
+      const y = event?.clientY ?? (anchor?.getBoundingClientRect?.().top || pad);
+      panel.style.left = `${Math.max(pad, Math.min(x, window.innerWidth - box.width - pad))}px`;
+      panel.style.top = `${Math.max(pad, Math.min(y, window.innerHeight - box.height - pad))}px`;
+    };
+
+    const snapshotInline = (el) => (el ? el.getAttribute('style') || '' : '');
+
+    const snapshotRootVars = () => {
+      const out = {};
+      rootVarsOf().forEach((item) => {
+        out[item.name] = document.documentElement.style.getPropertyValue(item.name) || item.value;
+      });
+      return out;
+    };
+
+    const applyInlineMap = (el, map) => {
+      if (!el) return;
+      Object.entries(map || {}).forEach(([prop, value]) => {
+        if (value == null || value === '') el.style.removeProperty(prop);
+        else el.style.setProperty(prop, value);
+      });
+    };
+
+    const rememberStyle = (el, prop, value) => {
+      const key = ensureKey(el, 'style');
+      if (!(key in originals.styles)) originals.styles[key] = snapshotInline(el);
+      const rec = { ...(state.styles[key] || {}) };
+      rec[prop] = value;
+      state.styles[key] = rec;
+    };
+
+    const rememberVar = (name, value) => {
+      if (!(name in originals.vars)) {
+        originals.vars[name] = document.documentElement.style.getPropertyValue(name)
+          || getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      }
+      if (value === originals.vars[name]) delete state.vars[name];
+      else state.vars[name] = value;
+    };
+
+    const rememberAnim = (el, next) => {
+      const key = ensureKey(el, 'anim');
+      if (!(key in originals.anims)) originals.anims[key] = readAnim(el);
+      state.anims[key] = next;
+    };
+
+    const recordStyleChange = (el, beforeStyle, afterStyle) => {
+      if (beforeStyle === afterStyle) return;
+      const key = ensureKey(el, 'style');
+      record({
+        undo: () => {
+          const node = nodeByKey(key);
+          if (!node) return;
+          if (beforeStyle) node.setAttribute('style', beforeStyle);
+          else node.removeAttribute('style');
+          if (beforeStyle === originals.styles[key]) delete state.styles[key];
+        },
+        redo: () => {
+          const node = nodeByKey(key);
+          if (!node) return;
+          if (afterStyle) node.setAttribute('style', afterStyle);
+          else node.removeAttribute('style');
+        },
+      });
+    };
+
+    const recordVarChange = (name, before, after) => {
+      if (before === after) return;
+      record({
+        undo: () => {
+          document.documentElement.style.setProperty(name, before);
+          rememberVar(name, before);
+        },
+        redo: () => {
+          document.documentElement.style.setProperty(name, after);
+          rememberVar(name, after);
+        },
+      });
+    };
+
+    const recordAnimChange = (el, before, after) => {
+      if (JSON.stringify(before) === JSON.stringify(after)) return;
+      const key = ensureKey(el, 'anim');
+      record({
+        undo: () => {
+          const node = nodeByKey(key);
+          if (!node) return;
+          writeAnim(node, before);
+          state.anims[key] = before;
+        },
+        redo: () => {
+          const node = nodeByKey(key);
+          if (!node) return;
+          writeAnim(node, after);
+          state.anims[key] = after;
+        },
+      });
+    };
+
+    const elLabel = (text) => {
+      const p = document.createElement('div');
+      p.className = 'seed-edit-panel__label';
+      p.textContent = text;
+      return p;
+    };
+
+    const elRow = (label, inner) => {
+      const row = document.createElement('div');
+      row.className = 'seed-edit-panel__row';
+      const span = document.createElement('span');
+      span.textContent = label;
+      row.append(span, inner);
+      return row;
+    };
+
+    const fillColorPanel = (el) => {
+      panel.append(elLabel('此元素'));
+      const cs = getComputedStyle(el);
+      const svgish = !!(el.closest?.('svg') || el.querySelector?.('svg') || el.matches?.('svg, path, circle, rect, polygon, polyline, line, text'));
+      COLOR_PROPS.forEach((prop) => {
+        if ((prop.id === 'fill' || prop.id === 'stroke') && !svgish) return;
+        const wrap = document.createElement('div');
+        wrap.className = 'seed-edit-panel__color';
+        const pick = document.createElement('input');
+        pick.type = 'color';
+        const hex = rgbToHex(cs.getPropertyValue(prop.id)) || '#000000';
+        pick.value = hexInputValue(hex) || '#000000';
+        const text = document.createElement('input');
+        text.type = 'text';
+        text.value = (el.style.getPropertyValue(prop.id) || cs.getPropertyValue(prop.id) || '').trim();
+        let strokeBefore = snapshotInline(el);
+        const apply = (raw) => {
+          const next = hexInputValue(raw) || raw;
+          if (!next) return;
+          el.style.setProperty(prop.id, next);
+          rememberStyle(el, prop.id, next);
+          text.value = next;
+          const asHex = hexInputValue(next);
+          if (asHex) pick.value = asHex;
+        };
+        const commit = () => {
+          recordStyleChange(el, strokeBefore, snapshotInline(el));
+          strokeBefore = snapshotInline(el);
+          persist();
+        };
+        pick.addEventListener('focus', () => { strokeBefore = snapshotInline(el); });
+        text.addEventListener('focus', () => { strokeBefore = snapshotInline(el); });
+        pick.addEventListener('input', () => apply(pick.value));
+        pick.addEventListener('change', () => { apply(pick.value); commit(); });
+        text.addEventListener('change', () => { apply(text.value); commit(); });
+        wrap.append(pick, text);
+        panel.append(elRow(prop.label, wrap));
+      });
+      const vars = rootVarsOf().filter((item) => isColorLike(item.value) || item.name.toLowerCase().includes('color') || item.name.toLowerCase().includes('-c-'));
+      if (!vars.length) return;
+      panel.append(elLabel('页面变量'));
+      vars.slice(0, 16).forEach((item) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'seed-edit-panel__color';
+        const live = document.documentElement.style.getPropertyValue(item.name) || item.value;
+        const pick = document.createElement('input');
+        pick.type = 'color';
+        pick.value = hexInputValue(rgbToHex(live)) || '#000000';
+        const text = document.createElement('input');
+        text.type = 'text';
+        text.value = live;
+        let varBefore = live;
+        const apply = (raw) => {
+          const next = hexInputValue(raw) || raw;
+          if (!next) return;
+          document.documentElement.style.setProperty(item.name, next);
+          rememberVar(item.name, next);
+          text.value = next;
+          const asHex = hexInputValue(rgbToHex(next));
+          if (asHex) pick.value = asHex;
+        };
+        const commit = () => {
+          const next = document.documentElement.style.getPropertyValue(item.name) || text.value;
+          recordVarChange(item.name, varBefore, next);
+          varBefore = next;
+          persist();
+        };
+        pick.addEventListener('focus', () => {
+          varBefore = document.documentElement.style.getPropertyValue(item.name) || item.value;
+        });
+        text.addEventListener('focus', () => {
+          varBefore = document.documentElement.style.getPropertyValue(item.name) || item.value;
+        });
+        pick.addEventListener('input', () => apply(pick.value));
+        pick.addEventListener('change', () => { apply(pick.value); commit(); });
+        text.addEventListener('change', () => { apply(text.value); commit(); });
+        wrap.append(pick, text);
+        panel.append(elRow(item.name.replace(/^--/, ''), wrap));
+      });
+    };
+
+    const fillSpacePanel = (el) => {
+      panel.append(elLabel('此元素'));
+      const cs = getComputedStyle(el);
+      const makeSides = (prop, label) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'seed-edit-panel__sides';
+        const keys = ['top', 'right', 'bottom', 'left'];
+        keys.forEach((side) => {
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.step = '1';
+          input.title = side;
+          input.value = String(parsePx(cs.getPropertyValue(`${prop}-${side}`)));
+          let sideBefore = snapshotInline(el);
+          const apply = () => {
+            const cssProp = `${prop}-${side}`;
+            const next = `${parsePx(input.value)}px`;
+            el.style.setProperty(cssProp, next);
+            rememberStyle(el, cssProp, next);
+          };
+          input.addEventListener('focus', () => { sideBefore = snapshotInline(el); });
+          input.addEventListener('input', apply);
+          input.addEventListener('change', () => {
+            apply();
+            recordStyleChange(el, sideBefore, snapshotInline(el));
+            sideBefore = snapshotInline(el);
+            persist();
+          });
+          wrap.append(input);
+        });
+        panel.append(elRow(label, wrap));
+      };
+      makeSides('margin', '外边距');
+      makeSides('padding', '内边距');
+      if (/flex|grid/.test(cs.display)) {
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.value = String(parsePx(cs.gap));
+        let gapBefore = snapshotInline(el);
+        const apply = () => {
+          const next = `${parsePx(input.value)}px`;
+          el.style.gap = next;
+          rememberStyle(el, 'gap', next);
+        };
+        input.addEventListener('focus', () => { gapBefore = snapshotInline(el); });
+        input.addEventListener('input', apply);
+        input.addEventListener('change', () => {
+          apply();
+          recordStyleChange(el, gapBefore, snapshotInline(el));
+          gapBefore = snapshotInline(el);
+          persist();
+        });
+        panel.append(elRow('间距', input));
+      }
+      const vars = rootVarsOf().filter((item) => isSizeLike(item.value) || /^--s-|^--t-|^--space|^--gap|^--pad|^--margin/i.test(item.name));
+      if (!vars.length) return;
+      panel.append(elLabel('页面变量'));
+      vars.slice(0, 16).forEach((item) => {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = document.documentElement.style.getPropertyValue(item.name) || item.value;
+        input.addEventListener('change', () => {
+          const before = document.documentElement.style.getPropertyValue(item.name) || item.value;
+          const next = input.value.trim();
+          document.documentElement.style.setProperty(item.name, next);
+          rememberVar(item.name, next);
+          recordVarChange(item.name, before, next);
+          persist();
+        });
+        panel.append(elRow(item.name.replace(/^--/, ''), input));
+      });
+    };
+
+    const fillAnimPanel = (el) => {
+      const snap = readAnim(el);
+      panel.append(elLabel(snap.kind === 'animation' ? '动画' : '过渡'));
+      const name = document.createElement('input');
+      name.type = 'text';
+      name.value = firstCssItem(snap.name);
+      name.readOnly = true;
+      panel.append(elRow('名称', name));
+      const fields = [
+        { key: 'duration', label: '时长', value: firstCssItem(snap.duration) },
+        { key: 'delay', label: '延迟', value: firstCssItem(snap.delay) },
+        { key: 'easing', label: '缓动', value: firstCssItem(snap.easing) },
+      ];
+      if (snap.kind === 'animation') {
+        fields.push({ key: 'iterate', label: '次数', value: firstCssItem(snap.iterate) });
+      }
+      const current = { ...snap };
+      fields.forEach((field) => {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = field.value;
+        input.addEventListener('input', () => {
+          current[field.key] = input.value.trim();
+          writeAnim(el, current);
+        });
+        input.addEventListener('change', () => {
+          current[field.key] = input.value.trim();
+          writeAnim(el, current);
+          rememberAnim(el, { ...current });
+          recordAnimChange(el, panelBefore, { ...current });
+          panelBefore = { ...current };
+          persist();
+        });
+        panel.append(elRow(field.label, input));
+      });
+      if (snap.kind === 'animation') {
+        const dir = document.createElement('select');
+        ['normal', 'reverse', 'alternate', 'alternate-reverse'].forEach((v) => {
+          const opt = document.createElement('option');
+          opt.value = v;
+          opt.textContent = v;
+          if (firstCssItem(snap.direction) === v) opt.selected = true;
+          dir.append(opt);
+        });
+        dir.addEventListener('change', () => {
+          current.direction = dir.value;
+          writeAnim(el, current);
+          rememberAnim(el, { ...current });
+          recordAnimChange(el, panelBefore, { ...current });
+          panelBefore = { ...current };
+          persist();
+        });
+        panel.append(elRow('方向', dir));
+        const play = document.createElement('select');
+        [{ v: 'running', t: '运行' }, { v: 'paused', t: '暂停' }].forEach((item) => {
+          const opt = document.createElement('option');
+          opt.value = item.v;
+          opt.textContent = item.t;
+          if (firstCssItem(snap.play) === item.v) opt.selected = true;
+          play.append(opt);
+        });
+        play.addEventListener('change', () => {
+          current.play = play.value;
+          writeAnim(el, current);
+          rememberAnim(el, { ...current });
+          recordAnimChange(el, panelBefore, { ...current });
+          panelBefore = { ...current };
+          persist();
+        });
+        panel.append(elRow('播放', play));
+      }
+      const hint = document.createElement('p');
+      hint.className = 'seed-edit-panel__hint';
+      hint.textContent = '改时长、延迟、缓动后立刻作用于当前页';
+      panel.append(hint);
+    };
+
+    const openPanel = (mode, target, event) => {
+      if (!target) return;
+      hidePanel();
+      panelMode = mode;
+      panelTarget = target;
+      if (mode === 'color') {
+        panelBefore = snapshotRootVars();
+        panelBefore.__style = snapshotInline(target);
+        panel.append(Object.assign(document.createElement('p'), { className: 'seed-edit-panel__head', textContent: '颜色' }));
+        fillColorPanel(target);
+      } else if (mode === 'space') {
+        panelBefore = snapshotInline(target);
+        panel.append(Object.assign(document.createElement('p'), { className: 'seed-edit-panel__head', textContent: '间距' }));
+        fillSpacePanel(target);
+      } else if (mode === 'anim') {
+        panelBefore = readAnim(target);
+        panel.append(Object.assign(document.createElement('p'), { className: 'seed-edit-panel__head', textContent: '动画参数' }));
+        fillAnimPanel(target);
+      }
+      placePanel(target, event);
     };
 
     const placeDone = (anchor) => {
@@ -2135,14 +1701,9 @@
       if (top + height > window.innerHeight - pad) top = Math.max(pad, box.bottom - height);
       doneBtn.style.left = `${left}px`;
       doneBtn.style.top = `${top}px`;
-      const boldW = boldBtn.hidden ? 0 : (boldBtn.offsetWidth || 56);
-      if (!boldBtn.hidden) {
-        boldBtn.style.left = `${Math.max(pad, left - boldW - 8)}px`;
-        boldBtn.style.top = `${top}px`;
-      }
       if (!colorPick.hidden) {
         const size = colorPick.offsetWidth || 34;
-        let cleft = left - (boldW ? boldW + 8 : 0) - size - 8;
+        let cleft = left - size - 8;
         if (cleft < pad) cleft = left + width + 8;
         colorPick.style.left = `${cleft}px`;
         colorPick.style.top = `${top}px`;
@@ -2217,7 +1778,6 @@
       node.removeAttribute('data-edit-text');
       document.documentElement.classList.remove('is-inline-editing');
       doneBtn.hidden = true;
-      boldBtn.hidden = true;
       hideColorPick();
       clearSvgInput();
       activeText = null;
@@ -2225,6 +1785,7 @@
         if (key) {
           writeMarkup(node, previous);
           syncChartValue(node);
+          remapSeedChart(node);
           applyTokenValue(node);
         }
         return;
@@ -2233,6 +1794,7 @@
       if (originals.texts[key] === value) delete state.texts[key];
       else state.texts[key] = value;
       syncChartValue(node);
+      remapSeedChart(node);
       applyTokenValue(node);
       if (previous !== value) {
         record({
@@ -2256,6 +1818,7 @@
       svgInput.addEventListener('input', () => {
         node.textContent = svgInput.value;
         syncChartValue(node);
+        remapSeedChart(node);
       });
       svgInput.focus();
       svgInput.select();
@@ -2273,14 +1836,12 @@
       document.documentElement.classList.add('is-inline-editing');
       doneBtn.hidden = false;
       if (isSvgText(node)) {
-        boldBtn.hidden = true;
         startSvgTextEdit(node);
         return;
       }
       node.contentEditable = 'true';
       node.spellcheck = false;
       node.focus();
-      boldBtn.hidden = !!node.closest?.('[data-token-kind="color"]');
       if (node.closest?.('[data-token-kind="color"]')) showColorPickFor(node);
       else hideColorPick();
       placeDone(node);
@@ -2538,7 +2099,8 @@
       if (recordOp && JSON.stringify(prev) !== JSON.stringify(next)) {
         record({
           undo: () => {
-            const host = nodeByKey(key);
+            const node = nodeByKey(key);
+            const host = mediaBoxOf(node) || node;
             if (!host) return;
             writeLayout(host, prev || { align: 'left', fit: 'fit', width: null, height: null });
             const cur = state.media[key] || {};
@@ -2546,7 +2108,8 @@
             state.media[key] = cur;
           },
           redo: () => {
-            const host = nodeByKey(key);
+            const node = nodeByKey(key);
+            const host = mediaBoxOf(node) || node;
             if (!host) return;
             writeLayout(host, next);
             const cur = state.media[key] || {};
@@ -2570,7 +2133,7 @@
     };
 
     const startMediaAdjust = (el) => {
-      const box = resizeBoxOf(el);
+      const box = resizeBoxOf(el) || mediaBoxOf(el);
       if (!box) return;
       if (activeBox && activeBox !== box) stopMediaAdjust();
       const key = ensureKey(box, 'media');
@@ -2626,13 +2189,8 @@
     bindResizeHandle(handleH, 'y');
 
     const applyStateToDom = async () => {
-      if (state.markup) {
-        const root = markupRootOf();
-        if (root) {
-          root.innerHTML = state.markup;
-          restoredMarkup = true;
-          stripSortAttrs(root);
-        }
+      for (const [name, value] of Object.entries(state.vars || {})) {
+        document.documentElement.style.setProperty(name, value);
       }
       for (const [key, rec] of Object.entries(state.variants || {})) {
         const node = nodeByKey(key);
@@ -2642,25 +2200,36 @@
         restoreVariant(node, snap);
       }
       for (const [key, value] of Object.entries(state.texts || {})) {
-        const live = document.querySelector(`[data-edit-key="${CSS.escape(key)}"]`);
         const path = key.split('::').slice(2).join('::');
-        const node = live || (restoredMarkup ? null : fromPath(path));
+        const node = fromPath(path);
         if (!node || node.closest('[data-css-var]')) continue;
         node.dataset.editKey = key;
         if (!(key in originals.texts)) originals.texts[key] = readMarkup(node);
         writeMarkup(node, value);
       }
+      for (const [key, map] of Object.entries(state.styles || {})) {
+        const node = nodeByKey(key);
+        if (!node) continue;
+        if (!(key in originals.styles)) originals.styles[key] = snapshotInline(node);
+        applyInlineMap(node, map);
+      }
+      for (const [key, snap] of Object.entries(state.anims || {})) {
+        const node = nodeByKey(key);
+        if (!node) continue;
+        if (!(key in originals.anims)) originals.anims[key] = readAnim(node);
+        writeAnim(node, snap);
+      }
       document.querySelectorAll('.chart-value').forEach((el) => syncChartValue(el));
+      document.querySelectorAll('[data-seed-chart]').forEach((el) => remapSeedChart(el));
       if (!window.ThemeRuntime) {
         document.querySelectorAll('.token-value').forEach((el) => applyTokenValue(el, { persistTheme: false }));
       }
       for (const [key, rec] of Object.entries(state.media || {})) {
-        const live = document.querySelector(`[data-edit-key="${CSS.escape(key)}"]`);
         const path = key.split('::').slice(2).join('::');
-        let node = live || (restoredMarkup ? null : fromPath(path));
+        let node = fromPath(path);
         if (!node) continue;
         node.dataset.editKey = key;
-        if (rec.layout) writeLayout(resizeBoxOf(node) || node, rec.layout);
+        if (rec.layout) writeLayout(mediaBoxOf(node) || node, rec.layout);
         const blob = await idbGet('blobs', `${slug}::${key}`);
         if (!(blob instanceof Blob)) continue;
         const prev = objectUrls.get(key);
@@ -2679,7 +2248,11 @@
       if (colorHost) {
         event.preventDefault();
         event.stopPropagation();
-        showMenu(event, { text: colorHost.querySelector('.token-value') });
+        showMenu(event, {
+          text: colorHost.querySelector('.token-value'),
+          style: colorHost,
+          space: boxTargetOf(colorHost),
+        });
         return;
       }
       const onGraphic = !!(node.closest('img, video') || (node.closest('svg') && !node.closest('text, tspan, foreignObject')));
@@ -2687,53 +2260,25 @@
       const media = mediaTargetOf(node);
       const variant = variantHostOf(node);
       const resize = resizeBoxOf(node);
+      const style = styleTargetOf(node);
+      const space = boxTargetOf(node);
+      const anim = animTargetOf(node);
       const both = text && media && isSvgText(text);
-      const heading = headingGroupOf(node);
-      const itemHit = itemMatchOf(node);
-      const block = blockOf(node);
-      const blank = isBlankHit(node);
-      const stack = nearestStack(node, event.clientY);
-      const insertAt = blank && stack ? insertPointFromY(stack, event.clientY) : null;
-      if (!text && !media && !variant && !resize && !heading && !itemHit && !insertAt && !block) return;
+      if (!text && !media && !variant && !resize && !style && !space && !anim) return;
       event.preventDefault();
       event.stopPropagation();
       showMenu(event, {
-        text: insertAt ? null : text,
-        media: insertAt ? null : (both || !text ? media : null),
-        variant: insertAt ? null : variant,
-        resize: insertAt || media ? null : resize,
-        heading: insertAt ? null : heading,
-        itemHit: insertAt ? null : itemHit,
-        block: insertAt ? null : block,
-        insertAt,
+        text,
+        media: both || !text ? media : null,
+        variant,
+        resize: media ? null : resize,
+        style,
+        space,
+        anim,
       });
     }, true);
 
     menu.addEventListener('click', (event) => {
-      if (event.target.closest('[data-edit-insert-toggle]')) {
-        event.preventDefault();
-        insertList.hidden = !insertList.hidden;
-        if (!insertList.hidden) {
-          insertList.style.top = '0px';
-          insertList.style.left = 'calc(100% + 6px)';
-          insertList.style.right = 'auto';
-          const menuBox = menu.getBoundingClientRect();
-          const subBox = insertList.getBoundingClientRect();
-          if (menuBox.right + subBox.width > window.innerWidth - 8) {
-            insertList.style.left = 'auto';
-            insertList.style.right = 'calc(100% + 6px)';
-          }
-          let after = insertList.getBoundingClientRect();
-          if (after.bottom > window.innerHeight - 8) {
-            insertList.style.top = `${window.innerHeight - 8 - after.bottom}px`;
-          }
-          after = insertList.getBoundingClientRect();
-          if (after.top < 8) insertList.style.top = `${(parseFloat(insertList.style.top) || 0) + (8 - after.top)}px`;
-        }
-        return;
-      }
-      const insertId = event.target.closest('[data-edit-insert-id]')?.dataset.editInsertId;
-      if (insertId && menuInsertAt) insertBlock(insertId, menuInsertAt);
       const variantId = event.target.closest('[data-edit-variant]')?.dataset.editVariant;
       if (variantId && menuVariant) applyVariant(menuVariant, variantId);
       if (event.target.closest('[data-edit-text-action]') && menuText) startTextEdit(menuText);
@@ -2741,10 +2286,10 @@
       if (event.target.closest('[data-edit-layout-action]') && (menuMedia || menuResize)) {
         startMediaAdjust(menuMedia || menuResize);
       }
-      if (event.target.closest('[data-edit-add-item]') && menuItemHit) addItemAt(menuItemHit);
-      if (event.target.closest('[data-edit-del-item]') && menuItemHit) removeItem(menuItemHit);
-      if (event.target.closest('[data-edit-del-group]') && menuHeading) removeGroup(menuHeading);
-      if (event.target.closest('[data-edit-del-block]') && menuBlock) removeBlock(menuBlock);
+      const at = { clientX: event.clientX, clientY: event.clientY };
+      if (event.target.closest('[data-edit-color-action]') && menuStyle) openPanel('color', menuStyle, at);
+      if (event.target.closest('[data-edit-space-action]') && menuSpace) openPanel('space', menuSpace, at);
+      if (event.target.closest('[data-edit-anim-action]') && menuAnim) openPanel('anim', menuAnim, at);
       hideMenu();
     });
 
@@ -2753,73 +2298,36 @@
       event.stopPropagation();
       stopTextEdit({ commit: true });
     });
-    boldBtn.addEventListener('pointerdown', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-    });
-    boldBtn.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (!activeText || isSvgText(activeText)) return;
-      document.execCommand('bold');
-    });
 
     document.addEventListener('pointerdown', (event) => {
       if (!menu.hidden && !event.target.closest('.seed-edit-menu')) hideMenu();
+      if (!panel.hidden && !event.target.closest('.seed-edit-panel')) hidePanel();
       if (activeBox && !event.target.closest('.seed-edit-media, .seed-edit-handle, .seed-edit-handle-h, [data-seed-editing-media]')) {
         stopMediaAdjust();
       }
-      if (event.button !== 0) return;
-      if (sorting || activeText || activeBox) return;
-      const onGrip = event.target.closest?.('.seed-edit-grip');
-      if (onGrip && gripTarget?.parentElement) {
-        startSortDrag(gripTarget, gripTarget.parentElement, event, gripMode);
-      }
     }, true);
-
-    document.addEventListener('pointermove', (event) => {
-      if (sorting || activeText || activeBox || !menu.hidden) return;
-      if (event.target.closest?.('.seed-edit-menu, .seed-edit-done, .seed-edit-bold, .seed-edit-media, .seed-edit-handle, .seed-edit-handle-h')) return;
-      if (pointerNearGrip(event)) return;
-      const node = event.target instanceof Element ? event.target : event.target?.parentElement;
-      if (!node || isChrome(node)) {
-        grip.hidden = true;
-        gripTarget = null;
-        return;
-      }
-      const itemHit = itemMatchOf(node);
-      if (itemHit?.item) {
-        placeGrip(itemHit.item, 'item');
-        return;
-      }
-      const block = blockOf(node);
-      if (block) {
-        placeGrip(block, 'block');
-        return;
-      }
-      grip.hidden = true;
-      gripTarget = null;
-    });
 
     document.addEventListener('keydown', (event) => {
       const meta = event.metaKey || event.ctrlKey;
       if (meta && event.key.toLowerCase() === 'z') {
         if (activeText) return;
         event.preventDefault();
+        hidePanel();
         runHistory(event.shiftKey ? 'redo' : 'undo');
         return;
       }
       if (meta && event.key.toLowerCase() === 'y') {
         if (activeText) return;
         event.preventDefault();
+        hidePanel();
         runHistory('redo');
         return;
       }
       if (event.key === 'Escape') {
         hideMenu();
-        if (sorting) {
+        if (!panel.hidden) {
           event.preventDefault();
-          clearSortAttrs();
+          hidePanel();
         }
         if (activeBox) {
           event.preventDefault();
@@ -2832,12 +2340,7 @@
         return;
       }
       if (!activeText) return;
-      if (meta && event.key.toLowerCase() === 'b' && !isSvgText(activeText)) {
-        event.preventDefault();
-        document.execCommand('bold');
-        return;
-      }
-      if (event.key === 'Enter' && !event.shiftKey && !activeText.matches?.('.finding')) {
+      if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
         stopTextEdit({ commit: true });
       }
@@ -2881,6 +2384,7 @@
     window.addEventListener('resize', () => {
       if (activeText) placeDone(svgInput || activeText);
       if (activeBox) placeMediaChrome();
+      if (!panel.hidden) placePanel(panelTarget);
     });
     document.addEventListener('scroll', () => {
       if (activeText) placeDone(svgInput || activeText);
@@ -2888,13 +2392,15 @@
     }, true);
 
     enhanceColorTokens();
-    const isCatalog = !!document.querySelector('.report-shell[data-catalog]');
+    if (FILE_ORIGIN) return;
     idbGet('state', slug).then(async (saved) => {
-      if (saved && (saved.texts || saved.media || saved.images || saved.markup || saved.variants)) {
+      if (saved && (saved.texts || saved.media || saved.images || saved.styles || saved.vars || saved.anims || saved.variants)) {
         state.texts = saved.texts || {};
         state.media = saved.media || saved.images || {};
         state.variants = saved.variants || {};
-        state.markup = isCatalog ? '' : (saved.markup || '');
+        state.styles = saved.styles || {};
+        state.vars = saved.vars || {};
+        state.anims = saved.anims || {};
         await applyStateToDom();
       }
     }).catch(() => {});
