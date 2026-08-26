@@ -2,8 +2,8 @@
   const CHROME = [
     '.theme-control', '.report-chrome', '.report-chrome-hotspot', '.document-nav',
     '.report-pager',     '.seed-edit-menu', '.seed-edit-done', '.seed-edit-svg-input',
-    '.seed-edit-color', '.seed-edit-media', '.seed-edit-handle', '.seed-edit-handle-h',
-    '.seed-edit-ghost', '.seed-edit-grip', '.seed-edit-bold', '.topbar', 'nav.toc', '.tools',
+    '.seed-edit-color', '.seed-edit-palette', '.seed-edit-media', '.seed-edit-handle', '.seed-edit-handle-h',
+    '.seed-edit-ghost', '.seed-edit-grip', '.seed-edit-bold', '.seed-edit-size', '.seed-edit-rule', '.seed-edit-trash', '.topbar', 'nav.toc', '.tools',
   ].join(', ');
 
   const BLOCK_TAGS = new Set([
@@ -152,6 +152,10 @@
 
     const frame = node.closest('.shot__frame, .gallery-stage, .brand-concept-film, .shot, figure');
     if (frame) return frame.querySelector('img, video, svg');
+    const cover = node.closest?.('.chapter-cover');
+    if (cover && (cover.getAttribute('data-cover') === 'image' || cover.getAttribute('data-cover') === 'split')) {
+      return cover.querySelector('.chapter-cover__media img') || null;
+    }
     return null;
   };
 
@@ -397,9 +401,26 @@
       group: 'stat',
       sel: '.stat-card:not(.is-pair)',
       title: '类型',
-      items: [
-        { id: 'plain', label: '数字卡' },
-        { id: 'note', label: '标注卡' },
+      checks: [
+        { id: 'prefix', label: '前缀' },
+        { id: 'suffix', label: '后缀' },
+        { id: 'kicker', label: '说明' },
+      ],
+    },
+    {
+      group: 'stat-row',
+      sel: '.stat-row',
+      sections: [
+        {
+          id: 'cols',
+          title: '列数',
+          items: [
+            { id: 'cols-2', label: '2' },
+            { id: 'cols-3', label: '3' },
+            { id: 'cols-4', label: '4' },
+            { id: 'cols-5', label: '5' },
+          ],
+        },
       ],
     },
     {
@@ -417,10 +438,9 @@
         },
         {
           id: 'index',
-          title: '显示编号',
+          check: true,
           items: [
-            { id: 'index-on', label: '是' },
-            { id: 'index-off', label: '否' },
+            { id: 'index-on', label: '显示编号', check: true },
           ],
         },
         {
@@ -463,6 +483,7 @@
             { id: 'cols-2', label: '2' },
             { id: 'cols-3', label: '3' },
             { id: 'cols-4', label: '4' },
+            { id: 'cols-5', label: '5' },
           ],
         },
       ],
@@ -492,6 +513,17 @@
         { id: 'scroll', label: '可滚动' },
         { id: 'wide', label: '宽图' },
         { id: 'poster', label: '海报' },
+      ],
+    },
+    {
+      group: 'cover',
+      sel: '.chapter-cover',
+      title: '版式',
+      items: [
+        { id: 'left', label: '左齐' },
+        { id: 'center', label: '居中' },
+        { id: 'image', label: '配图' },
+        { id: 'split', label: '图文分栏' },
       ],
     },
   ];
@@ -558,12 +590,12 @@
 
   const infoColsOf = (grid) => {
     const n = Number(grid.getAttribute('data-cols') || 0);
-    if (n === 2 || n === 3 || n === 4) return n;
+    if (n === 2 || n === 3 || n === 4 || n === 5) return n;
     return 3;
   };
 
   const writeInfoCols = (grid, n) => {
-    const cols = n === 2 || n === 3 || n === 4 ? n : 3;
+    const cols = n === 2 || n === 3 || n === 4 || n === 5 ? n : 3;
     grid.setAttribute('data-cols', String(cols));
     if (infoShapeOf(grid) === 'grid' && infoPosOf(grid) !== 'left') writeInfoKind(grid, 'cols');
   };
@@ -650,48 +682,129 @@
     else grid.setAttribute('data-index', type);
   };
 
-  const ensureStatNoteSlots = (card) => {
+  const ensureStatSlots = (card) => {
     let kicker = card.querySelector('.stat-card__kicker');
     if (!kicker) {
       kicker = document.createElement('span');
       kicker.className = 'stat-card__kicker';
       card.prepend(kicker);
     }
-    if (!(kicker.textContent || '').trim()) kicker.textContent = '标签';
     let num = card.querySelector('.stat-card__num');
     if (!num) {
       num = document.createElement('strong');
       num.className = 'stat-card__num';
       kicker.after(num);
     }
-    let ratio = num.querySelector('.stat-card__ratio');
-    if (!ratio) {
-      ratio = document.createElement('span');
-      ratio.className = 'stat-card__ratio';
-      num.append(ratio);
+    let prefix = num.querySelector('.stat-card__prefix');
+    if (!prefix) {
+      prefix = document.createElement('span');
+      prefix.className = 'stat-card__prefix';
+      num.prepend(prefix);
     }
-    if (!(ratio.textContent || '').trim()) ratio.textContent = '0 / 0';
+    let suffix = num.querySelector('.stat-card__suffix') || num.querySelector('.stat-card__ratio');
+    if (!suffix) {
+      suffix = document.createElement('span');
+      suffix.className = 'stat-card__suffix';
+      num.append(suffix);
+    } else {
+      suffix.className = 'stat-card__suffix';
+    }
+    return { kicker, num, prefix, suffix };
   };
 
-  const writeStatVariant = (card, id) => {
-    if (id === 'note') {
-      ensureStatNoteSlots(card);
-      card.setAttribute('data-variant', 'note');
+  const statFlagOn = (card, flag) => {
+    if (card.hasAttribute(`data-${flag}`)) return true;
+    if (flag === 'kicker' || flag === 'suffix') return card.getAttribute('data-variant') === 'note';
+    return false;
+  };
+
+  const writeStatFlag = (card, flag, on) => {
+    ensureStatSlots(card);
+    const slots = ensureStatSlots(card);
+    if (card.getAttribute('data-variant') === 'note') {
+      if (!card.hasAttribute('data-kicker')) card.setAttribute('data-kicker', '');
+      if (!card.hasAttribute('data-suffix')) card.setAttribute('data-suffix', '');
+      card.removeAttribute('data-variant');
+    }
+    if (on) {
+      card.setAttribute(`data-${flag}`, '');
+      if (flag === 'prefix' && !(slots.prefix.textContent || '').trim()) slots.prefix.textContent = '¥';
+      if (flag === 'suffix' && !(slots.suffix.textContent || '').trim()) slots.suffix.textContent = '%';
+      if (flag === 'kicker' && !(slots.kicker.textContent || '').trim()) slots.kicker.textContent = '说明';
+    } else {
+      card.removeAttribute(`data-${flag}`);
+    }
+  };
+
+  const writeStatCols = (host, cols) => {
+    const grid = host.closest?.('.stat-grid, .stat-row') || (host.matches?.('.stat-grid, .stat-row') ? host : null);
+    if (!grid) return;
+    if (cols) grid.setAttribute('data-cols', String(cols));
+    else grid.removeAttribute('data-cols');
+  };
+
+  const COVER_KINDS = new Set(['left', 'center', 'image', 'split']);
+  const COVER_MEDIA_SRC = 'assets/demo/pet-travel.png';
+
+  const ensureCoverMedia = (host) => {
+    if (!host?.matches?.('.chapter-cover')) return;
+    let copy = host.querySelector(':scope > .chapter-cover__copy');
+    if (!copy) {
+      copy = document.createElement('div');
+      copy.className = 'chapter-cover__copy';
+      [...host.children].forEach((el) => {
+        if (el.classList.contains('chapter-cover__media')) return;
+        copy.append(el);
+      });
+      host.append(copy);
+    }
+    let media = host.querySelector(':scope > .chapter-cover__media');
+    if (!media) {
+      media = document.createElement('div');
+      media.className = 'chapter-cover__media';
+      const img = document.createElement('img');
+      img.alt = '';
+      img.src = COVER_MEDIA_SRC;
+      media.append(img);
+      host.prepend(media);
       return;
     }
-    card.removeAttribute('data-variant');
+    let img = media.querySelector('img');
+    if (!img) {
+      img = document.createElement('img');
+      img.alt = '';
+      media.append(img);
+    }
+    if (!(img.getAttribute('src') || '').trim()) img.src = COVER_MEDIA_SRC;
+  };
+
+  const writeCoverKind = (host, id) => {
+    ensureCoverMedia(host);
+    const kind = COVER_KINDS.has(id) ? id : 'left';
+    if (kind === 'left') host.removeAttribute('data-cover');
+    else host.setAttribute('data-cover', kind);
+  };
+
+  const coverKindOf = (host) => {
+    const kind = host?.getAttribute?.('data-cover') || 'left';
+    return COVER_KINDS.has(kind) ? kind : 'left';
   };
 
   const snapshotVariant = (host) => {
     const spec = specOf(host);
     if (!spec) return null;
     if (spec.group === 'stat') {
-      const grid = host.closest('.stat-grid');
+      const grid = host.closest('.stat-grid') || (host.matches('.stat-grid') ? host : null);
       return {
         group: 'stat',
-        variant: host.getAttribute('data-variant') === 'note' ? 'note' : 'plain',
+        prefix: statFlagOn(host, 'prefix'),
+        suffix: statFlagOn(host, 'suffix'),
+        kicker: statFlagOn(host, 'kicker'),
         cols: grid?.getAttribute('data-cols') || '',
       };
+    }
+    if (spec.group === 'stat-row') {
+      return { group: 'stat-row', cols: host.getAttribute('data-cols') || '' };
     }
     if (spec.group === 'info') {
       return {
@@ -718,18 +831,25 @@
         shotCols: grid?.getAttribute('data-cols') || '',
       };
     }
+    if (spec.group === 'cover') return { group: 'cover', kind: coverKindOf(host) };
     return { group: spec.group };
   };
 
   const restoreVariant = (host, snap) => {
     if (!host || !snap) return;
     if (snap.group === 'stat') {
-      writeStatVariant(host, snap.variant === 'note' ? 'note' : 'plain');
-      const grid = host.closest('.stat-grid');
-      if (grid && 'cols' in snap) {
-        if (snap.cols) grid.setAttribute('data-cols', snap.cols);
-        else grid.removeAttribute('data-cols');
+      writeStatFlag(host, 'prefix', !!snap.prefix);
+      writeStatFlag(host, 'suffix', !!snap.suffix);
+      writeStatFlag(host, 'kicker', !!snap.kicker);
+      if (snap.variant === 'note' && snap.prefix == null) {
+        writeStatFlag(host, 'suffix', true);
+        writeStatFlag(host, 'kicker', true);
       }
+      writeStatCols(host, snap.cols);
+      return;
+    }
+    if (snap.group === 'stat-row') {
+      writeStatCols(host, snap.cols);
       return;
     }
     if (snap.group === 'info') {
@@ -764,7 +884,9 @@
         if (snap.shotCols) grid.setAttribute('data-cols', snap.shotCols);
         else grid.removeAttribute('data-cols');
       }
+      return;
     }
+    if (snap.group === 'cover') writeCoverKind(host, snap.kind);
   };
 
   const applyVariantId = (host, id) => {
@@ -772,17 +894,26 @@
     if (!spec) return;
     const before = snapshotVariant(host);
     if (spec.group === 'stat') {
-      if (id === 'cols-2' || id === 'cols-3' || id === 'cols-4') {
-        const grid = host.closest('.stat-grid') || (host.matches('.stat-grid') ? host : null);
-        if (grid) grid.setAttribute('data-cols', id.slice(5));
-      } else {
-        writeStatVariant(host, id);
+      if (id === 'cols-2' || id === 'cols-3' || id === 'cols-4' || id === 'cols-5') {
+        writeStatCols(host, id.slice(5));
+      } else if (id === 'prefix' || id === 'suffix' || id === 'kicker') {
+        writeStatFlag(host, id, !statFlagOn(host, id));
+      }
+    } else if (spec.group === 'stat-row') {
+      if (id === 'cols-2' || id === 'cols-3' || id === 'cols-4' || id === 'cols-5') {
+        writeStatCols(host, id.slice(5));
       }
     } else if (spec.group === 'info') {
       if (id === 'no-lg') writeInfoNo(host, true);
       else if (id === 'no-sm') writeInfoNo(host, false);
       else if (id === 'index-off') writeInfoIndex(host, 'off');
-      else if (id === 'index-on') writeInfoIndex(host, infoTypeOf(host), infoLabelsOf(host));
+      else if (id === 'index-on') {
+        if ((host.getAttribute('data-index') || '') === 'off') {
+          writeInfoIndex(host, infoTypeOf(host), infoLabelsOf(host));
+        } else {
+          writeInfoIndex(host, 'off');
+        }
+      }
       else if (id === 'type-alpha') writeInfoIndex(host, 'alpha');
       else if (id === 'type-num') writeInfoIndex(host, 'num');
       else if (id === 'type-q') writeInfoIndex(host, 'q');
@@ -795,13 +926,14 @@
       else if (id === 'cols-2') writeInfoCols(host, 2);
       else if (id === 'cols-3') writeInfoCols(host, 3);
       else if (id === 'cols-4') writeInfoCols(host, 4);
+      else if (id === 'cols-5') writeInfoCols(host, 5);
       else writeInfoKind(host, id);
     } else if (spec.group === 'plain') {
       restoreVariant(host, { group: 'plain', surface: id });
     } else if (spec.group === 'point') {
       restoreVariant(host, { group: 'point', soft: id === 'soft' });
     } else if (spec.group === 'shot') {
-      if (id === 'cols-1' || id === 'cols-2' || id === 'cols-3' || id === 'cols-4') {
+      if (id === 'cols-1' || id === 'cols-2' || id === 'cols-3' || id === 'cols-4' || id === 'cols-5') {
         const grid = host.closest('.shot-grid');
         if (grid) {
           if (id === 'cols-1') grid.removeAttribute('data-cols');
@@ -810,6 +942,8 @@
       } else {
         host.setAttribute('data-kind', id === 'photo' ? 'crop' : id);
       }
+    } else if (spec.group === 'cover') {
+      writeCoverKind(host, id);
     }
     return { before, after: snapshotVariant(host) };
   };
@@ -818,9 +952,15 @@
     const snap = snapshotVariant(host);
     if (!snap) return [];
     if (snap.group === 'stat') {
-      const ids = [snap.variant || 'plain'];
+      const ids = [];
+      if (snap.prefix) ids.push('prefix');
+      if (snap.suffix) ids.push('suffix');
+      if (snap.kicker) ids.push('kicker');
       if (snap.cols) ids.push(`cols-${snap.cols}`);
       return ids;
+    }
+    if (snap.group === 'stat-row') {
+      return snap.cols ? [`cols-${snap.cols}`] : [];
     }
     if (snap.group === 'info') {
       const shape = snap.layout === 'row' ? 'row' : (snap.layout === 'stack' || snap.layout === 'label') ? 'stack' : 'grid';
@@ -842,6 +982,7 @@
       if (snap.shotCols) ids.push(`cols-${snap.shotCols}`);
       return ids;
     }
+    if (snap.group === 'cover') return [snap.kind || 'left'];
     return [];
   };
 
@@ -1099,6 +1240,40 @@
     return `#${a}${a}${b}${b}${c}${c}`.toLowerCase();
   };
 
+  const cssColorToHex = (raw) => {
+    const fromHex = hexInputValue(raw);
+    if (fromHex) return fromHex;
+    const m = String(raw || '').trim().match(/^rgba?\(\s*(\d+)\s*[,\s]\s*(\d+)\s*[,\s]\s*(\d+)/i);
+    if (!m) return '';
+    const h = (n) => Number(n).toString(16).padStart(2, '0');
+    return `#${h(m[1])}${h(m[2])}${h(m[3])}`;
+  };
+
+  const TEXT_COLOR_TOKENS = ['--c-text', '--c-text-2', '--c-text-3', '--c-text-4', '--c-accent', '--c-pos', '--c-neg', '--c-line'];
+
+  const listColorTokens = () => {
+    const seen = new Set();
+    const names = [];
+    document.querySelectorAll('[data-css-var][data-token-kind="color"]').forEach((host) => {
+      const name = host.dataset.cssVar;
+      if (!name || seen.has(name)) return;
+      seen.add(name);
+      names.push(name);
+    });
+    TEXT_COLOR_TOKENS.forEach((name) => {
+      if (seen.has(name)) return;
+      seen.add(name);
+      names.push(name);
+    });
+    return names;
+  };
+
+  const tokenColorHex = (name) => {
+    const live = getComputedStyle(document.documentElement).getPropertyValue(name)
+      || getComputedStyle(document.body).getPropertyValue(name);
+    return cssColorToHex(live);
+  };
+
   const paintColorSwatch = (swatch, value) => {
     if (!swatch) return;
     const hex = hexInputValue(value);
@@ -1158,12 +1333,13 @@
     ['.source-note', '来源'],
     ['hr.rule', '分割线'],
     ['.info-grid', '编号信息'],
+    ['.stat-grid.is-compact', '横排数字'],
     ['.stat-grid', '数字信息'],
     ['.plain-grid', '无编号信息'],
     ['.stat-row', '横排数字'],
     ['.point', '观点'],
     ['.pain-text-list', '议题格'],
-    ['.finding', '重点文本'],
+    ['.finding', '自定义文本'],
     ['.shot-grid', '图'],
     ['.shot-stack', '图'],
     ['.shot', '图'],
@@ -1188,18 +1364,18 @@
     { id: 'source', label: '来源', html: '<p class="source-note">来源：待填</p>' },
     { id: 'rule', label: '分割线', html: '<hr class="rule">' },
     { id: 'formula', label: '公式', html: '<div class="market-formula" aria-label="公式"><div class="market-factor"><div class="market-number"><span>A</span><i>单位</i></div><div class="market-factor-label">因子：基数</div></div><div class="market-operator" aria-hidden="true">×</div><div class="market-factor"><div class="market-number"><span>B</span><i>%</i></div><div class="market-factor-label">因子：转化率</div></div><div class="market-operator" aria-hidden="true">=</div><div class="market-factor market-result"><div class="market-number"><span>N</span><i>次</i></div><div class="market-factor-label">结果</div></div></div>' },
-    { id: 'stat-row', label: '横排数字', html: '<div class="stat-row" data-cols="3"><article><div class="market-number"><span>0</span><i></i></div><h3>指标名称</h3></article><article><div class="market-number"><span>0</span><i></i></div><h3>指标名称</h3></article><article><div class="market-number"><span>0</span><i></i></div><h3>指标名称</h3></article></div>' },
-    { id: 'stat', label: '数字信息', html: '<div class="stat-grid"><article class="stat-card"><span class="stat-card__kicker">口径</span><strong class="stat-card__num">0</strong><h3>标题</h3><p>待填。</p></article><article class="stat-card"><span class="stat-card__kicker">口径</span><strong class="stat-card__num">0</strong><h3>标题</h3><p>待填。</p></article></div>' },
+    { id: 'stat-row', label: '横排数字', html: '<div class="stat-grid is-compact" data-cols="5"><article class="stat-card" data-suffix><span class="stat-card__kicker"></span><strong class="stat-card__num"><span class="stat-card__prefix"></span>0<span class="stat-card__suffix">%</span></strong><h3>指标名称</h3></article><article class="stat-card" data-suffix><span class="stat-card__kicker"></span><strong class="stat-card__num"><span class="stat-card__prefix"></span>0<span class="stat-card__suffix">%</span></strong><h3>指标名称</h3></article><article class="stat-card" data-suffix><span class="stat-card__kicker"></span><strong class="stat-card__num"><span class="stat-card__prefix"></span>0<span class="stat-card__suffix">%</span></strong><h3>指标名称</h3></article></div>' },
+    { id: 'stat', label: '数字信息', html: '<div class="stat-grid"><article class="stat-card"><span class="stat-card__kicker"></span><strong class="stat-card__num"><span class="stat-card__prefix"></span>0<span class="stat-card__suffix"></span></strong><h3>标题</h3><p>待填。</p></article><article class="stat-card"><span class="stat-card__kicker"></span><strong class="stat-card__num"><span class="stat-card__prefix"></span>0<span class="stat-card__suffix"></span></strong><h3>标题</h3><p>待填。</p></article></div>' },
     { id: 'info', label: '编号信息', html: '<div class="info-grid" data-layout="2"><article class="info"><span class="info__no">01</span><h3>要点标题</h3><p>待填。写清这条在论证什么。</p></article><article class="info"><span class="info__no">02</span><h3>要点标题</h3><p>待填。</p></article></div>' },
     { id: 'plain', label: '无编号信息', html: '<div class="plain-grid" data-surface="tint"><article class="plain"><b>要点标题</b><p>待填。</p></article><article class="plain"><b>要点标题</b><p>待填。</p></article></div>' },
     { id: 'point', label: '观点', html: '<aside class="point"><span>观点</span><p>待填。一句立场。</p></aside>' },
     { id: 'pain', label: '议题格', html: '<div class="pain-text-list"><article class="pain-topic"><header class="pain-topic-head"><h3><span class="pain-topic-index">01</span>议题名称</h3><p class="pain-topic-summary">一句概括：这一格要回答什么问题。</p></header><div class="pain-topic-body"><ul class="pain-detail-list"><li>待填</li></ul></div></article></div>' },
-    { id: 'finding', label: '重点文本', html: '<article class="finding"><h3>重点标题</h3><p>待填。整块可编辑，选中文字可加粗。</p><div class="finding-sub"><b>① 分点标题</b><p>待填。</p></div></article>' },
+    { id: 'finding', label: '自定义文本', html: '<article class="finding"><p>待填。可改字号、颜色、加粗，可插入弱分割线。</p></article>' },
     { id: 'table', label: '表格', html: '<div class="plain-table-wrap"><table class="airline-matrix"><thead><tr><th>维度</th><th>对象 A</th><th>对象 B</th></tr></thead><tbody><tr><td>指标</td><td>待填</td><td>待填</td></tr></tbody></table></div>' },
     { id: 'chart', label: '折线图', html: '<figure class="rail-growth-chart" aria-label="折线图"><div class="rail-growth-chart-scroll"><svg viewBox="0 0 640 220" role="img"><line class="chart-grid" x1="56" y1="170" x2="600" y2="170"/><line class="chart-axis" x1="56" y1="30" x2="56" y2="170"/><line class="chart-line" x1="80" y1="150" x2="320" y2="110"/><line class="chart-line" x1="320" y1="110" x2="560" y2="50"/><circle class="chart-point" cx="80" cy="150" r="4"/><circle class="chart-point" cx="320" cy="110" r="4"/><circle class="chart-point" cx="560" cy="50" r="4"/><text class="chart-value" x="80" y="140" text-anchor="middle">10</text><text class="chart-value" x="320" y="100" text-anchor="middle">40</text><text class="chart-value" x="560" y="40" text-anchor="middle">90</text><text class="chart-date" x="80" y="198" text-anchor="middle">T1</text><text class="chart-date" x="320" y="198" text-anchor="middle">T2</text><text class="chart-date" x="560" y="198" text-anchor="end">T3</text></svg></div></figure>' },
     { id: 'ansoff', label: '四象限矩阵', html: '<div class="ansoff-wrap"><div class="ansoff-grid" aria-label="四象限矩阵"><div class="ansoff-corner"></div><div class="ansoff-col-head"><span class="ansoff-kicker">横轴 · 低</span><span class="ansoff-title">象限 · 左</span></div><div class="ansoff-col-head"><span class="ansoff-kicker">横轴 · 高</span><span class="ansoff-title">象限 · 右</span></div><div class="ansoff-row-head"><span class="ansoff-kicker">纵轴 · 高</span></div><div class="ansoff-cell"><span class="cell-tag">I</span><h4>象限名称</h4><p>待填。</p></div><div class="ansoff-cell"><span class="cell-tag">II</span><h4>象限名称</h4><p>待填。</p></div><div class="ansoff-row-head"><span class="ansoff-kicker">纵轴 · 低</span></div><div class="ansoff-cell"><span class="cell-tag">III</span><h4>象限名称</h4><p>待填。</p></div><div class="ansoff-cell"><span class="cell-tag">IV</span><h4>象限名称</h4><p>待填。</p></div></div></div>' },
     { id: 'rank', label: '排行榜', html: '<section class="hotel-ranking-block"><div class="hotel-ranking-head"><div><h4>排行榜标题</h4><p>待填。</p></div></div><div class="hotel-ranking-scroll"><table><thead><tr><th>#</th><th>名称</th><th>分值</th></tr></thead><tbody><tr><td class="rank">1</td><td class="hotel-name">对象 01</td><td class="score total">0</td></tr><tr><td class="rank">2</td><td class="hotel-name">对象 02</td><td class="score total">0</td></tr></tbody></table></div></section>' },
-    { id: 'shot', label: '图', html: '<figure class="shot" data-kind="photo"><div class="shot__frame"><img alt=""></div><figcaption><b>图片标题</b><span>一句说明。右键替换图片。</span></figcaption></figure>' },
+    { id: 'shot', label: '图', html: '<div class="shot-grid" data-cols="2"><figure class="shot" data-kind="photo"><div class="shot__frame"><img alt=""></div><figcaption><b>图片标题</b><span>一句说明。右键替换图片。</span></figcaption></figure></div>' },
     { id: 'transport', label: '图文卡', html: '<div class="transport-cards"><article class="transport-card"><div class="transport-card-copy"><h3>方案名称</h3><p>一句对比。</p><div class="transport-facts"><div class="transport-fact"><span>属性</span><strong>待填</strong></div></div></div></article></div>' },
   ];
 
@@ -1227,6 +1403,11 @@
       const item = node.closest(itemSel);
       if (item && host.contains(item) && item.parentElement === host) return { spec, host, item };
       if (host === node || host.contains(node)) return { spec, host, item: null };
+    }
+    const shot = node.closest('.shot');
+    if (shot && !shot.closest('.shot-grid, .shot-stack, .chapter-cover')) {
+      const spec = ITEM_SPECS.find((s) => s.host === '.shot-grid');
+      if (spec) return { spec, host: shot, item: shot, wrapShot: true };
     }
     return null;
   };
@@ -1391,6 +1572,7 @@
     let menuHeading = null;
     let menuItemHit = null;
     let menuBlock = null;
+    let menuAt = { x: 0, y: 0 };
 
     const menu = document.createElement('div');
     menu.className = 'seed-edit-menu';
@@ -1475,13 +1657,32 @@
     boldBtn.textContent = '加粗';
     boldBtn.setAttribute('aria-label', '选中文字加粗');
     document.body.appendChild(boldBtn);
+    const sizeSel = document.createElement('select');
+    sizeSel.className = 'seed-edit-size';
+    sizeSel.hidden = true;
+    sizeSel.setAttribute('aria-label', '字号');
+    sizeSel.innerHTML = '<option value="">字号</option><option value="12px">12</option><option value="14px">14</option><option value="15px">15</option><option value="16px">16</option><option value="20px">20</option>';
+    document.body.appendChild(sizeSel);
+    const ruleBtn = document.createElement('button');
+    ruleBtn.className = 'seed-edit-rule';
+    ruleBtn.type = 'button';
+    ruleBtn.hidden = true;
+    ruleBtn.textContent = '分割线';
+    ruleBtn.setAttribute('aria-label', '插入弱分割线');
+    document.body.appendChild(ruleBtn);
     const colorPick = document.createElement('input');
     colorPick.type = 'color';
     colorPick.className = 'seed-edit-color';
     colorPick.hidden = true;
     colorPick.setAttribute('aria-label', '选择颜色');
     document.body.appendChild(colorPick);
+    const colorPalette = document.createElement('div');
+    colorPalette.className = 'seed-edit-palette';
+    colorPalette.hidden = true;
+    colorPalette.setAttribute('aria-label', '主题色');
+    document.body.appendChild(colorPalette);
     let colorBefore = '';
+    let savedRange = null;
 
     const hideMenu = () => {
       menu.hidden = true;
@@ -1499,7 +1700,7 @@
     };
 
     const paintVariantMenu = (host) => {
-      menu.querySelectorAll('[data-edit-variant], [data-edit-variant-rule], [data-edit-variant-label]').forEach((el) => el.remove());
+      menu.querySelectorAll('[data-edit-variant], [data-edit-variant-rule], [data-edit-variant-label], [data-edit-variant-check]').forEach((el) => el.remove());
       menuSide.replaceChildren();
       menuSide.hidden = true;
       menu.classList.remove('is-split');
@@ -1531,6 +1732,17 @@
         btn.classList.toggle('is-on', active.has(item.id));
         parent.append(btn);
       };
+      const appendCheck = (parent, item) => {
+        const label = document.createElement('label');
+        label.className = 'seed-edit-menu__check';
+        label.setAttribute('data-edit-variant-check', '');
+        const box = document.createElement('input');
+        box.type = 'checkbox';
+        box.dataset.editVariant = item.id;
+        box.checked = active.has(item.id);
+        label.append(box, document.createTextNode(item.label));
+        parent.append(label);
+      };
       if (spec.sections) {
         const indexOn = !active.has('index-off');
         const gridOn = active.has('layout-grid') && active.has('pos-top');
@@ -1538,7 +1750,11 @@
           if (section.when === 'index-on' && !indexOn) return;
           if (section.when === 'grid' && !gridOn) return;
           const parent = section.side ? menuSide : menuMain;
-          appendLabel(parent, section.title);
+          if (section.title) appendLabel(parent, section.title);
+          if (section.check) {
+            (section.items || []).forEach((item) => appendCheck(parent, item));
+            return;
+          }
           (section.items || []).forEach((item) => appendItem(parent, item));
         });
         if (menuSide.childElementCount) {
@@ -1547,12 +1763,12 @@
         }
       } else {
         if (spec.title) appendLabel(menuMain, spec.title);
+        (spec.checks || []).forEach((item) => appendCheck(menuMain, item));
         (spec.items || []).forEach((item) => appendItem(menuMain, item));
       }
       if (spec.group === 'shot') {
         const grid = host.closest('.shot-grid');
-        const count = grid ? grid.querySelectorAll('.shot').length : 0;
-        if (grid && count >= 2) {
+        if (grid) {
           const cols = grid.getAttribute('data-cols') || '1';
           appendLabel(menuMain, '列数');
           [
@@ -1560,6 +1776,7 @@
             { id: 'cols-2', label: '2' },
             { id: 'cols-3', label: '3' },
             { id: 'cols-4', label: '4' },
+            { id: 'cols-5', label: '5' },
           ].forEach((item) => {
             const btn = document.createElement('button');
             btn.type = 'button';
@@ -1573,12 +1790,13 @@
       if (spec.group === 'stat') {
         const grid = host.closest('.stat-grid') || (host.matches('.stat-grid') ? host : null);
         if (grid) {
-          const cols = grid.getAttribute('data-cols') || '3';
+          const cols = grid.getAttribute('data-cols') || (grid.classList.contains('is-compact') ? '5' : '3');
           appendLabel(menuMain, '列数');
           [
             { id: 'cols-2', label: '2' },
             { id: 'cols-3', label: '3' },
             { id: 'cols-4', label: '4' },
+            { id: 'cols-5', label: '5' },
           ].forEach((item) => {
             const btn = document.createElement('button');
             btn.type = 'button';
@@ -1602,11 +1820,11 @@
       menuInsertAt = insertAt || null;
       textBtn.hidden = !menuText;
       imageBtn.hidden = !menuMedia;
-      layoutBtn.hidden = !(menuMedia || menuResize);
+      layoutBtn.hidden = menuMedia?.closest?.('.chapter-cover') ? true : !(menuMedia || menuResize);
       const canAddItem = !!(menuItemHit?.host);
       const canDelItem = !!(menuItemHit?.item && menuItemHit.host && menuItemHit.host.querySelectorAll(menuItemHit.spec.item).length > 1);
       const canDelGroup = !!(menuHeading?.nodes?.length);
-      const canDelBlock = !!(menuBlock && !canDelGroup && !menuItemHit);
+      const canDelBlock = !!(menuBlock && !canDelGroup);
       const canInsert = !!menuInsertAt;
       addItemBtn.hidden = !canAddItem;
       delItemBtn.hidden = !canDelItem;
@@ -1634,10 +1852,28 @@
         else break;
       }
       menu.hidden = false;
+      menuAt = { x: event.clientX, y: event.clientY };
       const box = menu.getBoundingClientRect();
       const pad = 8;
-      menu.style.left = `${Math.max(pad, Math.min(event.clientX, window.innerWidth - box.width - pad))}px`;
-      menu.style.top = `${Math.max(pad, Math.min(event.clientY, window.innerHeight - box.height - pad))}px`;
+      menu.style.left = `${Math.max(pad, Math.min(menuAt.x, window.innerWidth - box.width - pad))}px`;
+      menu.style.top = `${Math.max(pad, Math.min(menuAt.y, window.innerHeight - box.height - pad))}px`;
+    };
+
+    const refreshOpenMenu = () => {
+      if (menu.hidden || !menuVariant) return;
+      paintVariantMenu(menuVariant);
+      const hasDelete = !delItemBtn.hidden || !delGroupBtn.hidden || !delBlockBtn.hidden;
+      deleteRule.hidden = !hasDelete;
+      if (hasDelete) {
+        menuMain.append(deleteRule);
+        if (!delItemBtn.hidden) menuMain.append(delItemBtn);
+        if (!delGroupBtn.hidden) menuMain.append(delGroupBtn);
+        if (!delBlockBtn.hidden) menuMain.append(delBlockBtn);
+      }
+      const box = menu.getBoundingClientRect();
+      const pad = 8;
+      menu.style.left = `${Math.max(pad, Math.min(menuAt.x, window.innerWidth - box.width - pad))}px`;
+      menu.style.top = `${Math.max(pad, Math.min(menuAt.y, window.innerHeight - box.height - pad))}px`;
     };
 
     const persist = async () => {
@@ -1818,7 +2054,7 @@
 
     const defaultItemHtml = (spec) => {
       if (spec.host === '.info-grid') return '<article class="info"><span class="info__no">01</span><h3>新标题</h3><p>待填</p></article>';
-      if (spec.host === '.stat-grid') return '<article class="stat-card"><span class="stat-card__kicker">口径</span><strong class="stat-card__num">0</strong><h3>新标题</h3><p>待填</p></article>';
+      if (spec.host === '.stat-grid') return '<article class="stat-card"><span class="stat-card__kicker"></span><strong class="stat-card__num"><span class="stat-card__prefix"></span>0<span class="stat-card__suffix"></span></strong><h3>新标题</h3><p>待填</p></article>';
       if (spec.host === '.plain-grid') return '<article class="plain"><b>新标题</b><p>待填</p></article>';
       if (spec.host === '.stat-row') return '<article><div class="market-number"><span>0</span><i></i></div><h3>指标名称</h3></article>';
       if (spec.host === '.pain-text-list') return '<article class="pain-topic"><header class="pain-topic-head"><h3><span class="pain-topic-index">01</span>议题名称</h3><p class="pain-topic-summary">一句概括。</p></header><div class="pain-topic-body"><ul class="pain-detail-list"><li>待填</li></ul></div></article>';
@@ -1905,6 +2141,14 @@
 
     const addItemAt = (hit) => {
       if (!hit?.host) return;
+      if (hit.wrapShot && hit.item?.matches?.('.shot') && !hit.item.closest('.shot-grid')) {
+        const grid = document.createElement('div');
+        grid.className = 'shot-grid';
+        grid.setAttribute('data-cols', '2');
+        hit.item.replaceWith(grid);
+        grid.append(hit.item);
+        hit = { spec: hit.spec, host: grid, item: hit.item };
+      }
       const items = [...hit.host.querySelectorAll(hit.spec.item)];
       const src = hit.item || items[items.length - 1];
       const node = src ? src.cloneNode(true) : htmlToNodes(defaultItemHtml(hit.spec))[0];
@@ -1946,6 +2190,11 @@
     ghost.className = 'seed-edit-ghost';
     ghost.hidden = true;
     document.body.appendChild(ghost);
+    const trash = document.createElement('div');
+    trash.className = 'seed-edit-trash';
+    trash.hidden = true;
+    trash.innerHTML = '<span class="seed-edit-trash__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28"><path fill="currentColor" d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg></span><span>拖到这里删除</span>';
+    document.body.appendChild(trash);
     const grip = document.createElement('button');
     grip.className = 'seed-edit-grip';
     grip.type = 'button';
@@ -1991,6 +2240,8 @@
       grip.hidden = true;
       gripTarget = null;
       sorting = false;
+      trash.hidden = true;
+      trash.classList.remove('is-hot');
     };
 
     const enterBlockSort = (stack) => {
@@ -2076,20 +2327,45 @@
       else enterBlockSort(parent);
       el.classList.add('is-seed-drag');
       grip.hidden = true;
+      trash.hidden = false;
+      trash.classList.remove('is-hot');
       ghost.textContent = el.dataset.seedSortTitle || (mode === 'item' ? itemTitleOf(el) : blockTitleOf(el));
       ghost.classList.remove('is-item');
       ghost.hidden = false;
       ghost.style.left = `${event.clientX + 12}px`;
       ghost.style.top = `${event.clientY - 18}px`;
+      const overTrash = (x, y) => {
+        const box = trash.getBoundingClientRect();
+        return y >= box.top && x >= 0 && x <= window.innerWidth;
+      };
       const onMove = (move) => {
         ghost.style.left = `${move.clientX + 12}px`;
         ghost.style.top = `${move.clientY - 18}px`;
-        liveReorder(el, parent, move.clientX, move.clientY);
+        const hot = overTrash(move.clientX, move.clientY);
+        trash.classList.toggle('is-hot', hot);
+        if (!hot) liveReorder(el, parent, move.clientX, move.clientY);
       };
       const onUp = () => {
         document.removeEventListener('pointermove', onMove);
         document.removeEventListener('pointerup', onUp);
         el.classList.remove('is-seed-drag');
+        const dropDelete = trash.classList.contains('is-hot');
+        if (dropDelete) {
+          if (fromParent) {
+            if (fromBefore && fromBefore.parentNode === fromParent) fromParent.insertBefore(el, fromBefore);
+            else fromParent.appendChild(el);
+          }
+          clearSortAttrs();
+          if (mode === 'item') {
+            const spec = ITEM_SPECS.find((s) => fromParent.matches(s.host));
+            const count = spec ? fromParent.querySelectorAll(spec.item).length : 1;
+            if (count <= 1) recordRemove([blockOf(fromParent) || fromParent]);
+            else recordRemove([el]);
+          } else {
+            recordRemove([el]);
+          }
+          return;
+        }
         const toParent = el.parentElement;
         const toBefore = el.nextSibling;
         const moved = fromParent !== toParent || fromBefore !== toBefore;
@@ -2126,31 +2402,50 @@
       const node = anchor || activeText;
       if (!node || !node.getBoundingClientRect) return;
       const box = node.getBoundingClientRect();
-      const width = doneBtn.offsetWidth || 72;
-      const height = doneBtn.offsetHeight || 34;
       const pad = 8;
-      let left = box.right + pad;
-      let top = box.top;
-      if (left + width > window.innerWidth - pad) left = Math.max(pad, box.right - width);
-      if (top + height > window.innerHeight - pad) top = Math.max(pad, box.bottom - height);
-      doneBtn.style.left = `${left}px`;
-      doneBtn.style.top = `${top}px`;
-      const boldW = boldBtn.hidden ? 0 : (boldBtn.offsetWidth || 56);
-      if (!boldBtn.hidden) {
-        boldBtn.style.left = `${Math.max(pad, left - boldW - 8)}px`;
-        boldBtn.style.top = `${top}px`;
+      const tools = [sizeSel, colorPick, colorPalette, boldBtn, ruleBtn, doneBtn].filter((el) => !el.hidden);
+      const gap = 8;
+      const widths = tools.map((el) => el.offsetWidth || (el === colorPick ? 34 : el === colorPalette ? 160 : 56));
+      const heights = tools.map((el) => el.offsetHeight || 34);
+      const total = widths.reduce((sum, w) => sum + w + gap, -gap);
+      const rowH = Math.max(34, ...heights);
+      const fitsRight = box.right + pad + total <= window.innerWidth - pad;
+      let left;
+      let top;
+      if (fitsRight) {
+        left = box.right + pad;
+        top = box.top;
+      } else {
+        left = Math.max(pad, Math.min(box.left, window.innerWidth - pad - total));
+        top = box.bottom + pad;
+        if (top + rowH > window.innerHeight - pad) top = Math.max(pad, box.top - rowH - pad);
       }
-      if (!colorPick.hidden) {
-        const size = colorPick.offsetWidth || 34;
-        let cleft = left - (boldW ? boldW + 8 : 0) - size - 8;
-        if (cleft < pad) cleft = left + width + 8;
-        colorPick.style.left = `${cleft}px`;
-        colorPick.style.top = `${top}px`;
-      }
+      let x = left;
+      tools.forEach((el, i) => {
+        el.style.left = `${x}px`;
+        el.style.top = `${top}px`;
+        x += widths[i] + gap;
+      });
     };
 
     const hideColorPick = () => {
       colorPick.hidden = true;
+      colorPalette.hidden = true;
+    };
+
+    const paintColorPalette = () => {
+      colorPalette.replaceChildren();
+      listColorTokens().forEach((name) => {
+        const hex = tokenColorHex(name);
+        if (!hex) return;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.colorToken = name;
+        btn.title = name;
+        btn.setAttribute('aria-label', name);
+        btn.style.background = `var(${name})`;
+        colorPalette.append(btn);
+      });
     };
 
     const showColorPickFor = (valueEl) => {
@@ -2218,6 +2513,8 @@
       document.documentElement.classList.remove('is-inline-editing');
       doneBtn.hidden = true;
       boldBtn.hidden = true;
+      sizeSel.hidden = true;
+      ruleBtn.hidden = true;
       hideColorPick();
       clearSvgInput();
       activeText = null;
@@ -2274,15 +2571,28 @@
       doneBtn.hidden = false;
       if (isSvgText(node)) {
         boldBtn.hidden = true;
+        sizeSel.hidden = true;
+        ruleBtn.hidden = true;
+        hideColorPick();
         startSvgTextEdit(node);
         return;
       }
       node.contentEditable = 'true';
       node.spellcheck = false;
       node.focus();
-      boldBtn.hidden = !!node.closest?.('[data-token-kind="color"]');
-      if (node.closest?.('[data-token-kind="color"]')) showColorPickFor(node);
-      else hideColorPick();
+      const tokenColor = !!node.closest?.('[data-token-kind="color"]');
+      const finding = !!node.matches?.('.finding');
+      boldBtn.hidden = tokenColor;
+      sizeSel.hidden = !finding;
+      sizeSel.value = '';
+      ruleBtn.hidden = !finding;
+      if (tokenColor) showColorPickFor(node);
+      else {
+        colorPick.hidden = false;
+        colorPick.value = '#1d1d1f';
+        paintColorPalette();
+        colorPalette.hidden = false;
+      }
       placeDone(node);
     };
 
@@ -2734,8 +3044,16 @@
       }
       const insertId = event.target.closest('[data-edit-insert-id]')?.dataset.editInsertId;
       if (insertId && menuInsertAt) insertBlock(insertId, menuInsertAt);
-      const variantId = event.target.closest('[data-edit-variant]')?.dataset.editVariant;
-      if (variantId && menuVariant) applyVariant(menuVariant, variantId);
+      const checkHost = event.target.closest('[data-edit-variant-check]');
+      const variantId = checkHost?.querySelector('[data-edit-variant]')?.dataset.editVariant
+        || event.target.closest('[data-edit-variant]')?.dataset.editVariant;
+      if (variantId && menuVariant) {
+        applyVariant(menuVariant, variantId);
+        if (checkHost) {
+          refreshOpenMenu();
+          return;
+        }
+      }
       if (event.target.closest('[data-edit-text-action]') && menuText) startTextEdit(menuText);
       if (event.target.closest('[data-edit-image-action]') && menuMedia) pickMedia(menuMedia);
       if (event.target.closest('[data-edit-layout-action]') && (menuMedia || menuResize)) {
@@ -2753,6 +3071,46 @@
       event.stopPropagation();
       stopTextEdit({ commit: true });
     });
+    const rememberRange = () => {
+      if (!activeText || isSvgText(activeText) || colorHostOf(activeText)) return;
+      const sel = window.getSelection();
+      if (sel.rangeCount && activeText.contains(sel.anchorNode)) {
+        savedRange = sel.getRangeAt(0).cloneRange();
+      }
+    };
+
+    const restoreRange = () => {
+      if (!savedRange || !activeText) return;
+      activeText.focus();
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(savedRange);
+    };
+
+    const applyForeColor = (hex) => {
+      restoreRange();
+      document.execCommand('styleWithCSS', false, true);
+      document.execCommand('foreColor', false, hex);
+    };
+
+    const applyFontSize = (px) => {
+      if (!px) return;
+      restoreRange();
+      document.execCommand('styleWithCSS', false, true);
+      document.execCommand('fontSize', false, '7');
+      (activeText || document).querySelectorAll('font[size="7"]').forEach((el) => {
+        const span = document.createElement('span');
+        span.style.fontSize = px;
+        while (el.firstChild) span.appendChild(el.firstChild);
+        el.replaceWith(span);
+      });
+      (activeText || document).querySelectorAll('span').forEach((el) => {
+        const size = el.style.fontSize;
+        if (size === 'xxx-large' || size === 'xx-large') el.style.fontSize = px;
+      });
+    };
+
+    document.addEventListener('selectionchange', rememberRange);
     boldBtn.addEventListener('pointerdown', (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -2761,7 +3119,55 @@
       event.preventDefault();
       event.stopPropagation();
       if (!activeText || isSvgText(activeText)) return;
+      restoreRange();
       document.execCommand('bold');
+    });
+    sizeSel.addEventListener('pointerdown', (event) => event.stopPropagation());
+    sizeSel.addEventListener('change', () => {
+      if (!activeText || isSvgText(activeText)) return;
+      applyFontSize(sizeSel.value);
+      sizeSel.value = '';
+    });
+    ruleBtn.addEventListener('pointerdown', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+    ruleBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!activeText || isSvgText(activeText)) return;
+      restoreRange();
+      const sel = window.getSelection();
+      const range = sel.rangeCount ? sel.getRangeAt(0) : null;
+      let block = range?.startContainer || null;
+      if (block?.nodeType === 3) block = block.parentElement;
+      while (block && block.parentElement && block.parentElement !== activeText) block = block.parentElement;
+      const hr = document.createElement('hr');
+      hr.className = 'rule is-soft';
+      if (block && block.parentElement === activeText) block.after(hr);
+      else activeText.append(hr);
+      const next = document.createRange();
+      next.setStartAfter(hr);
+      next.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(next);
+      savedRange = next.cloneRange();
+    });
+    colorPick.addEventListener('pointerdown', () => rememberRange());
+    colorPalette.addEventListener('pointerdown', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      rememberRange();
+    });
+    colorPalette.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const btn = event.target.closest?.('[data-color-token]');
+      if (!btn || !activeText || isSvgText(activeText)) return;
+      const hex = tokenColorHex(btn.dataset.colorToken);
+      if (!hex) return;
+      applyForeColor(hex);
+      colorPick.value = hex;
     });
 
     document.addEventListener('pointerdown', (event) => {
@@ -2779,7 +3185,7 @@
 
     document.addEventListener('pointermove', (event) => {
       if (sorting || activeText || activeBox || !menu.hidden) return;
-      if (event.target.closest?.('.seed-edit-menu, .seed-edit-done, .seed-edit-bold, .seed-edit-media, .seed-edit-handle, .seed-edit-handle-h')) return;
+      if (event.target.closest?.('.seed-edit-menu, .seed-edit-done, .seed-edit-bold, .seed-edit-size, .seed-edit-rule, .seed-edit-color, .seed-edit-palette, .seed-edit-media, .seed-edit-handle, .seed-edit-handle-h, .seed-edit-trash')) return;
       if (pointerNearGrip(event)) return;
       const node = event.target instanceof Element ? event.target : event.target?.parentElement;
       if (!node || isChrome(node)) {
@@ -2853,6 +3259,7 @@
       if (chromePick && activeText) {
         const host = colorHostOf(activeText);
         if (host) applyColorHex(host, chromePick.value);
+        else applyForeColor(chromePick.value);
         return;
       }
       const boardPick = event.target.closest?.('input.token-color');

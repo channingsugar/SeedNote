@@ -1230,7 +1230,8 @@ html:has(.report-chrome-hotspot:focus-visible) .report-chrome,
   position: relative;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
+  contain: paint;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1249,12 +1250,17 @@ html:has(.report-chrome-hotspot:focus-visible) .report-chrome,
   background-size: auto, auto, 42px 42px, 42px 42px;
   pointer-events: none;
 }
-.chapter-cover > * { position: relative; z-index: 1; }
+.chapter-cover > *,
+.chapter-cover__copy > * { position: relative; z-index: 1; }
+.chapter-cover__copy { display: contents; }
 .chapter-cover__media {
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
+}
+.chapter-cover:not([data-cover="image"]):not([data-cover="split"]) .chapter-cover__media {
+  display: none;
 }
 .chapter-cover__media img {
   width: 100%;
@@ -1269,7 +1275,8 @@ html:has(.report-chrome-hotspot:focus-visible) .report-chrome,
   background-size: auto;
   z-index: 1;
 }
-.chapter-cover[data-cover="image"] > *:not(.chapter-cover__media) {
+.chapter-cover[data-cover="image"] > *:not(.chapter-cover__media),
+.chapter-cover[data-cover="image"] .chapter-cover__copy > * {
   z-index: 2;
 }
 .chapter-cover[data-cover="image"] .chapter-cover__no,
@@ -1292,7 +1299,7 @@ html:has(.report-chrome-hotspot:focus-visible) .report-chrome,
   letter-spacing: .14em;
   text-transform: uppercase;
 }
-.chapter-cover:not(:has(> .chapter-cover__no)) .chapter-cover__kicker {
+.chapter-cover:not(:has(.chapter-cover__no)) .chapter-cover__kicker {
   margin-top: 0;
 }
 .chapter-cover__title {
@@ -1391,6 +1398,86 @@ html:has(.report-chrome-hotspot:focus-visible) .report-chrome,
 }
 .chapter-cover[data-cover="image"] .chapter-cover__byline {
   color: color-mix(in srgb, var(--inverse) 72%, transparent);
+}
+.chapter-cover[data-cover="center"] {
+  align-items: center;
+  text-align: center;
+}
+.chapter-cover[data-cover="center"] .chapter-cover__title,
+.chapter-cover[data-cover="center"] .chapter-cover__subtitle {
+  max-width: 16em;
+}
+.chapter-cover[data-cover="center"] .chapter-cover__lead,
+.chapter-cover[data-cover="center"] .chapter-cover__byline {
+  max-width: 36rem;
+}
+.chapter-cover[data-cover="center"] .chapter-cover__kicker {
+  align-self: center;
+}
+.chapter-cover[data-cover="center"] .chapter-cover__byline,
+.chapter-cover[data-cover="center"] .chapter-cover__actions {
+  justify-content: center;
+}
+.chapter-cover[data-cover="split"] {
+  flex-direction: row;
+  align-items: stretch;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  padding: 0;
+  overflow: visible;
+  contain: paint;
+}
+.chapter-cover[data-cover="split"]::before {
+  display: none;
+}
+.chapter-cover[data-cover="split"] .chapter-cover__copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  flex: 1 1 54%;
+  min-width: 0;
+  min-height: 0;
+  order: 1;
+  padding: clamp(32px, 7vh, 88px) var(--page-gutter, clamp(64px, 10.417vw, 200px));
+  box-sizing: border-box;
+  overflow: visible;
+}
+.chapter-cover[data-cover="split"] .chapter-cover__copy::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 12% 18%, color-mix(in srgb, var(--accent-soft) 80%, transparent), transparent 34%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 6%, transparent), transparent 48%),
+    linear-gradient(color-mix(in srgb, var(--accent) 4%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 4%, transparent) 1px, transparent 1px);
+  background-size: auto, auto, 42px 42px, 42px 42px;
+  pointer-events: none;
+}
+.chapter-cover[data-cover="split"] .chapter-cover__media {
+  position: relative;
+  inset: auto;
+  z-index: 0;
+  flex: 1 1 46%;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  align-self: stretch;
+  order: 2;
+  pointer-events: auto;
+  overflow: visible;
+  contain: paint;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.chapter-cover[data-cover="split"] .chapter-cover__media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .report-shell.is-deck .report-section {

@@ -727,7 +727,7 @@
     if (fromWin) return fromWin;
     const fromFig = node.closest('.evidence-figure')?.querySelector('.evidence-window img, img');
     if (fromFig) return fromFig;
-    const cover = node.closest('.chapter-cover[data-cover="image"], .full-page[data-full="image"]');
+    const cover = node.closest('.chapter-cover[data-cover="image"], .chapter-cover[data-cover="split"], .full-page[data-full="image"]');
     if (cover) return cover.querySelector('.chapter-cover__media img, img');
     return null;
   };
@@ -830,10 +830,17 @@
       const width = doneBtn.offsetWidth || 72;
       const height = doneBtn.offsetHeight || 34;
       const pad = 8;
-      let left = box.right + pad;
-      let top = box.top;
-      if (left + width > window.innerWidth - pad) left = Math.max(pad, box.right - width);
-      if (top + height > window.innerHeight - pad) top = Math.max(pad, box.bottom - height);
+      const fitsRight = box.right + pad + width <= window.innerWidth - pad;
+      let left;
+      let top;
+      if (fitsRight) {
+        left = box.right + pad;
+        top = box.top;
+      } else {
+        left = Math.max(pad, Math.min(box.left, window.innerWidth - pad - width));
+        top = box.bottom + pad;
+        if (top + height > window.innerHeight - pad) top = Math.max(pad, box.top - height - pad);
+      }
       doneBtn.style.left = `${left}px`;
       doneBtn.style.top = `${top}px`;
     };

@@ -136,6 +136,7 @@ html:has(.report-shell.is-flow) .theme-control__hint { display: none; }
   height: auto;
   min-height: 0;
   overflow: visible;
+  overscroll-behavior: auto;
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
@@ -146,15 +147,32 @@ html:has(.report-shell.is-flow) .theme-control__hint { display: none; }
   background: transparent;
 }
 
-/* Cover stays a full opening. Other chapter covers collapse to a document h2. */
+/* Cover stays a full opening. Other chapter covers collapse to a document h2.
+   contain:paint clips the image without creating a scrollport, so wheel goes to the page. */
 .report-shell.is-flow .report-slide.is-chapter-cover[data-chapter="cover"] {
+  height: 100dvh;
   min-height: 100dvh;
+  max-height: 100dvh;
+  overflow: visible;
+  overscroll-behavior: auto;
 }
 .report-shell.is-flow .report-slide.is-chapter-cover[data-chapter="cover"] .chapter-cover {
-  min-height: 100dvh;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
   padding-inline: var(--flow-inset);
   padding-block: clamp(32px, 7vh, 88px);
   box-sizing: border-box;
+  overflow: visible;
+  contain: paint;
+}
+.report-shell.is-flow .report-slide.is-chapter-cover[data-chapter="cover"] .chapter-cover[data-cover="split"] {
+  padding: 0;
+}
+.report-shell.is-flow .report-slide.is-chapter-cover[data-chapter="cover"] .chapter-cover[data-cover="split"] .chapter-cover__copy {
+  padding-inline: var(--flow-inset);
+  padding-block: clamp(32px, 7vh, 88px);
+  overflow: visible;
 }
 .report-shell.is-flow .report-slide.is-chapter-cover:not([data-chapter="cover"]) {
   min-height: 0;

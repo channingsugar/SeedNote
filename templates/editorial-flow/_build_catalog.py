@@ -84,29 +84,32 @@ def pain(no, title, lead, items):
     )
 
 
-def stat_cell(num, unit, title, note=None, accent=False):
-    extra = f'<p class="stat-row__note">{note}</p>' if note else ""
-    cls = ' class="is-accent"' if accent else ""
+def stat_card(num, title, body="", kicker=None, suffix=None, prefix=None, variant=None, accent=False, ratio=None):
+    tail = ratio if suffix is None else suffix
+    flags = []
+    if prefix: flags.append("data-prefix")
+    if tail or variant == "note": flags.append("data-suffix")
+    if kicker or variant == "note": flags.append("data-kicker")
+    cls = "stat-card is-accent" if accent else "stat-card"
+    attr = f' class="{cls}"' + (f' {" ".join(flags)}' if flags else "")
+    kick = f'<span class="stat-card__kicker">{kicker or ""}</span>'
+    pre = f'<span class="stat-card__prefix">{prefix or ""}</span>'
+    suf = f'<span class="stat-card__suffix">{tail or ""}</span>'
+    para = f"<p>{body}</p>" if body else ""
     return (
-        f"<article{cls}><div class=\"market-number\"><span>{num}</span><i>{unit}</i></div>"
-        f"<h3>{title}</h3>{extra}</article>"
+        f"<article{attr}>{kick}"
+        f'<strong class="stat-card__num">{pre}{num}{suf}</strong>'
+        f"<h3>{title}</h3>{para}</article>"
     )
+
+
+def stat_cell(num, unit, title, note=None, accent=False):
+    return stat_card(num, title, body=note or "", suffix=unit, accent=accent)
 
 
 def stat_row(*cells, cols=None):
-    attr = f' data-cols="{cols}"' if cols else ""
-    return f'<div class="stat-row"{attr}>{"".join(cells)}</div>'
-
-
-def stat_card(num, title, body, kicker=None, ratio=None, variant=None):
-    kick = f'<span class="stat-card__kicker">{kicker or ""}</span>'
-    rat = f'<span class="stat-card__ratio">{ratio or ""}</span>'
-    var = ' data-variant="note"' if variant == "note" else ""
-    return (
-        f'<article class="stat-card"{var}>{kick}'
-        f'<strong class="stat-card__num">{num}{rat}</strong>'
-        f"<h3>{title}</h3><p>{body}</p></article>"
-    )
+    attr = f' data-cols="{cols or 5}"'
+    return f'<div class="stat-grid is-compact"{attr}>{"".join(cells)}</div>'
 
 
 def stat_pair(title, left_label, left_val, right_label, right_val):
@@ -642,9 +645,9 @@ lib = "".join([
         cols=5,
     )),
     lab("数字信息", stat_grid(
-        stat_card("34 / 52", "覆盖率标题", "分子 / 分母。正文写口径：具备政策基础不等于当天可订，仍取决于规格、时段与名额。", kicker="口径 · 覆盖", ratio="分子 / 分母"),
-        stat_card("17 / 52", "试点覆盖标题", "约 33% 已开放付费产品，通常按白名单、指定线路和单班名额执行。", kicker="口径 · 试点", ratio="开放占比"),
-        stat_card("6%", "分层占比标题", "高档供给在总量中仍然很少。", kicker="现状 · 供给分层", ratio="377 / 6326", variant="note"),
+        stat_card("34 / 52", "覆盖率标题", "分子 / 分母。正文写口径：具备政策基础不等于当天可订，仍取决于规格、时段与名额。"),
+        stat_card("17 / 52", "试点覆盖标题", "约 33% 已开放付费产品，通常按白名单、指定线路和单班名额执行。"),
+        stat_card("6", "分层占比标题", "高档供给在总量中仍然很少。", kicker="现状 · 供给分层", suffix="377 / 6326"),
     )),
     lab("编号信息", info_grid("2",
         info("01", "步骤或要点标题", "并列要点。写清这条在论证什么，不要塞进数字卡。"),
@@ -709,20 +712,15 @@ lib = "".join([
     lab("观点", point("观点判断", "一句立场：问题不在供给有没有，而在如何找对象做流程简化和能力突破。")),
     lab("观点 · 浅底", point("", "<strong>顺序建议：</strong>首选覆盖最大的对象建立基础供给；第二家补足名额、规格和临近出发申请。", soft=True)),
     lab("议题格", PAIN_LIST),
-    lab("重点文本", """<article class="finding">
+    lab("自定义文本", """<article class="finding">
         <h3>发现标题：既有“信息缺失”，更有“信息有误”</h3>
+        <hr class="rule is-soft">
         <p>现状下用户需要靠二次核验才能完成决策。</p>
-        <div class="finding-sub">
-          <b>① 信息有误——展示的和实际不符</b>
-          <p>实测 2 例：一家写“不可用”（实际部分档位可以）；另一家写 ¥100 / 晚（实际免费）。</p>
-        </div>
-        <div class="finding-sub">
-          <b>② 信息缺失——决定能否使用的关键条件，平台不展示</b>
-          <div class="stat-lines">
-            <div class="stat-line"><b>50%</b><p><strong>材料、时效要求</strong>　5 / 10 家要求许可证 / 有效证明。</p></div>
-            <div class="stat-line"><b>30%</b><p><strong>仅部分档位可用</strong>　3 / 10 家有档位限制。</p></div>
-          </div>
-        </div>
+        <p>① 信息有误——展示的和实际不符</p>
+        <p>实测 2 例：一家写“不可用”（实际部分档位可以）；另一家写 ¥100 / 晚（实际免费）。</p>
+        <p>② 信息缺失——决定能否使用的关键条件，平台不展示</p>
+        <p>50% 材料、时效要求 5 / 10 家要求许可证 / 有效证明。</p>
+        <p>30% 仅部分档位可用 3 / 10 家有档位限制。</p>
       </article>"""),
     lab("表格", """<div class="plain-table-wrap"><table class="airline-matrix">
         <thead><tr><th>维度</th>
@@ -771,10 +769,10 @@ html = f"""<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>知识汇报模板 · 流式 v2</title>
   <link rel="stylesheet" href="design-system/components.css">
-  <link rel="stylesheet" href="assets/template.css">
-  <link rel="stylesheet" href="assets/flow.css">
-  <link rel="stylesheet" href="assets/source.css?v=17">
-  <link rel="stylesheet" href="assets/lib.css?v=17">
+  <link rel="stylesheet" href="assets/template.css?v=5">
+  <link rel="stylesheet" href="assets/flow.css?v=5">
+  <link rel="stylesheet" href="assets/source.css?v=18">
+  <link rel="stylesheet" href="assets/lib.css?v=20">
   <link rel="stylesheet" href="assets/v2.css?v=9">
 </head>
 <body>
@@ -804,11 +802,14 @@ html = f"""<!doctype html>
       <div class="report-slides" data-report-slides>
         <section class="report-slide is-chapter-cover is-active" data-chapter="cover" data-slide="00" id="cover">
           <header class="chapter-cover">
+            <div class="chapter-cover__media"><img src="assets/demo/pet-travel.png" alt=""></div>
+            <div class="chapter-cover__copy">
             <span class="chapter-cover__kicker">流式 v2</span>
             <h2 class="chapter-cover__title">流式组件库</h2>
             <p class="chapter-cover__lead">可复用块按结构和作用收成父组件，用 data-* / is-* 切换变体。每个组件只陈列内容：不要把章头、分割线和导语画进议题格、图文卡、公式、韦恩图或提问。文案是槽位说明，换成项目内容即可。</p>
             <p class="chapter-cover__byline"><span class="chapter-cover__scope">组件</span><span class="chapter-cover__kind">editorial-flow</span></p>
             <div class="chapter-cover__actions"><a class="button primary" href="#lib">开始阅读</a></div>
+            </div>
           </header>
         </section>
         <section class="report-section report-slide" data-chapter="lib" data-slide="01" id="lib">
@@ -818,10 +819,10 @@ html = f"""<!doctype html>
           <footer class="report-notes">
             <h2>怎么用</h2>
             <ol>
-              <li>这是流式模板。壳是文档栏：report-shell.is-flow、吸顶导航、flow-stack 上下叠。</li>
-              <li>合并后的父组件：<code>.stat-row</code> 横排数字；<code>.stat-card</code> 数字信息（<code>data-variant</code>：默认数字卡 / <code>note</code> 标注卡，右键切换）；<code>.info</code> 编号信息（布局：格子 <code>cols</code> / 列表 A <code>stack</code> / 列表 B <code>row</code>；<code>data-pos</code> 顶部 / 左侧；<code>data-index</code>：数字 / <code>alpha</code> / <code>q</code> 问题 / <code>label</code> 标签 / <code>off</code> 隐藏；<code>.is-lg</code> / <code>data-no="lg"</code> 大编号）；<code>.plain</code> 无编号信息（<code>data-surface</code>：tint / line）；<code>.point</code> 观点（<code>.is-soft</code> 浅底）；<code>.shot</code> 图（<code>data-kind</code>：photo / crop / scroll / wide / poster）。</li>
+              <li>这是流式模板。壳是文档栏：report-shell.is-flow、吸顶导航、flow-stack 上下叠。封面右键切版式：左齐 / 居中 / 配图 / 图文分栏（<code>data-cover</code>：省略、<code>center</code>、<code>image</code>、<code>split</code>）；配图封面可右键替换图片。拖组件排序时封面不显示。</li>
+              <li>合并后的父组件：<code>.stat-card</code> / <code>.stat-grid</code> 数字信息（横排数字是同一父组件的紧凑排：<code>.stat-grid.is-compact</code>；右键勾选前缀 / 后缀 / 说明，列数 2–5）；<code>.info</code> 编号信息（布局：格子 <code>cols</code> / 列表 A <code>stack</code> / 列表 B <code>row</code>；<code>data-pos</code> 顶部 / 左侧；<code>data-index</code>：数字 / <code>alpha</code> / <code>q</code> 问题 / <code>label</code> 标签 / <code>off</code> 隐藏；<code>.is-lg</code> / <code>data-no="lg"</code> 大编号；格子列数 2–5）；<code>.plain</code> 无编号信息（<code>data-surface</code>：tint / line）；<code>.point</code> 观点（<code>.is-soft</code> 浅底）；<code>.shot</code> 图（<code>data-kind</code>：photo / crop / scroll / wide / poster；右键新增一条，列数 1–5）。</li>
               <li>组件库必须带基础 token：间隔 <code>--s-in</code> / <code>--s-stack</code> / <code>--s-chapter</code>；字号 <code>--t-h1</code> / <code>--t-num</code> / <code>--t-no-lg</code> / <code>--t-body</code> / <code>--t-aux</code>；颜色 <code>--c-text</code> 档、<code>--c-line</code>、<code>--c-accent</code>、表数据栏 <code>--c-pos</code> / <code>--c-neg</code>；分割线 <code>.rule</code> / <code>.rule.is-soft</code>。</li>
-              <li>仍独立：公式、议题格 <code>.pain-text-list</code> / <code>.pain-topic</code>、重点文本 <code>.finding</code>、图文卡 <code>.transport-cards</code> / <code>.transport-card</code>、韦恩图、导语、来源、章头、分割线、导航栏 <code>.topbar</code>、折线图 <code>.rail-growth-chart</code>、四象限矩阵 <code>.ansoff-grid</code>、漏斗图 <code>.hotel-funnel-chart</code>、关系网络 <code>.hotel-city-network</code>、节点表 <code>.network-node-table</code>、排行榜 <code>.hotel-ranking-block</code>。关系网络和节点表是两个父组件，不要包在同一块里。</li>
+              <li>仍独立：公式、议题格 <code>.pain-text-list</code> / <code>.pain-topic</code>、自定义文本 <code>.finding</code>、图文卡 <code>.transport-cards</code> / <code>.transport-card</code>、韦恩图、导语、来源、章头、分割线、导航栏 <code>.topbar</code>、折线图 <code>.rail-growth-chart</code>、四象限矩阵 <code>.ansoff-grid</code>、漏斗图 <code>.hotel-funnel-chart</code>、关系网络 <code>.hotel-city-network</code>、节点表 <code>.network-node-table</code>、排行榜 <code>.hotel-ranking-block</code>。关系网络和节点表是两个父组件，不要包在同一块里。</li>
               <li>同类块用父组件 + 变体，不要另起皮肤，也不要再收成 flow-block。</li>
               <li>公式、韦恩图、提问、议题格、图文卡只保留内容。章头 <code>.slide-head</code>、分割线 <code>.rule</code>、导语 <code>.research-lead</code> 是独立组件，不要画进这些块。报告里章头下方仍必须紧跟强线，那是排版规则，不是组件自带的。</li>
               <li>报告中每个主标题（<code>.slide-head</code>）下方必须紧跟一条可见的<strong>强线</strong> <code>.rule</code>，不得省略，不得用下一块顶线替代，CSS 不得把这条线 <code>display:none</code>。小节标题下不加线，只用间隔。其余块之间不加线，只靠间距。表 / list / 卡内部只用 1px 弱线。编号信息不超过 4 条用 <code>data-layout="cols"</code>（编号在上），5 条及以上才用 <code>stack</code>。</li>
@@ -830,7 +831,7 @@ html = f"""<!doctype html>
               <li>来源写一次。源格没有口径句，就不要补。</li>
               <li>没有源 HTML 时：从 <code>templates/editorial-flow/report.html</code> 生成报告。对照目录选父组件，缺了才新增。不要抄 <code>data-catalog</code>，报告导航用 <code>.topbar</code>。主题导入导出只在本目录页，不要做到报告壳上。</li>
               <li>分屏是另一套：templates/editorial-page/。旧稿在 templates/draft/。报告不要抄 data-catalog。报告导航用 <code>.topbar</code>，不要用目录壳的 <code>.document-nav</code>。</li>
-              <li>结构说明：两张截图卡是同一父组件 <code>.shot</code>，<code>photo</code> / <code>crop</code> 变体；图区坏图时不把 alt 再写一层，标题只留在 figcaption。宽图和方案图也是同一父组件：<code>.shot[data-kind=wide]</code>，方案只是 <code>.shot-plan</code> 标签槽，目录收在「图 · 宽」。提问是 <code>.info-grid[data-layout=row]</code> 的问答内容，不是新父组件；底下浅底格是无编号信息，不要画进提问。关系网络舞台高度跟左右列表走，不要写死 min-height。图 / 表 / 折线右键「尺寸」可拖宽高；折线拖高后绘图区跟着拉高，改数字后纵轴刻度自适应。韦恩图第三圈保留，圈内文案是该集合自己的判断。公式和韦恩图只在组件区出现一次。公式与横排数字不是同一组件：公式是算法，横排是支撑数字。四象限矩阵目录用代码版 <code>.ansoff-grid</code>。基础 token 右键改数值，立刻作用于整页并写入当前主题，可导出 JSON 在本目录导入。颜色 token 点色块用取色器，也可改 hex。议题四格是同一父组件 <code>.pain-topic</code> 铺进 <code>.pain-text-list</code>，目录名「议题格」；01–04 主题不同，不把正文并成一块。图文四卡是同一父组件 <code>.transport-card</code> 横排进 <code>.transport-cards</code>，目录名「图文卡」；导语不画进卡。图廊主图不另写当前图名，缩略图才是切换槽，不是第二个组件。</li>
+              <li>结构说明：两张截图卡是同一父组件 <code>.shot</code>，<code>photo</code> / <code>crop</code> 变体；图区坏图时不把 alt 再写一层，标题只留在 figcaption。宽图和方案图也是同一父组件：<code>.shot[data-kind=wide]</code>，方案只是 <code>.shot-plan</code> 标签槽，目录收在「图 · 宽」。提问是 <code>.info-grid[data-layout=row]</code> 的问答内容，不是新父组件；底下浅底格是无编号信息，不要画进提问。关系网络舞台高度跟左右列表走，不要写死 min-height。图 / 表 / 折线右键「尺寸」可拖宽高；折线拖高后绘图区跟着拉高，改数字后纵轴刻度自适应。韦恩图第三圈保留，圈内文案是该集合自己的判断。公式和韦恩图只在组件区出现一次。公式与数字信息不是同一组件：公式是算法，数字是支撑数字。四象限矩阵目录用代码版 <code>.ansoff-grid</code>。基础 token 右键改数值，立刻作用于整页并写入当前主题，可导出 JSON 在本目录导入。颜色 token 点色块用取色器，也可改 hex。议题四格是同一父组件 <code>.pain-topic</code> 铺进 <code>.pain-text-list</code>，目录名「议题格」；01–04 主题不同，不把正文并成一块。图文四卡是同一父组件 <code>.transport-card</code> 横排进 <code>.transport-cards</code>，目录名「图文卡」；导语不画进卡。图廊主图不另写当前图名，缩略图才是切换槽，不是第二个组件。</li>
             </ol>
           </footer>
         </section>
@@ -838,10 +839,10 @@ html = f"""<!doctype html>
     </div>
   </div>
 {LIGHTBOX}
-  <link rel="stylesheet" href="editor/seed-edit.css?v=18">
+  <link rel="stylesheet" href="editor/seed-edit.css?v=22">
   <script src="design-system/design-data.js"></script>
   <script src="design-system/theme-runtime.js"></script>
-  <script src="editor/seed-edit.js?v=18"></script>
+  <script src="editor/seed-edit.js?v=22"></script>
   <script src="assets/template.js"></script>
   <script src="assets/source.js"></script>
   <script src="assets/network.js?v=16"></script>
