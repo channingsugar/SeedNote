@@ -107,6 +107,15 @@ html:has(.report-shell.is-flow) .theme-control__hint { display: none; }
   font-weight: var(--weight-medium);
 }
 
+.report-shell.is-flow[data-catalog] > .topbar {
+  padding-inline: var(--flow-inset);
+  background: #ffffff;
+}
+.report-shell.is-flow[data-catalog] > .topbar .topbar-inner {
+  max-width: none;
+  padding: 0;
+}
+
 .report-shell.is-flow .report-stage {
   display: block;
   height: auto;

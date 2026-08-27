@@ -121,7 +121,7 @@
   background: var(--c-text);
 }
 
-.report-shell.is-flow .pain-text-list,
+.report-shell.is-flow .pain-text-list:not([data-grid="b"]),
 .report-shell.is-flow .plain-table-wrap,
 .report-shell.is-flow .research-lead,
 .report-shell.is-flow .market-block,
@@ -148,8 +148,8 @@
   scroll-margin-top: 0;
 }
 
-.report-shell.is-flow[data-catalog] .topbar,
-.report-shell.is-flow[data-catalog] .progress {
+.report-shell.is-flow[data-catalog] .report-stage .topbar,
+.report-shell.is-flow[data-catalog] .report-stage .progress {
   display: none !important;
 }
 .report-shell.is-flow[data-catalog] .flow-lab .topbar,

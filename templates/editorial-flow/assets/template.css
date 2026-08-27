@@ -1396,8 +1396,19 @@ html:has(.report-chrome-hotspot:focus-visible) .report-chrome,
 .chapter-cover[data-cover="image"] .chapter-cover__date {
   color: color-mix(in srgb, var(--inverse) 56%, transparent);
 }
-.chapter-cover[data-cover="image"] .chapter-cover__byline {
-  color: color-mix(in srgb, var(--inverse) 72%, transparent);
+.chapter-cover[data-cover="image"] .chapter-cover__actions {
+  color: var(--inverse);
+}
+.chapter-cover[data-cover="image"] .chapter-cover__actions .button {
+  color: var(--inverse);
+  background: transparent;
+  border-color: color-mix(in srgb, var(--inverse) 62%, transparent);
+}
+.chapter-cover[data-cover="image"] .chapter-cover__actions .button.primary,
+.chapter-cover[data-cover="image"] .chapter-cover__actions .button.inverse {
+  color: var(--ink);
+  background: var(--inverse);
+  border-color: var(--inverse);
 }
 .chapter-cover[data-cover="center"] {
   align-items: center;

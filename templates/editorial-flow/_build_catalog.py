@@ -136,7 +136,7 @@ def info(no, title, body, lg=False):
     )
 
 
-def info_grid(layout, *cards, no=None, index=None, cols=None):
+def info_grid(layout, *cards, no=None, index=None, cols=None, grid=None, bg=False, pos=None):
     attr = f' data-layout="{layout}"'
     if no:
         attr += f' data-no="{no}"'
@@ -144,6 +144,12 @@ def info_grid(layout, *cards, no=None, index=None, cols=None):
         attr += f' data-index="{index}"'
     if cols:
         attr += f' data-cols="{cols}"'
+    if grid:
+        attr += f' data-grid="{grid}"'
+    if bg:
+        attr += ' data-bg'
+    if pos:
+        attr += f' data-pos="{pos}"'
     return f'<div class="info-grid"{attr}>{"".join(cards)}</div>'
 
 
@@ -151,12 +157,14 @@ def plain(title, body):
     return f"<article class=\"plain\"><b>{title}</b><p>{body}</p></article>"
 
 
-def plain_grid(*cards, cols=None, surface=None):
+def plain_grid(*cards, cols=None, surface=None, grid=None):
     attrs = []
     if cols:
         attrs.append(f'data-cols="{cols}"')
     if surface:
         attrs.append(f'data-surface="{surface}"')
+    if grid:
+        attrs.append(f'data-grid="{grid}"')
     attr = (" " + " ".join(attrs)) if attrs else ""
     return f'<div class="plain-grid"{attr}>{"".join(cards)}</div>'
 
@@ -171,6 +179,10 @@ def token_item(var, label, value, kind="size", sample=None):
             f'value="{hexv.lower()}" aria-label="{var}">'
         )
         shown = hexv.upper()
+    elif kind == "radius":
+        r = value if str(value).endswith("px") else f"{value}px"
+        swatch = f'<span class="token-swatch token-swatch--radius" style="border-radius:{r}"></span>'
+        shown = str(value)[:-2] if str(value).endswith("px") else str(value)
     elif kind == "size":
         w = value if str(value).endswith("px") else f"{value}px"
         swatch = f'<span class="token-swatch" style="width:{w}"></span>'
@@ -190,6 +202,10 @@ def token_col(title, items):
 
 
 def tokens():
+    radius = token_col("圆角", [
+        token_item("--r-none", "直角", "0", "radius"),
+        token_item("--r-sm", "小圆角", "4", "radius"),
+    ])
     spacing = token_col("间隔", [
         token_item("--s-in", "区内", "16"),
         token_item("--s-stack", "换排", "40"),
@@ -222,7 +238,7 @@ def tokens():
         + '<div class="token-line"><hr class="rule is-soft"><small>预览 · 弱线</small></div>'
         "</div>"
     )
-    return f'<div class="token-board">{spacing}{type_}{color}{line}</div>'
+    return f'<div class="token-board">{radius}{spacing}{type_}{color}{line}</div>'
 
 
 def topbar():
@@ -501,7 +517,7 @@ def transport_card(title, lead, facts, thumbs):
 
 
 PAIN_LIST = (
-    '<div class="pain-text-list">'
+    '<div class="pain-text-list" data-cols="2">'
     + pain(
         "01", "议题名称",
         "一句概括：这一格要回答什么问题。",
@@ -672,6 +688,22 @@ lib = "".join([
         info("03", "临近出发补齐材料", "带齐身份、行程证明和当日有效的核验材料。", lg=True),
         no="lg",
     )),
+    lab("编号信息 · 格子 B", info_grid("cols",
+        info("01 · 建档", "正脸＋鼻纹确认身份", "为同一只宠物建立可复用档案。"),
+        info("02 · 出险", "在线报案并准备材料", "填写出险信息，上传治疗过程与医疗证明。"),
+        info("03 · 审核", "核对身份、责任和费用", "不在保障范围的项目会从合理费用中扣除。"),
+        info("04 · 赔付", "按限额与比例计算", "样本中按限额与比例计算赔付。"),
+        cols="4",
+        grid="b",
+    )),
+    lab("编号信息 · 背景", info_grid("cols",
+        info("属性名", "完整度 · 唯一性", "标签列 + 要点。勾选背景后可改底色。"),
+        info("预约时间", "持续维护", "勾选「背景」给每格铺底。"),
+        info("办理材料", "按次维护", "格子 A 是左侧竖线；格子 B 是四周框。"),
+        index="label",
+        cols="3",
+        bg=True,
+    )),
     lab("编号信息 · 隐藏编号", info_grid("cols",
         info("01", "要点标题", "同一父组件，只是不显示编号。"),
         info("02", "要点标题", "右键可打开编号，或改成字母 A B C。"),
@@ -702,12 +734,25 @@ lib = "".join([
         info("线下时间", "出发前至少 2 小时", "到指定办理点；到达后建议在 1 小时内领取。"),
         index="label",
     )),
-    lab("无编号信息", plain_grid(
-        plain("对比点标题", "用一句可核对的数字或范围，说明它比对照方案更有利。"),
-        plain("对比点标题", "样本里多数不要求某类材料。"),
-        plain("对比点标题", "档案覆盖的对象类型更广。"),
-        plain("对比点标题", "可单独走，也可选择同行。"),
-        surface="tint",
+    lab("编号信息 · 隐藏编号", info_grid("cols",
+        info("01", "对比点标题", "用一句可核对的数字或范围，说明它比对照方案更有利。"),
+        info("02", "对比点标题", "样本里多数不要求某类材料。"),
+        info("03", "对比点标题", "档案覆盖的对象类型更广。"),
+        info("04", "对比点标题", "可单独走，也可选择同行。"),
+        index="off",
+        cols=4,
+        pos="top",
+        bg=True,
+    )),
+    lab("编号信息 · 隐藏编号 · 格子 B", info_grid("cols",
+        info("01", "部分房型可携宠入住", "基础要求"),
+        info("02", "提供宠物活动空间", "基础要求"),
+        info("03", "提供宠物设施", "基础要求"),
+        info("04", "可单独留宠物在房间", "基础要求"),
+        index="off",
+        cols=4,
+        pos="top",
+        grid="b",
     )),
     lab("观点", point("观点判断", "一句立场：问题不在供给有没有，而在如何找对象做流程简化和能力突破。")),
     lab("观点 · 浅底", point("", "<strong>顺序建议：</strong>首选覆盖最大的对象建立基础供给；第二家补足名额、规格和临近出发申请。", soft=True)),
@@ -723,15 +768,15 @@ lib = "".join([
         <p>30% 仅部分档位可用 3 / 10 家有档位限制。</p>
       </article>"""),
     lab("表格", """<div class="plain-table-wrap"><table class="airline-matrix">
-        <thead><tr><th>维度</th>
-          <th><span class="airline-title">对象 A <span class="airline-rank one">TOP 1</span></span></th>
-          <th><span class="airline-title">对象 B <span class="airline-rank two">TOP 2</span></span></th>
-          <th><span class="airline-title">对象 C</span></th></tr></thead>
+        <thead><tr><th>权益类型</th>
+          <th><span class="table-level">对象 A</span><span class="table-score">对照档</span></th>
+          <th><span class="table-level">对象 B</span><span class="table-score">对照档</span></th>
+          <th class="is-accent"><span class="table-level">对象 C</span><span class="table-score">强调档</span></th></tr></thead>
         <tbody>
-          <tr><td>覆盖率</td><td class="best">约 57%，45 个节点</td><td>约 43%，38 个节点</td><td>约 47%，36 个节点</td></tr>
-          <tr><td>申请截止</td><td class="best">出发前 6 小时</td><td>48h 前在线；进入 24h 后可现场申请</td><td class="weak">仅出发前 7 天至 24h</td></tr>
-          <tr><td>单次数量</td><td>1</td><td class="best">最多 2</td><td>1</td></tr>
-          <tr><td>基础价格</td><td>&lt;2000km ¥1,299</td><td>¥1,430</td><td class="best">¥1,288</td></tr>
+          <tr><td>覆盖率</td><td>约 57%，45 个节点</td><td>约 43%，38 个节点</td><td>约 47%，36 个节点</td></tr>
+          <tr><td>申请截止</td><td>出发前 6 小时</td><td>48h 前在线；进入 24h 后可现场申请</td><td>仅出发前 7 天至 24h</td></tr>
+          <tr><td>单次数量</td><td>1</td><td>最多 2</td><td>1</td></tr>
+          <tr><td>基础价格</td><td>&lt;2000km ¥1,299</td><td>¥1,430</td><td>¥1,288</td></tr>
         </tbody>
       </table></div>"""),
     lab("折线图", rail_chart()),
@@ -769,11 +814,11 @@ html = f"""<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>知识汇报模板 · 流式 v2</title>
   <link rel="stylesheet" href="design-system/components.css">
-  <link rel="stylesheet" href="assets/template.css?v=5">
-  <link rel="stylesheet" href="assets/flow.css?v=5">
-  <link rel="stylesheet" href="assets/source.css?v=18">
-  <link rel="stylesheet" href="assets/lib.css?v=20">
-  <link rel="stylesheet" href="assets/v2.css?v=9">
+  <link rel="stylesheet" href="assets/template.css?v=6">
+  <link rel="stylesheet" href="assets/flow.css?v=6">
+  <link rel="stylesheet" href="assets/source.css?v=21">
+  <link rel="stylesheet" href="assets/lib.css?v=35">
+  <link rel="stylesheet" href="assets/v2.css?v=11">
 </head>
 <body>
   <div class="theme-control" id="themeControl" aria-label="主题控制">
@@ -790,13 +835,21 @@ html = f"""<!doctype html>
   </div>
 
   <div class="report-shell is-flow" data-catalog>
-    <nav class="document-nav nav-underline is-sticky" data-component-id="navigation" aria-label="文档章节">
-      <div class="document-nav__brand"><span class="document-nav__mark" aria-hidden="true"></span><strong>SEED</strong></div>
-      <div class="document-nav__links"><a href="#cover" class="is-active">封面</a>
-        <a href="#lib">组件</a>
-        <a href="#notes">怎么用</a>
+    <header class="topbar" data-component-id="navigation" aria-label="文档章节">
+      <div class="topbar-inner">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1.2 12.8 7 7 12.8 1.2 7Z" fill="currentColor"/></svg>
+          </span>
+          <span class="brand-text">SEED</span>
+        </div>
+        <nav class="toc" aria-label="章节目录">
+          <a href="#cover" class="is-active">封面</a>
+          <a href="#lib">组件</a>
+          <a href="#notes">怎么用</a>
+        </nav>
       </div>
-    </nav>
+    </header>
 
     <div class="report-stage" data-report-stage>
       <div class="report-slides" data-report-slides>
@@ -819,8 +872,8 @@ html = f"""<!doctype html>
           <footer class="report-notes">
             <h2>怎么用</h2>
             <ol>
-              <li>这是流式模板。壳是文档栏：report-shell.is-flow、吸顶导航、flow-stack 上下叠。封面右键切版式：左齐 / 居中 / 配图 / 图文分栏（<code>data-cover</code>：省略、<code>center</code>、<code>image</code>、<code>split</code>）；配图封面可右键替换图片。拖组件排序时封面不显示。</li>
-              <li>合并后的父组件：<code>.stat-card</code> / <code>.stat-grid</code> 数字信息（横排数字是同一父组件的紧凑排：<code>.stat-grid.is-compact</code>；右键勾选前缀 / 后缀 / 说明，列数 2–5）；<code>.info</code> 编号信息（布局：格子 <code>cols</code> / 列表 A <code>stack</code> / 列表 B <code>row</code>；<code>data-pos</code> 顶部 / 左侧；<code>data-index</code>：数字 / <code>alpha</code> / <code>q</code> 问题 / <code>label</code> 标签 / <code>off</code> 隐藏；<code>.is-lg</code> / <code>data-no="lg"</code> 大编号；格子列数 2–5）；<code>.plain</code> 无编号信息（<code>data-surface</code>：tint / line）；<code>.point</code> 观点（<code>.is-soft</code> 浅底）；<code>.shot</code> 图（<code>data-kind</code>：photo / crop / scroll / wide / poster；右键新增一条，列数 1–5）。</li>
+              <li>这是流式模板。壳是文档栏：report-shell.is-flow、吸顶导航栏 <code>.topbar</code>、flow-stack 上下叠。封面右键切版式：左齐 / 居中 / 配图 / 图文分栏（<code>data-cover</code>：省略、<code>center</code>、<code>image</code>、<code>split</code>）；配图封面可右键替换图片。拖组件排序时封面不显示。</li>
+              <li>合并后的父组件：<code>.stat-card</code> / <code>.stat-grid</code> 数字信息（横排数字是同一父组件的紧凑排：<code>.stat-grid.is-compact</code>；右键勾选前缀 / 后缀 / 说明，列数 2–5）；<code>.info</code> 编号信息（布局：格子 A 左侧竖线 / 格子 B 四周框 <code>data-grid="b"</code> / 列表 A <code>stack</code> / 列表 B <code>row</code>；<code>data-pos</code> 顶部 / 左侧；<code>data-index</code>：数字 / <code>alpha</code> / <code>q</code> 问题 / <code>label</code> 标签 / <code>off</code> 隐藏，即原无编号；<code>.is-lg</code> / <code>data-no="lg"</code> 大编号；格子列数 2–5；勾选「背景」<code>data-bg</code> 后可设 <code>--info-bg</code>（默认纯色 <code>--tint-2</code>，不用渐变）；整组右键勾选「配图」，图在一组信息的左 / 右 <code>data-aside</code>；配图可换裁切 / 可滚动 / 宽图 / 海报，底部保留 figcaption。尺寸只拖配图外框（和图片组一样），内部图高度始终铺满外框，拖高时整组与左侧信息跟着变高、不裁切文字和说明）；<code>.point</code> 观点（<code>.is-soft</code> 浅底）；<code>.shot</code> 图（<code>data-kind</code>：photo / crop / scroll / wide / poster；右键新增一条，列数 1–5；尺寸拖高后行均分、铺满裁切且不超出容器）。</li>
               <li>组件库必须带基础 token：间隔 <code>--s-in</code> / <code>--s-stack</code> / <code>--s-chapter</code>；字号 <code>--t-h1</code> / <code>--t-num</code> / <code>--t-no-lg</code> / <code>--t-body</code> / <code>--t-aux</code>；颜色 <code>--c-text</code> 档、<code>--c-line</code>、<code>--c-accent</code>、表数据栏 <code>--c-pos</code> / <code>--c-neg</code>；分割线 <code>.rule</code> / <code>.rule.is-soft</code>。</li>
               <li>仍独立：公式、议题格 <code>.pain-text-list</code> / <code>.pain-topic</code>、自定义文本 <code>.finding</code>、图文卡 <code>.transport-cards</code> / <code>.transport-card</code>、韦恩图、导语、来源、章头、分割线、导航栏 <code>.topbar</code>、折线图 <code>.rail-growth-chart</code>、四象限矩阵 <code>.ansoff-grid</code>、漏斗图 <code>.hotel-funnel-chart</code>、关系网络 <code>.hotel-city-network</code>、节点表 <code>.network-node-table</code>、排行榜 <code>.hotel-ranking-block</code>。关系网络和节点表是两个父组件，不要包在同一块里。</li>
               <li>同类块用父组件 + 变体，不要另起皮肤，也不要再收成 flow-block。</li>
@@ -830,8 +883,8 @@ html = f"""<!doctype html>
               <li>格内条目留在该卡里。例如议题格的百分比、图文卡的属性行，不要抬成新的一排。</li>
               <li>来源写一次。源格没有口径句，就不要补。</li>
               <li>没有源 HTML 时：从 <code>templates/editorial-flow/report.html</code> 生成报告。对照目录选父组件，缺了才新增。不要抄 <code>data-catalog</code>，报告导航用 <code>.topbar</code>。主题导入导出只在本目录页，不要做到报告壳上。</li>
-              <li>分屏是另一套：templates/editorial-page/。旧稿在 templates/draft/。报告不要抄 data-catalog。报告导航用 <code>.topbar</code>，不要用目录壳的 <code>.document-nav</code>。</li>
-              <li>结构说明：两张截图卡是同一父组件 <code>.shot</code>，<code>photo</code> / <code>crop</code> 变体；图区坏图时不把 alt 再写一层，标题只留在 figcaption。宽图和方案图也是同一父组件：<code>.shot[data-kind=wide]</code>，方案只是 <code>.shot-plan</code> 标签槽，目录收在「图 · 宽」。提问是 <code>.info-grid[data-layout=row]</code> 的问答内容，不是新父组件；底下浅底格是无编号信息，不要画进提问。关系网络舞台高度跟左右列表走，不要写死 min-height。图 / 表 / 折线右键「尺寸」可拖宽高；折线拖高后绘图区跟着拉高，改数字后纵轴刻度自适应。韦恩图第三圈保留，圈内文案是该集合自己的判断。公式和韦恩图只在组件区出现一次。公式与数字信息不是同一组件：公式是算法，数字是支撑数字。四象限矩阵目录用代码版 <code>.ansoff-grid</code>。基础 token 右键改数值，立刻作用于整页并写入当前主题，可导出 JSON 在本目录导入。颜色 token 点色块用取色器，也可改 hex。议题四格是同一父组件 <code>.pain-topic</code> 铺进 <code>.pain-text-list</code>，目录名「议题格」；01–04 主题不同，不把正文并成一块。图文四卡是同一父组件 <code>.transport-card</code> 横排进 <code>.transport-cards</code>，目录名「图文卡」；导语不画进卡。图廊主图不另写当前图名，缩略图才是切换槽，不是第二个组件。</li>
+              <li>分屏是另一套：templates/editorial-page/。旧稿在 templates/draft/。报告不要抄 data-catalog。导航用 <code>.topbar</code>。</li>
+              <li>结构说明：两张截图卡是同一父组件 <code>.shot</code>，<code>photo</code> / <code>crop</code> 变体；图区坏图时不把 alt 再写一层，标题只留在 figcaption。宽图和方案图也是同一父组件：<code>.shot[data-kind=wide]</code>，方案只是 <code>.shot-plan</code> 标签槽，目录收在「图 · 宽」。提问是 <code>.info-grid[data-layout=row]</code> 的问答内容，不是新父组件；底下浅底格是关掉编号的编号信息，不要画进提问。关系网络舞台高度跟左右列表走，不要写死 min-height。图 / 表 / 折线右键「尺寸」可拖宽高；折线拖高后绘图区跟着拉高，改数字后纵轴刻度自适应。韦恩图第三圈保留，圈内文案是该集合自己的判断。公式和韦恩图只在组件区出现一次。公式与数字信息不是同一组件：公式是算法，数字是支撑数字。四象限矩阵目录用代码版 <code>.ansoff-grid</code>。基础 token 右键改数值，立刻作用于整页并写入当前主题，可导出 JSON 在本目录导入。颜色 token 点色块用取色器，也可改 hex。议题四格是同一父组件 <code>.pain-topic</code> 铺进 <code>.pain-text-list</code>，目录名「议题格」；01–04 主题不同，不把正文并成一块。图文四卡是同一父组件 <code>.transport-card</code> 横排进 <code>.transport-cards</code>，目录名「图文卡」；导语不画进卡。图廊主图不另写当前图名，缩略图才是切换槽，不是第二个组件。</li>
             </ol>
           </footer>
         </section>
@@ -839,10 +892,10 @@ html = f"""<!doctype html>
     </div>
   </div>
 {LIGHTBOX}
-  <link rel="stylesheet" href="editor/seed-edit.css?v=22">
+  <link rel="stylesheet" href="editor/seed-edit.css?v=37">
   <script src="design-system/design-data.js"></script>
   <script src="design-system/theme-runtime.js"></script>
-  <script src="editor/seed-edit.js?v=22"></script>
+  <script src="editor/seed-edit.js?v=37"></script>
   <script src="assets/template.js"></script>
   <script src="assets/source.js"></script>
   <script src="assets/network.js?v=16"></script>

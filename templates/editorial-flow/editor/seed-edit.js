@@ -150,7 +150,7 @@
       return svg;
     }
 
-    const frame = node.closest('.shot__frame, .gallery-stage, .brand-concept-film, .shot, figure');
+    const frame = node.closest('.shot__frame, .gallery-stage, .brand-concept-film, .shot, figure, .comp-media');
     if (frame) return frame.querySelector('img, video, svg');
     const cover = node.closest?.('.chapter-cover');
     if (cover && (cover.getAttribute('data-cover') === 'image' || cover.getAttribute('data-cover') === 'split')) {
@@ -177,6 +177,8 @@
   const resizeBoxOf = (el) => {
     if (!el || el.nodeType === 3) el = el?.parentElement;
     if (!el || isChrome(el)) return null;
+    const asideMedia = el.closest('.comp-media');
+    if (asideMedia) return asideMedia;
     const shell = el.closest('.network-shell');
     if (shell) return shell;
     const rank = el.closest('.hotel-ranking-block');
@@ -184,7 +186,7 @@
     const nodeTable = el.closest('.network-node-table');
     if (nodeTable) return nodeTable;
     const shot = el.closest('.shot, figure.shot');
-    if (shot) return shot.closest('.shot-grid, .shot-stack, .shot-plan, .transport-cards') || shot;
+    if (shot) return shot.closest('.shot-grid, .shot-stack') || shot;
     const gallery = el.closest('.gallery-stage');
     if (gallery) return gallery.closest('.transport-cards') || gallery;
     const ansoff = el.closest('.ansoff-wrap, .ansoff-grid');
@@ -195,26 +197,84 @@
     return host || null;
   };
 
-  const isMediaBox = (box) => !!(box && box.matches('.shot, .shot-grid, .shot-stack, .shot-plan, .gallery-stage, .brand-concept-film, figure.shot, .transport-cards'));
+  const isMediaBox = (box) => !!(box && box.matches('.shot, .shot-grid, .shot-stack, .shot-plan, .gallery-stage, .brand-concept-film, figure.shot, .transport-cards, .comp-media'));
+  const isShotSurface = (box) => !!(box && box.matches('.shot, figure.shot, .shot-grid, .shot-stack, .comp-media'));
+  const isAsideHost = (box) => !!(box?.matches?.('.info-grid[data-aside], .pain-text-list[data-aside], .plain-grid[data-aside]'));
+  const isAsideFrame = (box) => !!(box?.matches?.('.comp-media') && isAsideHost(box.parentElement));
+  const asideGroupOf = (box) => {
+    if (!box) return null;
+    if (isAsideHost(box)) return box;
+    if (isAsideFrame(box)) return box.parentElement;
+    const media = box.closest?.('.comp-media');
+    return media && isAsideHost(media.parentElement) ? media.parentElement : null;
+  };
+  const asideShotOf = (box) => {
+    if (!box) return null;
+    if (box.matches?.('.shot, figure.shot') && box.closest('.comp-media')) return box;
+    return (isAsideFrame(box) ? box : box?.closest?.('.comp-media'))?.querySelector?.('.shot') || null;
+  };
+  const isIntrinsicHeight = (box) => !!(box && box.matches('.market-formula, .stat-grid, .stat-row, .info-grid, .plain-grid, .point, .finding') && !isAsideHost(box));
+  const parsePx = (value) => {
+    if (!value || value === '100%' || value === 'auto') return null;
+    const n = parseFloat(value);
+    return n > 0 ? n : null;
+  };
 
-  const readLayout = (box) => ({
-    align: box?.dataset.align || 'left',
-    fit: box?.dataset.fit || 'fit',
-    width: box?.style.width ? parseFloat(box.style.width) : null,
-    height: box?.style.height ? parseFloat(box.style.height) : null,
-  });
+  const readLayout = (box) => {
+    const asideGroup = asideGroupOf(box);
+    const sizingAsideCol = isAsideFrame(box) || !!box?.closest?.('.comp-media');
+    const asideW = sizingAsideCol ? asideGroup?.style.getPropertyValue('--aside-w') : '';
+    const inner = asideShotOf(box);
+    return {
+      align: box?.dataset.align || inner?.dataset.align || 'left',
+      fit: box?.dataset.fit || inner?.dataset.fit || (asideGroup ? 'fit' : (isShotSurface(box) ? 'fill' : 'fit')),
+      width: asideW ? parseFloat(asideW) : (box?.style.width ? parseFloat(box.style.width) : null),
+      height: asideGroup
+        ? (parsePx(asideGroup.style.height) || parsePx(asideGroup.style.minHeight))
+        : (parsePx(box?.style.height) || parsePx(box?.style.minHeight)),
+    };
+  };
 
   const writeLayout = (box, layout = {}) => {
     if (!box) return;
+    const isShotBox = box.matches('.shot, figure.shot');
+    const inShotGrid = isShotBox && !!box.parentElement?.matches?.('.shot-grid, .shot-stack');
+    const asideGroup = asideGroupOf(box);
+    const asideCol = isAsideFrame(box) || (isShotBox && !!box.closest('.comp-media'));
+    const innerShot = asideShotOf(box);
     const align = layout.align || 'left';
-    const fit = layout.fit || 'fit';
+    const fit = layout.fit || (asideGroup ? 'fit' : (isShotSurface(box) ? 'fill' : 'fit'));
     box.dataset.align = align;
     box.dataset.fit = fit;
-    if (layout.width) {
+    if (box.matches('.shot-grid, .shot-stack')) {
+      box.querySelectorAll(':scope > .shot').forEach((shot) => {
+        shot.dataset.fit = fit;
+        shot.dataset.align = 'left';
+      });
+    }
+    if (innerShot && innerShot !== box) {
+      innerShot.dataset.fit = fit;
+      innerShot.dataset.align = align;
+    }
+    if (asideCol && asideGroup) {
+      if (layout.width) asideGroup.style.setProperty('--aside-w', `${Math.round(layout.width)}px`);
+      else asideGroup.style.removeProperty('--aside-w');
+      box.style.removeProperty('width');
+      box.style.maxWidth = '100%';
+      if (innerShot) {
+        innerShot.style.removeProperty('width');
+        innerShot.style.maxWidth = '100%';
+      }
+    } else if (inShotGrid) {
+      box.style.removeProperty('width');
+      box.style.maxWidth = '100%';
+    } else if (layout.width) {
       box.style.width = `${Math.round(layout.width)}px`;
       box.style.maxWidth = '100%';
     } else {
       box.style.removeProperty('width');
+      if (isShotSurface(box) || isShotBox) box.style.maxWidth = '100%';
+      else box.style.removeProperty('max-width');
     }
     const frame = box.matches('.shot-grid, .shot-stack, .transport-cards, .ansoff-wrap, .info-grid, .stat-grid, .plain-grid, .market-formula')
       ? box
@@ -222,27 +282,107 @@
     const rankScroll = box.matches('.hotel-ranking-block')
       ? box.querySelector('.hotel-ranking-scroll')
       : (box.matches('.hotel-ranking-scroll') ? box : null);
-    const isGridBox = box.matches('.plain-grid, .info-grid, .stat-grid, .ansoff-wrap, .shot-grid, .shot-stack, .market-formula');
+    const isGridBox = box.matches('.plain-grid, .info-grid, .stat-grid, .ansoff-wrap, .shot-grid, .shot-stack');
+    const isFormula = box.matches('.market-formula');
     const isRankBlock = box.matches('.hotel-ranking-block');
     const isNodeTable = box.matches('.network-node-table');
     const isNetworkShell = box.matches('.network-shell');
     const isTableBox = box.matches('.plain-table-wrap, .table-wrap');
     const isFunnel = box.matches('.hotel-funnel-chart');
     const isChartBox = box.matches('.rail-growth-chart, .venn-wrap, .hotel-funnel-chart');
-    if (layout.height) {
+    const shotRowsOf = (grid) => {
+      const cols = Math.max(1, Number(grid.getAttribute('data-cols') || 1));
+      const n = grid.querySelectorAll(':scope > .shot').length;
+      return Math.max(1, Math.ceil(n / cols));
+    };
+    const sizeShotGrid = (grid, h) => {
+      const rows = shotRowsOf(grid);
+      grid.classList.add('is-sized');
+      grid.style.height = `${h}px`;
+      grid.style.minHeight = `${h}px`;
+      grid.style.maxHeight = `${h}px`;
+      grid.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
+      grid.style.gridAutoRows = 'minmax(0, 1fr)';
+    };
+    const fillShot = (shot, opts = {}) => {
+      shot.style.display = 'flex';
+      shot.style.flexDirection = 'column';
+      shot.style.minHeight = '0';
+      shot.style.overflow = opts.keepCaption ? 'visible' : 'hidden';
+      const imgFrame = shot.querySelector('.shot__frame');
+      if (imgFrame) {
+        imgFrame.style.removeProperty('height');
+        imgFrame.style.removeProperty('max-height');
+        imgFrame.style.flex = '1 1 auto';
+        imgFrame.style.minHeight = '0';
+        imgFrame.style.overflow = 'hidden';
+      }
+    };
+    const sizeAsideGroup = (host, h, shot) => {
+      host.style.height = 'auto';
+      host.style.minHeight = `${h}px`;
+      host.style.removeProperty('max-height');
+      host.style.overflow = 'visible';
+      host.classList.add('is-aside-sized');
+      const mediaShot = shot || host.querySelector(':scope > .comp-media .shot');
+      if (!mediaShot) return;
+      mediaShot.classList.add('is-sized');
+      mediaShot.style.removeProperty('height');
+      mediaShot.style.removeProperty('width');
+      mediaShot.style.minHeight = '0';
+      mediaShot.style.maxWidth = '100%';
+      mediaShot.style.removeProperty('max-height');
+      fillShot(mediaShot, { keepCaption: true });
+    };
+    if (isIntrinsicHeight(box)) {
+      box.style.removeProperty('height');
+      box.style.removeProperty('min-height');
+      box.style.removeProperty('max-height');
+      box.style.removeProperty('overflow-y');
+    } else if (layout.height) {
       const h = Math.round(layout.height);
-      box.style.height = `${h}px`;
       box.style.maxHeight = 'none';
-      if (isRankBlock || isNetworkShell || isTableBox || isNodeTable || isFunnel) box.style.minHeight = `${h}px`;
-      else box.style.removeProperty('min-height');
-      if (frame !== box && !isNetworkShell && !isGridBox) {
+      if (box.matches('.shot-grid, .shot-stack')) {
+        sizeShotGrid(box, h);
+      } else if (asideGroup) {
+        sizeAsideGroup(asideGroup, h, innerShot);
+      } else if (isShotBox) {
+        box.classList.add('is-sized');
+        box.style.height = `${h}px`;
+        box.style.minHeight = `${h}px`;
+        box.style.maxHeight = `${h}px`;
+      } else {
+        box.style.height = `${h}px`;
+        if (isRankBlock || isNetworkShell || isTableBox || isNodeTable || isFunnel) box.style.minHeight = `${h}px`;
+        else box.style.removeProperty('min-height');
+      }
+      if (frame !== box && !isNetworkShell && !isGridBox && !isShotBox && !asideGroup) {
         frame.style.height = `${h}px`;
         frame.style.maxHeight = 'none';
       }
-      if (isRankBlock || isNetworkShell || isGridBox || isMediaBox(box) || isChartBox || isTableBox || isNodeTable) {
+      if (isShotBox) {
+        fillShot(box);
+        box.style.overflow = 'hidden';
+      } else if (box.matches('.shot-grid, .shot-stack')) {
+        box.style.overflow = 'hidden';
+        box.querySelectorAll(':scope > .shot').forEach(fillShot);
+      } else if (asideGroup) {
+        const mediaShot = asideGroup.querySelector(':scope > .comp-media .shot');
+        if (mediaShot) fillShot(mediaShot, { keepCaption: true });
+        asideGroup.style.overflow = 'visible';
+      } else if (isRankBlock || isNetworkShell || isGridBox || isMediaBox(box) || isChartBox || isTableBox || isNodeTable) {
         box.style.overflow = 'hidden';
       } else {
         box.style.overflow = 'auto';
+      }
+      if (isFormula) {
+        box.style.display = 'flex';
+        box.style.flexDirection = 'row';
+        box.style.flexWrap = 'nowrap';
+        box.style.alignItems = 'center';
+        box.style.justifyContent = 'space-between';
+        box.style.overflowX = 'auto';
+        box.style.overflowY = 'hidden';
       }
       if (isTableBox) {
         box.style.display = 'flex';
@@ -316,7 +456,62 @@
         frame.style.removeProperty('height');
         frame.style.removeProperty('max-height');
       }
-      if (!isMediaBox(box)) box.style.removeProperty('overflow');
+      if (isShotBox) {
+        box.classList.remove('is-sized');
+        box.style.removeProperty('display');
+        box.style.removeProperty('flex-direction');
+        box.style.removeProperty('overflow');
+        const imgFrame = box.querySelector('.shot__frame');
+        if (imgFrame) {
+          imgFrame.style.removeProperty('flex');
+          imgFrame.style.removeProperty('min-height');
+          imgFrame.style.removeProperty('overflow');
+        }
+        if (asideGroup) {
+          asideGroup.style.removeProperty('height');
+          asideGroup.style.removeProperty('min-height');
+          asideGroup.classList.remove('is-aside-sized');
+        }
+      } else if (asideGroup) {
+        asideGroup.style.removeProperty('height');
+        asideGroup.style.removeProperty('min-height');
+        asideGroup.classList.remove('is-aside-sized');
+        const mediaShot = asideGroup.querySelector(':scope > .comp-media .shot');
+        if (mediaShot) {
+          mediaShot.classList.remove('is-sized');
+          mediaShot.style.removeProperty('height');
+          mediaShot.style.removeProperty('min-height');
+          mediaShot.style.removeProperty('display');
+          mediaShot.style.removeProperty('flex-direction');
+          mediaShot.style.removeProperty('overflow');
+          const imgFrame = mediaShot.querySelector('.shot__frame');
+          if (imgFrame) {
+            imgFrame.style.removeProperty('flex');
+            imgFrame.style.removeProperty('min-height');
+            imgFrame.style.removeProperty('overflow');
+          }
+        }
+      } else if (box.matches('.shot-grid, .shot-stack')) {
+        box.classList.remove('is-sized');
+        box.style.removeProperty('overflow');
+        box.style.removeProperty('grid-template-rows');
+        box.style.removeProperty('grid-auto-rows');
+        box.querySelectorAll(':scope > .shot').forEach((shot) => {
+          shot.style.removeProperty('display');
+          shot.style.removeProperty('flex-direction');
+          shot.style.removeProperty('min-height');
+          shot.style.removeProperty('height');
+          shot.style.removeProperty('overflow');
+          const imgFrame = shot.querySelector('.shot__frame');
+          if (imgFrame) {
+            imgFrame.style.removeProperty('flex');
+            imgFrame.style.removeProperty('min-height');
+            imgFrame.style.removeProperty('overflow');
+          }
+        });
+      } else if (!isMediaBox(box)) {
+        box.style.removeProperty('overflow');
+      }
       if (rankScroll) {
         rankScroll.style.removeProperty('height');
         rankScroll.style.removeProperty('min-height');
@@ -406,6 +601,10 @@
         { id: 'suffix', label: '后缀' },
         { id: 'kicker', label: '说明' },
       ],
+      items: [
+        { id: 'layout-grid-a', label: '格子 A' },
+        { id: 'layout-grid-b', label: '格子 B' },
+      ],
     },
     {
       group: 'stat-row',
@@ -431,7 +630,8 @@
           id: 'layout',
           title: '布局',
           items: [
-            { id: 'layout-grid', label: '格子' },
+            { id: 'layout-grid-a', label: '格子 A' },
+            { id: 'layout-grid-b', label: '格子 B' },
             { id: 'layout-stack', label: '列表 A' },
             { id: 'layout-row', label: '列表 B' },
           ],
@@ -441,6 +641,13 @@
           check: true,
           items: [
             { id: 'index-on', label: '显示编号', check: true },
+          ],
+        },
+        {
+          id: 'bg',
+          check: true,
+          items: [
+            { id: 'bg', label: '背景', check: true },
           ],
         },
         {
@@ -491,10 +698,48 @@
     {
       group: 'plain',
       sel: '.plain-grid',
-      items: [
-        { id: 'plain', label: '默认底' },
-        { id: 'tint', label: '浅底' },
-        { id: 'line', label: '夹线' },
+      sections: [
+        {
+          id: 'layout',
+          title: '布局',
+          items: [
+            { id: 'layout-grid-a', label: '格子 A' },
+            { id: 'layout-grid-b', label: '格子 B' },
+          ],
+        },
+        {
+          id: 'surface',
+          title: '底',
+          items: [
+            { id: 'plain', label: '默认底' },
+            { id: 'tint', label: '浅底' },
+            { id: 'line', label: '夹线' },
+          ],
+        },
+      ],
+    },
+    {
+      group: 'pain',
+      sel: '.pain-text-list',
+      sections: [
+        {
+          id: 'layout',
+          title: '布局',
+          items: [
+            { id: 'layout-grid-a', label: '格子 A' },
+            { id: 'layout-grid-b', label: '格子 B' },
+          ],
+        },
+        {
+          id: 'cols',
+          title: '列数',
+          items: [
+            { id: 'cols-2', label: '2' },
+            { id: 'cols-3', label: '3' },
+            { id: 'cols-4', label: '4' },
+            { id: 'cols-5', label: '5' },
+          ],
+        },
       ],
     },
     {
@@ -508,6 +753,7 @@
     {
       group: 'shot',
       sel: '.shot',
+      title: '类型',
       items: [
         { id: 'crop', label: '裁切' },
         { id: 'scroll', label: '可滚动' },
@@ -532,6 +778,10 @@
 
   const variantHostOf = (node) => {
     if (!node?.closest) return null;
+    if (node.closest('.comp-media')) {
+      const shot = node.closest('.shot') || node.closest('.comp-media')?.querySelector('.shot');
+      if (shot) return shot;
+    }
     for (const spec of VARIANT_SPECS) {
       const host = node.closest(spec.sel);
       if (host) return host;
@@ -597,7 +847,172 @@
   const writeInfoCols = (grid, n) => {
     const cols = n === 2 || n === 3 || n === 4 || n === 5 ? n : 3;
     grid.setAttribute('data-cols', String(cols));
-    if (infoShapeOf(grid) === 'grid' && infoPosOf(grid) !== 'left') writeInfoKind(grid, 'cols');
+    if (infoShapeOf(grid) === 'grid') {
+      writeInfoKind(grid, 'cols');
+      if (!grid.getAttribute('data-pos')) grid.setAttribute('data-pos', 'top');
+    }
+  };
+
+  const GRID_HOST_SEL = '.info-grid, .plain-grid, .pain-text-list, .stat-grid, .stat-row';
+  const gridHostOf = (host) => {
+    if (!host) return null;
+    if (host.matches?.(GRID_HOST_SEL)) return host;
+    return host.closest?.(GRID_HOST_SEL) || null;
+  };
+  const gridKindOf = (host) => (gridHostOf(host)?.getAttribute('data-grid') === 'b' ? 'b' : 'a');
+  const writeGridKind = (host, kind) => {
+    const grid = gridHostOf(host);
+    if (!grid) return;
+    if (kind === 'b') grid.setAttribute('data-grid', 'b');
+    else grid.removeAttribute('data-grid');
+  };
+  const infoBgOn = (host) => host?.hasAttribute?.('data-bg');
+  const infoBgColorOf = (host) => {
+    const raw = host?.style?.getPropertyValue('--info-bg')?.trim();
+    return raw || '';
+  };
+  const writeInfoBg = (host, on, color) => {
+    if (!host?.matches?.('.info-grid')) return;
+    if (on) {
+      host.setAttribute('data-bg', '');
+      host.style.setProperty('--info-bg', color || infoBgColorOf(host) || '#EDF4FD');
+    } else {
+      host.removeAttribute('data-bg');
+      host.style.removeProperty('--info-bg');
+    }
+  };
+
+  const asideHostOf = (node) => {
+    if (!node?.closest) return null;
+    return node.closest('.info-grid, .pain-text-list, .plain-grid');
+  };
+  const asideOn = (host) => !!(host && host.hasAttribute('data-aside') && host.querySelector(':scope > .comp-media'));
+  const asidePosOf = (host) => (host?.getAttribute('data-aside') === 'left' ? 'left' : 'right');
+  const emptyAsideShot = () => {
+    const wrap = document.createElement('div');
+    wrap.className = 'comp-media';
+    wrap.innerHTML = '<figure class="shot" data-kind="photo"><div class="shot__frame"><img alt=""></div><figcaption><b>图片标题</b><span>一句说明。</span></figcaption></figure>';
+    return wrap;
+  };
+  const ensureAsideCaption = (shot) => {
+    if (!shot || shot.querySelector(':scope > figcaption')) return;
+    const cap = document.createElement('figcaption');
+    cap.innerHTML = '<b>图片标题</b><span>一句说明。</span>';
+    shot.append(cap);
+  };
+  const convertPlainGrid = (grid) => {
+    if (!grid?.matches?.('.plain-grid')) return grid;
+    const main = grid.querySelector(':scope > .comp-main') || grid;
+    const items = [...main.querySelectorAll(':scope > .plain')];
+    items.forEach((plain, i) => {
+      const article = document.createElement('article');
+      article.className = 'info';
+      const no = document.createElement('span');
+      no.className = 'info__no';
+      no.textContent = String(i + 1).padStart(2, '0');
+      const titleSrc = plain.querySelector(':scope > b');
+      const h3 = document.createElement('h3');
+      if (titleSrc) h3.innerHTML = titleSrc.innerHTML;
+      else h3.textContent = '要点标题';
+      article.append(no, h3);
+      [...plain.children].forEach((child) => {
+        if (child === titleSrc) return;
+        article.append(child);
+      });
+      plain.replaceWith(article);
+    });
+    const cols = grid.getAttribute('data-cols');
+    const kind = grid.getAttribute('data-grid');
+    const aside = grid.getAttribute('data-aside');
+    const surface = grid.getAttribute('data-surface');
+    grid.classList.remove('plain-grid');
+    grid.classList.add('info-grid');
+    grid.setAttribute('data-layout', 'cols');
+    grid.setAttribute('data-pos', 'top');
+    grid.setAttribute('data-index', 'off');
+    if (cols) grid.setAttribute('data-cols', cols);
+    else if (items.length >= 2) grid.setAttribute('data-cols', String(Math.min(5, Math.max(2, items.length))));
+    if (kind) grid.setAttribute('data-grid', kind);
+    if (aside) grid.setAttribute('data-aside', aside);
+    if (surface === 'tint') grid.setAttribute('data-bg', '');
+    grid.removeAttribute('data-surface');
+    return grid;
+  };
+
+  const migrateCoverActions = (root = document) => {
+    root.querySelectorAll('.chapter-cover').forEach((cover) => {
+      if (cover.querySelector('.chapter-cover__actions')) return;
+      const leads = [...cover.querySelectorAll('.chapter-cover__lead')];
+      const candidate = [...leads].reverse().find((p) => {
+        const links = [...p.querySelectorAll(':scope > a')];
+        if (!links.length) return false;
+        const clone = p.cloneNode(true);
+        clone.querySelectorAll('a').forEach((a) => a.remove());
+        return !clone.textContent.replace(/\s/g, '');
+      });
+      if (!candidate) return;
+      const actions = document.createElement('div');
+      actions.className = 'chapter-cover__actions';
+      [...candidate.querySelectorAll(':scope > a')].forEach((a, i) => {
+        a.classList.add('button');
+        if (i === 0) a.classList.add('primary');
+        a.textContent = (a.textContent || '').replace(/\s*→\s*$/, '').trim();
+        actions.append(a);
+      });
+      candidate.replaceWith(actions);
+    });
+  };
+
+  const hydrateEditorial = (root = document) => {
+    migrateCoverActions(root);
+    root.querySelectorAll('.plain-grid').forEach(convertPlainGrid);
+  };
+
+  const wrapAsideMain = (host) => {
+    if (!host) return null;
+    let main = host.querySelector(':scope > .comp-main');
+    if (main) return main;
+    main = document.createElement('div');
+    main.className = 'comp-main';
+    [...host.children]
+      .filter((el) => !el.classList.contains('comp-media') && !el.classList.contains('comp-main'))
+      .forEach((el) => main.append(el));
+    const media = host.querySelector(':scope > .comp-media');
+    if (media) host.insertBefore(main, media);
+    else host.prepend(main);
+    return main;
+  };
+  const unwrapAsideMain = (host) => {
+    const main = host.querySelector(':scope > .comp-main');
+    if (!main) return;
+    while (main.firstChild) host.insertBefore(main.firstChild, main);
+    main.remove();
+  };
+  const stripItemAsides = (root = document) => {
+    root.querySelectorAll('.info[data-aside], .pain-topic-head[data-aside], .pain-detail-list li[data-aside]').forEach((el) => {
+      el.removeAttribute('data-aside');
+      el.querySelector(':scope > .comp-media')?.remove();
+    });
+  };
+  const writeAside = (host, on, pos) => {
+    if (!host) return;
+    stripItemAsides(host);
+    const media = host.querySelector(':scope > .comp-media');
+    if (on) {
+      const next = pos === 'left' || pos === 'right' ? pos : asidePosOf(host);
+      host.setAttribute('data-aside', next);
+      wrapAsideMain(host);
+      if (!media) host.append(emptyAsideShot());
+      host.querySelectorAll(':scope > .comp-media .shot').forEach(ensureAsideCaption);
+    } else {
+      host.removeAttribute('data-aside');
+      host.style.removeProperty('height');
+      host.style.removeProperty('min-height');
+      host.style.removeProperty('--aside-w');
+      host.classList.remove('is-aside-sized');
+      media?.remove();
+      unwrapAsideMain(host);
+    }
   };
 
   const writeInfoNo = (grid, lg) => {
@@ -743,6 +1158,92 @@
     else grid.removeAttribute('data-cols');
   };
 
+  const ensureShotGrid = (host) => {
+    if (!host) return null;
+    if (host.matches?.('.shot-grid')) return host;
+    const nested = host.closest?.('.shot-grid');
+    if (nested) return nested;
+    const shot = host.matches?.('.shot, figure.shot') ? host : null;
+    if (!shot || shot.closest('.shot-stack, .chapter-cover')) return null;
+    const wrap = document.createElement('div');
+    wrap.className = 'shot-grid';
+    wrap.setAttribute('data-cols', '1');
+    shot.replaceWith(wrap);
+    wrap.append(shot);
+    return wrap;
+  };
+
+  const writeShotCols = (host, cols) => {
+    const grid = ensureShotGrid(host);
+    if (!grid) return;
+    grid.setAttribute('data-cols', String(cols || 1));
+    grid.querySelectorAll(':scope > .shot').forEach((shot) => {
+      shot.style.removeProperty('width');
+      shot.style.removeProperty('max-width');
+      shot.style.removeProperty('margin-left');
+      shot.style.removeProperty('margin-right');
+      if (shot.dataset.align === 'center' || shot.dataset.align === 'right') shot.dataset.align = 'left';
+    });
+    if (grid.classList.contains('is-sized')) {
+      const colsN = Math.max(1, Number(cols || 1));
+      const n = grid.querySelectorAll(':scope > .shot').length;
+      const rows = Math.max(1, Math.ceil(n / colsN));
+      grid.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
+    }
+  };
+
+  const writePlainCols = (host, cols) => {
+    const grid = host.closest?.('.plain-grid') || (host.matches?.('.plain-grid') ? host : null);
+    if (!grid) return;
+    grid.setAttribute('data-cols', String(cols || 4));
+  };
+
+  const writeHostCols = (host, spec, n) => {
+    if (!host || !spec) return;
+    const cols = Number(n);
+    if (spec.group === 'stat' || spec.group === 'stat-row') writeStatCols(host, cols);
+    else if (spec.group === 'info') writeInfoCols(host, cols);
+    else if (spec.group === 'shot') writeShotCols(host, cols);
+    else if (spec.group === 'plain') writePlainCols(host, cols);
+    else if (spec.group === 'pain') {
+      const grid = host.closest?.('.pain-text-list') || (host.matches?.('.pain-text-list') ? host : null);
+      if (grid) grid.setAttribute('data-cols', String(cols || 2));
+    }
+  };
+
+  const colsRangeOf = (spec, host) => {
+    if (!spec || !host) return null;
+    if (spec.group === 'shot') {
+      if (host.closest('.comp-media')) return null;
+      const grid = host.closest('.shot-grid') || (host.matches('.shot-grid') ? host : null);
+      const n = Number((grid || host).getAttribute?.('data-cols') || 1);
+      return { min: 1, max: 5, value: n >= 1 && n <= 5 ? n : 1 };
+    }
+    if (spec.group === 'stat') {
+      const grid = host.closest('.stat-grid') || (host.matches('.stat-grid') ? host : null);
+      if (!grid) return null;
+      const fallback = grid.classList.contains('is-compact') ? 5 : 3;
+      const n = Number(grid.getAttribute('data-cols') || fallback);
+      return { min: 2, max: 5, value: n >= 2 && n <= 5 ? n : fallback };
+    }
+    if (spec.group === 'stat-row') {
+      const n = Number(host.getAttribute('data-cols') || 5);
+      return { min: 2, max: 5, value: n >= 2 && n <= 5 ? n : 5 };
+    }
+    if (spec.group === 'info') {
+      return { min: 2, max: 5, value: infoColsOf(host) };
+    }
+    if (spec.group === 'plain') {
+      const n = Number(host.getAttribute('data-cols') || 4);
+      return { min: 2, max: 5, value: n >= 2 && n <= 5 ? n : 4 };
+    }
+    if (spec.group === 'pain') {
+      const n = Number(host.getAttribute('data-cols') || 2);
+      return { min: 1, max: 5, value: n >= 1 && n <= 5 ? n : 2 };
+    }
+    return null;
+  };
+
   const COVER_KINDS = new Set(['left', 'center', 'image', 'split']);
   const COVER_MEDIA_SRC = 'assets/demo/pet-travel.png';
 
@@ -801,6 +1302,7 @@
         suffix: statFlagOn(host, 'suffix'),
         kicker: statFlagOn(host, 'kicker'),
         cols: grid?.getAttribute('data-cols') || '',
+        grid: gridKindOf(grid || host),
       };
     }
     if (spec.group === 'stat-row') {
@@ -818,9 +1320,26 @@
         seedIndexType: host.dataset.seedIndexType || '',
         seedLeftLayout: host.dataset.seedLeftLayout || '',
         cols: infoColsOf(host),
+        grid: gridKindOf(host),
+        bg: infoBgOn(host),
+        bgColor: infoBgColorOf(host),
       };
     }
-    if (spec.group === 'plain') return { group: 'plain', surface: host.getAttribute('data-surface') || 'plain' };
+    if (spec.group === 'plain') {
+      return {
+        group: 'plain',
+        surface: host.getAttribute('data-surface') || 'plain',
+        cols: host.getAttribute('data-cols') || '',
+        grid: gridKindOf(host),
+      };
+    }
+    if (spec.group === 'pain') {
+      return {
+        group: 'pain',
+        cols: host.getAttribute('data-cols') || '2',
+        grid: gridKindOf(host),
+      };
+    }
     if (spec.group === 'point') return { group: 'point', soft: host.classList.contains('is-soft') };
     if (spec.group === 'shot') {
       const kind = host.getAttribute('data-kind') || 'crop';
@@ -846,10 +1365,12 @@
         writeStatFlag(host, 'kicker', true);
       }
       writeStatCols(host, snap.cols);
+      writeGridKind(host, snap.grid);
       return;
     }
     if (snap.group === 'stat-row') {
       writeStatCols(host, snap.cols);
+      writeGridKind(host, snap.grid);
       return;
     }
     if (snap.group === 'info') {
@@ -866,11 +1387,20 @@
         : (snap.index === 'on' ? (snap.type || 'num') : (snap.index || snap.type || 'num'));
       writeInfoIndex(host, indexKind, snap.labels);
       if (snap.cols) writeInfoCols(host, snap.cols);
+      writeGridKind(host, snap.grid);
+      writeInfoBg(host, !!snap.bg, snap.bgColor);
       return;
     }
     if (snap.group === 'plain') {
       if (!snap.surface || snap.surface === 'plain') host.removeAttribute('data-surface');
       else host.setAttribute('data-surface', snap.surface);
+      if (snap.cols) host.setAttribute('data-cols', snap.cols);
+      writeGridKind(host, snap.grid);
+      return;
+    }
+    if (snap.group === 'pain') {
+      if (snap.cols) host.setAttribute('data-cols', snap.cols);
+      writeGridKind(host, snap.grid);
       return;
     }
     if (snap.group === 'point') {
@@ -879,11 +1409,7 @@
     }
     if (snap.group === 'shot') {
       if (snap.kind) host.setAttribute('data-kind', snap.kind === 'photo' ? 'crop' : snap.kind);
-      const grid = host.closest('.shot-grid');
-      if (grid && 'shotCols' in snap) {
-        if (snap.shotCols) grid.setAttribute('data-cols', snap.shotCols);
-        else grid.removeAttribute('data-cols');
-      }
+      if ('shotCols' in snap) writeShotCols(host, snap.shotCols || 1);
       return;
     }
     if (snap.group === 'cover') writeCoverKind(host, snap.kind);
@@ -893,16 +1419,16 @@
     const spec = specOf(host);
     if (!spec) return;
     const before = snapshotVariant(host);
+    const colsMatch = String(id || '').match(/^cols-([1-5])$/);
+    if (colsMatch) {
+      writeHostCols(host, spec, colsMatch[1]);
+      return { before, after: snapshotVariant(host) };
+    }
     if (spec.group === 'stat') {
-      if (id === 'cols-2' || id === 'cols-3' || id === 'cols-4' || id === 'cols-5') {
-        writeStatCols(host, id.slice(5));
-      } else if (id === 'prefix' || id === 'suffix' || id === 'kicker') {
+      if (id === 'prefix' || id === 'suffix' || id === 'kicker') {
         writeStatFlag(host, id, !statFlagOn(host, id));
-      }
-    } else if (spec.group === 'stat-row') {
-      if (id === 'cols-2' || id === 'cols-3' || id === 'cols-4' || id === 'cols-5') {
-        writeStatCols(host, id.slice(5));
-      }
+      } else if (id === 'layout-grid-a' || id === 'layout-grid') writeGridKind(host, 'a');
+      else if (id === 'layout-grid-b') writeGridKind(host, 'b');
     } else if (spec.group === 'info') {
       if (id === 'no-lg') writeInfoNo(host, true);
       else if (id === 'no-sm') writeInfoNo(host, false);
@@ -918,30 +1444,31 @@
       else if (id === 'type-num') writeInfoIndex(host, 'num');
       else if (id === 'type-q') writeInfoIndex(host, 'q');
       else if (id === 'type-label') writeInfoIndex(host, 'label');
-      else if (id === 'layout-grid') writeInfoShape(host, 'grid');
+      else if (id === 'layout-grid' || id === 'layout-grid-a') {
+        writeInfoShape(host, 'grid');
+        writeGridKind(host, 'a');
+      }
+      else if (id === 'layout-grid-b') {
+        writeInfoShape(host, 'grid');
+        writeGridKind(host, 'b');
+      }
       else if (id === 'layout-stack') writeInfoShape(host, 'stack');
       else if (id === 'layout-row') writeInfoShape(host, 'row');
       else if (id === 'pos-top') writeInfoPos(host, 'top');
       else if (id === 'pos-left') writeInfoPos(host, 'left');
-      else if (id === 'cols-2') writeInfoCols(host, 2);
-      else if (id === 'cols-3') writeInfoCols(host, 3);
-      else if (id === 'cols-4') writeInfoCols(host, 4);
-      else if (id === 'cols-5') writeInfoCols(host, 5);
+      else if (id === 'bg') writeInfoBg(host, !infoBgOn(host), infoBgColorOf(host));
       else writeInfoKind(host, id);
     } else if (spec.group === 'plain') {
-      restoreVariant(host, { group: 'plain', surface: id });
+      if (id === 'layout-grid-a' || id === 'layout-grid') writeGridKind(host, 'a');
+      else if (id === 'layout-grid-b') writeGridKind(host, 'b');
+      else restoreVariant(host, { group: 'plain', surface: id, cols: host.getAttribute('data-cols') || '', grid: gridKindOf(host) });
+    } else if (spec.group === 'pain') {
+      if (id === 'layout-grid-a' || id === 'layout-grid') writeGridKind(host, 'a');
+      else if (id === 'layout-grid-b') writeGridKind(host, 'b');
     } else if (spec.group === 'point') {
       restoreVariant(host, { group: 'point', soft: id === 'soft' });
     } else if (spec.group === 'shot') {
-      if (id === 'cols-1' || id === 'cols-2' || id === 'cols-3' || id === 'cols-4' || id === 'cols-5') {
-        const grid = host.closest('.shot-grid');
-        if (grid) {
-          if (id === 'cols-1') grid.removeAttribute('data-cols');
-          else grid.setAttribute('data-cols', id.slice(5));
-        }
-      } else {
-        host.setAttribute('data-kind', id === 'photo' ? 'crop' : id);
-      }
+      host.setAttribute('data-kind', id === 'photo' ? 'crop' : id);
     } else if (spec.group === 'cover') {
       writeCoverKind(host, id);
     }
@@ -957,25 +1484,40 @@
       if (snap.suffix) ids.push('suffix');
       if (snap.kicker) ids.push('kicker');
       if (snap.cols) ids.push(`cols-${snap.cols}`);
+      ids.push(snap.grid === 'b' ? 'layout-grid-b' : 'layout-grid-a');
       return ids;
     }
     if (snap.group === 'stat-row') {
-      return snap.cols ? [`cols-${snap.cols}`] : [];
+      const ids = snap.cols ? [`cols-${snap.cols}`] : [];
+      ids.push(snap.grid === 'b' ? 'layout-grid-b' : 'layout-grid-a');
+      return ids;
     }
     if (snap.group === 'info') {
       const shape = snap.layout === 'row' ? 'row' : (snap.layout === 'stack' || snap.layout === 'label') ? 'stack' : 'grid';
       const type = snap.type === 'alpha' || snap.type === 'q' || snap.type === 'label' ? snap.type : 'num';
       const pos = snap.pos || (snap.layout === 'cols' ? 'top' : 'left');
-      return [
-        `layout-${shape}`,
+      const ids = [
+        shape === 'grid' ? (snap.grid === 'b' ? 'layout-grid-b' : 'layout-grid-a') : `layout-${shape}`,
         snap.index === 'off' ? 'index-off' : 'index-on',
         `pos-${pos}`,
         `type-${type}`,
         snap.no === 'lg' ? 'no-lg' : 'no-sm',
         `cols-${snap.cols || 3}`,
       ];
+      if (snap.bg) ids.push('bg');
+      return ids;
     }
-    if (snap.group === 'plain') return [snap.surface || 'plain'];
+    if (snap.group === 'plain') {
+      const ids = [snap.surface || 'plain'];
+      if (snap.cols) ids.push(`cols-${snap.cols}`);
+      ids.push(snap.grid === 'b' ? 'layout-grid-b' : 'layout-grid-a');
+      return ids;
+    }
+    if (snap.group === 'pain') {
+      const ids = [snap.grid === 'b' ? 'layout-grid-b' : 'layout-grid-a'];
+      if (snap.cols) ids.push(`cols-${snap.cols}`);
+      return ids;
+    }
     if (snap.group === 'point') return [snap.soft ? 'soft' : 'tint'];
     if (snap.group === 'shot') {
       const ids = [snap.kind === 'photo' ? 'crop' : (snap.kind || 'crop')];
@@ -1312,15 +1854,19 @@
       swatch.style.width = px;
       swatch.style.height = Math.min(parseFloat(px) || 16, 40) + 'px';
     }
+    if (kind === 'radius') {
+      const px = `${parseFloat(value) || parseFloat(raw) || 0}px`;
+      swatch.style.borderRadius = px;
+    }
   };
 
   const ITEM_SPECS = [
     { host: '.pain-detail-list', item: ':scope > li' },
-    { host: '.info-grid', item: ':scope > .info' },
+    { host: '.info-grid', item: ':scope > .info, :scope > .comp-main > .info' },
     { host: '.stat-grid', item: ':scope > .stat-card' },
-    { host: '.plain-grid', item: ':scope > .plain' },
+    { host: '.plain-grid', item: ':scope > .plain, :scope > .comp-main > .plain' },
     { host: '.stat-row', item: ':scope > article' },
-    { host: '.pain-text-list', item: ':scope > .pain-topic' },
+    { host: '.pain-text-list', item: ':scope > .pain-topic, :scope > .comp-main > .pain-topic' },
     { host: '.transport-cards', item: ':scope > .transport-card' },
     { host: '.shot-grid', item: ':scope > .shot' },
     { host: '.market-formula', item: ':scope > .market-factor:not(.market-result)' },
@@ -1366,12 +1912,12 @@
     { id: 'formula', label: '公式', html: '<div class="market-formula" aria-label="公式"><div class="market-factor"><div class="market-number"><span>A</span><i>单位</i></div><div class="market-factor-label">因子：基数</div></div><div class="market-operator" aria-hidden="true">×</div><div class="market-factor"><div class="market-number"><span>B</span><i>%</i></div><div class="market-factor-label">因子：转化率</div></div><div class="market-operator" aria-hidden="true">=</div><div class="market-factor market-result"><div class="market-number"><span>N</span><i>次</i></div><div class="market-factor-label">结果</div></div></div>' },
     { id: 'stat-row', label: '横排数字', html: '<div class="stat-grid is-compact" data-cols="5"><article class="stat-card" data-suffix><span class="stat-card__kicker"></span><strong class="stat-card__num"><span class="stat-card__prefix"></span>0<span class="stat-card__suffix">%</span></strong><h3>指标名称</h3></article><article class="stat-card" data-suffix><span class="stat-card__kicker"></span><strong class="stat-card__num"><span class="stat-card__prefix"></span>0<span class="stat-card__suffix">%</span></strong><h3>指标名称</h3></article><article class="stat-card" data-suffix><span class="stat-card__kicker"></span><strong class="stat-card__num"><span class="stat-card__prefix"></span>0<span class="stat-card__suffix">%</span></strong><h3>指标名称</h3></article></div>' },
     { id: 'stat', label: '数字信息', html: '<div class="stat-grid"><article class="stat-card"><span class="stat-card__kicker"></span><strong class="stat-card__num"><span class="stat-card__prefix"></span>0<span class="stat-card__suffix"></span></strong><h3>标题</h3><p>待填。</p></article><article class="stat-card"><span class="stat-card__kicker"></span><strong class="stat-card__num"><span class="stat-card__prefix"></span>0<span class="stat-card__suffix"></span></strong><h3>标题</h3><p>待填。</p></article></div>' },
-    { id: 'info', label: '编号信息', html: '<div class="info-grid" data-layout="2"><article class="info"><span class="info__no">01</span><h3>要点标题</h3><p>待填。写清这条在论证什么。</p></article><article class="info"><span class="info__no">02</span><h3>要点标题</h3><p>待填。</p></article></div>' },
-    { id: 'plain', label: '无编号信息', html: '<div class="plain-grid" data-surface="tint"><article class="plain"><b>要点标题</b><p>待填。</p></article><article class="plain"><b>要点标题</b><p>待填。</p></article></div>' },
+    { id: 'info', label: '编号信息', html: '<div class="info-grid" data-layout="cols" data-cols="2" data-pos="top"><article class="info"><span class="info__no">01</span><h3>要点标题</h3><p>待填。写清这条在论证什么。</p></article><article class="info"><span class="info__no">02</span><h3>要点标题</h3><p>待填。</p></article></div>' },
+    { id: 'plain', label: '无编号信息', html: '<div class="info-grid" data-layout="cols" data-cols="2" data-pos="top" data-index="off"><article class="info"><span class="info__no">01</span><h3>要点标题</h3><p>待填。</p></article><article class="info"><span class="info__no">02</span><h3>要点标题</h3><p>待填。</p></article></div>' },
     { id: 'point', label: '观点', html: '<aside class="point"><span>观点</span><p>待填。一句立场。</p></aside>' },
-    { id: 'pain', label: '议题格', html: '<div class="pain-text-list"><article class="pain-topic"><header class="pain-topic-head"><h3><span class="pain-topic-index">01</span>议题名称</h3><p class="pain-topic-summary">一句概括：这一格要回答什么问题。</p></header><div class="pain-topic-body"><ul class="pain-detail-list"><li>待填</li></ul></div></article></div>' },
+    { id: 'pain', label: '议题格', html: '<div class="pain-text-list" data-cols="2"><article class="pain-topic"><header class="pain-topic-head"><h3><span class="pain-topic-index">01</span>议题名称</h3><p class="pain-topic-summary">一句概括：这一格要回答什么问题。</p></header><div class="pain-topic-body"><ul class="pain-detail-list"><li>待填</li></ul></div></article></div>' },
     { id: 'finding', label: '自定义文本', html: '<article class="finding"><p>待填。可改字号、颜色、加粗，可插入弱分割线。</p></article>' },
-    { id: 'table', label: '表格', html: '<div class="plain-table-wrap"><table class="airline-matrix"><thead><tr><th>维度</th><th>对象 A</th><th>对象 B</th></tr></thead><tbody><tr><td>指标</td><td>待填</td><td>待填</td></tr></tbody></table></div>' },
+    { id: 'table', label: '表格', html: '<div class="plain-table-wrap"><table class="airline-matrix"><thead><tr><th>维度</th><th><span class="table-level">对象 A</span><span class="table-score">对照档</span></th><th class="is-accent"><span class="table-level">对象 B</span><span class="table-score">强调档</span></th></tr></thead><tbody><tr><td>指标</td><td>待填</td><td>待填</td></tr></tbody></table></div>' },
     { id: 'chart', label: '折线图', html: '<figure class="rail-growth-chart" aria-label="折线图"><div class="rail-growth-chart-scroll"><svg viewBox="0 0 640 220" role="img"><line class="chart-grid" x1="56" y1="170" x2="600" y2="170"/><line class="chart-axis" x1="56" y1="30" x2="56" y2="170"/><line class="chart-line" x1="80" y1="150" x2="320" y2="110"/><line class="chart-line" x1="320" y1="110" x2="560" y2="50"/><circle class="chart-point" cx="80" cy="150" r="4"/><circle class="chart-point" cx="320" cy="110" r="4"/><circle class="chart-point" cx="560" cy="50" r="4"/><text class="chart-value" x="80" y="140" text-anchor="middle">10</text><text class="chart-value" x="320" y="100" text-anchor="middle">40</text><text class="chart-value" x="560" y="40" text-anchor="middle">90</text><text class="chart-date" x="80" y="198" text-anchor="middle">T1</text><text class="chart-date" x="320" y="198" text-anchor="middle">T2</text><text class="chart-date" x="560" y="198" text-anchor="end">T3</text></svg></div></figure>' },
     { id: 'ansoff', label: '四象限矩阵', html: '<div class="ansoff-wrap"><div class="ansoff-grid" aria-label="四象限矩阵"><div class="ansoff-corner"></div><div class="ansoff-col-head"><span class="ansoff-kicker">横轴 · 低</span><span class="ansoff-title">象限 · 左</span></div><div class="ansoff-col-head"><span class="ansoff-kicker">横轴 · 高</span><span class="ansoff-title">象限 · 右</span></div><div class="ansoff-row-head"><span class="ansoff-kicker">纵轴 · 高</span></div><div class="ansoff-cell"><span class="cell-tag">I</span><h4>象限名称</h4><p>待填。</p></div><div class="ansoff-cell"><span class="cell-tag">II</span><h4>象限名称</h4><p>待填。</p></div><div class="ansoff-row-head"><span class="ansoff-kicker">纵轴 · 低</span></div><div class="ansoff-cell"><span class="cell-tag">III</span><h4>象限名称</h4><p>待填。</p></div><div class="ansoff-cell"><span class="cell-tag">IV</span><h4>象限名称</h4><p>待填。</p></div></div></div>' },
     { id: 'rank', label: '排行榜', html: '<section class="hotel-ranking-block"><div class="hotel-ranking-head"><div><h4>排行榜标题</h4><p>待填。</p></div></div><div class="hotel-ranking-scroll"><table><thead><tr><th>#</th><th>名称</th><th>分值</th></tr></thead><tbody><tr><td class="rank">1</td><td class="hotel-name">对象 01</td><td class="score total">0</td></tr><tr><td class="rank">2</td><td class="hotel-name">对象 02</td><td class="score total">0</td></tr></tbody></table></div></section>' },
@@ -1401,11 +1947,11 @@
       if (!host) continue;
       const itemSel = spec.item.replace(':scope > ', '');
       const item = node.closest(itemSel);
-      if (item && host.contains(item) && item.parentElement === host) return { spec, host, item };
+      if (item && host.contains(item) && (item.parentElement === host || item.parentElement?.classList.contains('comp-main'))) return { spec, host, item };
       if (host === node || host.contains(node)) return { spec, host, item: null };
     }
     const shot = node.closest('.shot');
-    if (shot && !shot.closest('.shot-grid, .shot-stack, .chapter-cover')) {
+    if (shot && !shot.closest('.shot-grid, .shot-stack, .chapter-cover, .comp-media')) {
       const spec = ITEM_SPECS.find((s) => s.host === '.shot-grid');
       if (spec) return { spec, host: shot, item: shot, wrapShot: true };
     }
@@ -1571,6 +2117,7 @@
     let menuInsertAt = null;
     let menuHeading = null;
     let menuItemHit = null;
+    let menuAside = null;
     let menuBlock = null;
     let menuAt = { x: 0, y: 0 };
 
@@ -1594,10 +2141,12 @@
       '<button type="button" data-edit-del-block hidden>删除组件</button>',
       '</div>',
       '<div class="seed-edit-menu__side" data-edit-variant-side hidden></div>',
+      '<div class="seed-edit-menu__side" data-edit-aside-side hidden></div>',
     ].join('');
     document.body.appendChild(menu);
     const menuMain = menu.querySelector('.seed-edit-menu__main');
     const menuSide = menu.querySelector('[data-edit-variant-side]');
+    const menuAsideSide = menu.querySelector('[data-edit-aside-side]');
     const textBtn = menu.querySelector('[data-edit-text-action]');
     const imageBtn = menu.querySelector('[data-edit-image-action]');
     const layoutBtn = menu.querySelector('[data-edit-layout-action]');
@@ -1674,12 +2223,23 @@
     colorPick.type = 'color';
     colorPick.className = 'seed-edit-color';
     colorPick.hidden = true;
-    colorPick.setAttribute('aria-label', '选择颜色');
-    document.body.appendChild(colorPick);
+    colorPick.setAttribute('aria-label', '自定义颜色');
+    const colorWrap = document.createElement('label');
+    colorWrap.className = 'seed-edit-color-wrap';
+    colorWrap.hidden = true;
+    colorWrap.title = '自定义颜色';
+    colorWrap.innerHTML = '<span class="seed-edit-color-wrap__icon" aria-hidden="true"><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.2 13.8l1.1-3.8 7.2-7.2a1.4 1.4 0 0 1 2 2l-7.2 7.2-3.1 1.8z"/><path d="M9.2 3.8l3 3"/></svg></span>';
+    colorWrap.append(colorPick);
     const colorPalette = document.createElement('div');
     colorPalette.className = 'seed-edit-palette';
     colorPalette.hidden = true;
     colorPalette.setAttribute('aria-label', '主题色');
+    const paletteSwatches = document.createElement('div');
+    paletteSwatches.className = 'seed-edit-palette__swatches';
+    const paletteActions = document.createElement('div');
+    paletteActions.className = 'seed-edit-palette__actions';
+    paletteSwatches.append(colorWrap);
+    colorPalette.append(paletteSwatches, paletteActions);
     document.body.appendChild(colorPalette);
     let colorBefore = '';
     let savedRange = null;
@@ -1688,6 +2248,7 @@
       menu.hidden = true;
       insertList.hidden = true;
       menuSide.hidden = true;
+      menuAsideSide.hidden = true;
       menu.classList.remove('is-split');
       menuText = null;
       menuMedia = null;
@@ -1696,11 +2257,12 @@
       menuInsertAt = null;
       menuHeading = null;
       menuItemHit = null;
+      menuAside = null;
       menuBlock = null;
     };
 
     const paintVariantMenu = (host) => {
-      menu.querySelectorAll('[data-edit-variant], [data-edit-variant-rule], [data-edit-variant-label], [data-edit-variant-check]').forEach((el) => el.remove());
+      menu.querySelectorAll('[data-edit-variant], [data-edit-variant-rule], [data-edit-variant-label], [data-edit-variant-check], [data-edit-cols-stepper], [data-edit-bg-color], [data-edit-aside-check]').forEach((el) => el.remove());
       menuSide.replaceChildren();
       menuSide.hidden = true;
       menu.classList.remove('is-split');
@@ -1736,20 +2298,53 @@
         const label = document.createElement('label');
         label.className = 'seed-edit-menu__check';
         label.setAttribute('data-edit-variant-check', '');
+        const title = document.createElement('span');
+        title.textContent = item.label;
         const box = document.createElement('input');
         box.type = 'checkbox';
         box.dataset.editVariant = item.id;
         box.checked = active.has(item.id);
-        label.append(box, document.createTextNode(item.label));
+        label.append(title, box);
         parent.append(label);
+      };
+      const appendColsStepper = (parent, range) => {
+        if (!range) return;
+        const row = document.createElement('div');
+        row.className = 'seed-edit-menu__row';
+        row.setAttribute('data-edit-cols-stepper', '');
+        const title = document.createElement('span');
+        title.className = 'seed-edit-menu__row-label';
+        title.textContent = '列数';
+        const stepper = document.createElement('div');
+        stepper.className = 'seed-edit-stepper';
+        const minus = document.createElement('button');
+        minus.type = 'button';
+        minus.dataset.editColsStep = '-1';
+        minus.innerHTML = '<span aria-hidden="true">−</span>';
+        minus.disabled = range.value <= range.min;
+        minus.setAttribute('aria-label', '减少列数');
+        const value = document.createElement('span');
+        value.textContent = String(range.value);
+        const plus = document.createElement('button');
+        plus.type = 'button';
+        plus.dataset.editColsStep = '1';
+        plus.innerHTML = '<span aria-hidden="true">+</span>';
+        plus.disabled = range.value >= range.max;
+        plus.setAttribute('aria-label', '增加列数');
+        stepper.append(minus, value, plus);
+        row.append(title, stepper);
+        parent.append(row);
       };
       if (spec.sections) {
         const indexOn = !active.has('index-off');
-        const gridOn = active.has('layout-grid') && active.has('pos-top');
         spec.sections.forEach((section) => {
           if (section.when === 'index-on' && !indexOn) return;
-          if (section.when === 'grid' && !gridOn) return;
+          if (section.when === 'grid' && !active.has('layout-grid') && !active.has('layout-grid-a') && !active.has('layout-grid-b')) return;
           const parent = section.side ? menuSide : menuMain;
+          if (section.id === 'cols') {
+            appendColsStepper(parent, colsRangeOf(spec, host));
+            return;
+          }
           if (section.title) appendLabel(parent, section.title);
           if (section.check) {
             (section.items || []).forEach((item) => appendCheck(parent, item));
@@ -1761,65 +2356,91 @@
           menuSide.hidden = false;
           menu.classList.add('is-split');
         }
+        if (spec.group === 'info' && active.has('bg')) {
+          const row = document.createElement('label');
+          row.className = 'seed-edit-menu__row';
+          row.setAttribute('data-edit-bg-color', '');
+          const title = document.createElement('span');
+          title.className = 'seed-edit-menu__row-label';
+          title.textContent = '背景色';
+          const input = document.createElement('input');
+          input.type = 'color';
+          input.className = 'seed-edit-menu__swatch';
+          input.setAttribute('data-edit-bg-color-input', '');
+          const current = infoBgColorOf(host);
+          input.value = /^#[0-9a-fA-F]{6}$/.test(current) ? current : '#EDF4FD';
+          row.append(title, input);
+          menuMain.append(row);
+        }
       } else {
         if (spec.title) appendLabel(menuMain, spec.title);
         (spec.checks || []).forEach((item) => appendCheck(menuMain, item));
         (spec.items || []).forEach((item) => appendItem(menuMain, item));
       }
-      if (spec.group === 'shot') {
-        const grid = host.closest('.shot-grid');
-        if (grid) {
-          const cols = grid.getAttribute('data-cols') || '1';
-          appendLabel(menuMain, '列数');
-          [
-            { id: 'cols-1', label: '1' },
-            { id: 'cols-2', label: '2' },
-            { id: 'cols-3', label: '3' },
-            { id: 'cols-4', label: '4' },
-            { id: 'cols-5', label: '5' },
-          ].forEach((item) => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.dataset.editVariant = item.id;
-            btn.textContent = item.label;
-            btn.classList.toggle('is-on', cols === item.id.slice(5));
-            menuMain.append(btn);
-          });
-        }
-      }
-      if (spec.group === 'stat') {
-        const grid = host.closest('.stat-grid') || (host.matches('.stat-grid') ? host : null);
-        if (grid) {
-          const cols = grid.getAttribute('data-cols') || (grid.classList.contains('is-compact') ? '5' : '3');
-          appendLabel(menuMain, '列数');
-          [
-            { id: 'cols-2', label: '2' },
-            { id: 'cols-3', label: '3' },
-            { id: 'cols-4', label: '4' },
-            { id: 'cols-5', label: '5' },
-          ].forEach((item) => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.dataset.editVariant = item.id;
-            btn.textContent = item.label;
-            btn.classList.toggle('is-on', cols === item.id.slice(5));
-            menuMain.append(btn);
-          });
-        }
+      if ((spec.group === 'shot' && !host.closest('.comp-media')) || spec.group === 'stat' || spec.group === 'plain') {
+        appendColsStepper(menuMain, colsRangeOf(spec, host));
       }
     };
 
-    const showMenu = (event, { text, media, variant, resize, heading, itemHit, block, insertAt } = {}) => {
+    const paintAsideCheck = (aside) => {
+      menu.querySelectorAll('[data-edit-aside-check]').forEach((el) => el.remove());
+      menuAsideSide.replaceChildren();
+      menuAsideSide.hidden = true;
+      if (!aside) {
+        if (menuSide.childElementCount) {
+          menuSide.hidden = false;
+          menu.classList.add('is-split');
+        }
+        return;
+      }
+      const label = document.createElement('label');
+      label.className = 'seed-edit-menu__check';
+      label.setAttribute('data-edit-aside-check', '');
+      const title = document.createElement('span');
+      title.textContent = '配图';
+      const box = document.createElement('input');
+      box.type = 'checkbox';
+      box.dataset.editAside = 'on';
+      box.checked = asideOn(aside);
+      label.append(title, box);
+      menuMain.append(label);
+      if (!asideOn(aside)) {
+        if (menuSide.childElementCount) {
+          menuSide.hidden = false;
+          menu.classList.add('is-split');
+        }
+        return;
+      }
+      const posLabel = document.createElement('div');
+      posLabel.className = 'seed-edit-menu__label';
+      posLabel.textContent = '配图位置';
+      menuAsideSide.append(posLabel);
+      const pos = asidePosOf(aside);
+      ['left', 'right'].forEach((id) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.editAsidePos = id;
+        btn.textContent = id === 'left' ? '左' : '右';
+        btn.classList.toggle('is-on', pos === id);
+        menuAsideSide.append(btn);
+      });
+      menuAsideSide.hidden = false;
+      menu.classList.add('is-split');
+      if (menuSide.childElementCount) menuSide.hidden = false;
+    };
+
+    const showMenu = (event, { text, media, variant, resize, heading, itemHit, block, insertAt, aside } = {}) => {
       menuText = text || null;
       menuMedia = media || null;
       menuVariant = variant || null;
       menuResize = resize || null;
       menuHeading = heading || null;
       menuItemHit = itemHit || null;
+      menuAside = aside || null;
       menuBlock = block || null;
       menuInsertAt = insertAt || null;
       textBtn.hidden = !menuText;
-      imageBtn.hidden = !menuMedia;
+      imageBtn.hidden = !(menuMedia || isAsideFrame(menuResize));
       layoutBtn.hidden = menuMedia?.closest?.('.chapter-cover') ? true : !(menuMedia || menuResize);
       const canAddItem = !!(menuItemHit?.host);
       const canDelItem = !!(menuItemHit?.item && menuItemHit.host && menuItemHit.host.querySelectorAll(menuItemHit.spec.item).length > 1);
@@ -1835,6 +2456,7 @@
       const hasPrimary = !textBtn.hidden || !imageBtn.hidden || !layoutBtn.hidden;
       structRule.hidden = !(hasPrimary && (canAddItem || canInsert));
       paintVariantMenu(menuVariant);
+      paintAsideCheck(menuAside);
       const hasDelete = canDelItem || canDelGroup || canDelBlock;
       deleteRule.hidden = !hasDelete;
       if (hasDelete) {
@@ -1843,7 +2465,7 @@
         if (!delGroupBtn.hidden) menuMain.append(delGroupBtn);
         if (!delBlockBtn.hidden) menuMain.append(delBlockBtn);
       }
-      const hasAction = hasPrimary || menuVariant
+      const hasAction = hasPrimary || menuVariant || menuAside
         || canAddItem || canDelItem || canDelGroup || canDelBlock || canInsert;
       if (!hasAction) return;
       for (const el of menuMain.children) {
@@ -1860,8 +2482,9 @@
     };
 
     const refreshOpenMenu = () => {
-      if (menu.hidden || !menuVariant) return;
+      if (menu.hidden || (!menuVariant && !menuAside)) return;
       paintVariantMenu(menuVariant);
+      paintAsideCheck(menuAside);
       const hasDelete = !delItemBtn.hidden || !delGroupBtn.hidden || !delBlockBtn.hidden;
       deleteRule.hidden = !hasDelete;
       if (hasDelete) {
@@ -1932,7 +2555,7 @@
       if (!grid?.matches?.('.info-grid')) return;
       const type = infoIndexType(grid);
       if (type === 'off' || type === 'label') return;
-      [...grid.querySelectorAll(':scope > .info')].forEach((item, i) => {
+      [...grid.querySelectorAll(':scope > .info, :scope > .comp-main > .info')].forEach((item, i) => {
         const no = item.querySelector(':scope > .info__no');
         if (!no) return;
         if (type === 'alpha') no.textContent = String.fromCharCode(65 + (i % 26));
@@ -1943,7 +2566,7 @@
 
     const renumberPain = (host) => {
       if (!host?.matches?.('.pain-text-list')) return;
-      [...host.querySelectorAll(':scope > .pain-topic')].forEach((item, i) => {
+      [...host.querySelectorAll(':scope > .pain-topic, :scope > .comp-main > .pain-topic')].forEach((item, i) => {
         const no = item.querySelector('.pain-topic-index');
         if (no) no.textContent = String(i + 1).padStart(2, '0');
       });
@@ -1978,6 +2601,9 @@
 
     const resetClonedItem = (node, spec, host) => {
       node.querySelectorAll('[data-edit-key]').forEach((el) => el.removeAttribute('data-edit-key'));
+      node.querySelectorAll('.comp-media').forEach((el) => el.remove());
+      node.removeAttribute('data-aside');
+      node.querySelectorAll('[data-aside]').forEach((el) => el.removeAttribute('data-aside'));
       if (spec.host === '.info-grid') {
         const title = node.querySelector('h3');
         const body = node.querySelector('p');
@@ -2154,11 +2780,14 @@
       const node = src ? src.cloneNode(true) : htmlToNodes(defaultItemHtml(hit.spec))[0];
       if (!node) return;
       resetClonedItem(node, hit.spec, null);
+      const listParent = hit.host.querySelector(':scope > .comp-main') || hit.host;
       let before = hit.item ? hit.item.nextSibling : null;
       if (hit.spec.host === '.market-formula') {
         before = hit.host.querySelector(':scope > .market-result') || null;
       }
-      recordInsert([node], hit.host, before);
+      const asideMedia = hit.host.querySelector(':scope > .comp-media');
+      if (!before && asideMedia && listParent === hit.host) before = asideMedia;
+      recordInsert([node], listParent, before);
     };
 
     const removeItem = (hit) => {
@@ -2283,13 +2912,16 @@
     };
 
     const liveReorder = (el, parent, clientX, clientY) => {
+      const asideMedia = parent.querySelector(':scope > .comp-media');
       const kids = [...parent.children].filter((n) => {
         if (n.nodeType !== 1 || n === el) return false;
+        if (n.matches?.('.comp-media')) return false;
         if (parent.matches?.('.market-formula')) return n.matches('.market-factor:not(.market-result)');
         return true;
       });
       if (!kids.length) {
-        parent.appendChild(el);
+        if (asideMedia) parent.insertBefore(el, asideMedia);
+        else parent.appendChild(el);
         return;
       }
       let best = kids[0];
@@ -2311,7 +2943,8 @@
       if (after) {
         let next = best.nextElementSibling;
         if (next === el) next = next.nextElementSibling;
-        if (next) parent.insertBefore(el, next);
+        if (next && next !== asideMedia) parent.insertBefore(el, next);
+        else if (asideMedia) parent.insertBefore(el, asideMedia);
         else parent.appendChild(el);
       } else {
         parent.insertBefore(el, best);
@@ -2334,11 +2967,42 @@
       ghost.hidden = false;
       ghost.style.left = `${event.clientX + 12}px`;
       ghost.style.top = `${event.clientY - 18}px`;
+      let lastX = event.clientX;
+      let lastY = event.clientY;
+      let scrollRaf = 0;
       const overTrash = (x, y) => {
         const box = trash.getBoundingClientRect();
         return y >= box.top && x >= 0 && x <= window.innerWidth;
       };
+      const scrollRoot = () => document.scrollingElement || document.documentElement;
+      const applyEdgeScroll = () => {
+        if (!sorting) return;
+        const topbar = document.querySelector('.report-shell.is-flow > .topbar, .topbar');
+        const topEdge = topbar ? topbar.getBoundingClientRect().bottom : 0;
+        const trashTop = trash.hidden ? window.innerHeight : trash.getBoundingClientRect().top;
+        const zone = 140;
+        let dy = 0;
+        if (lastY < topEdge + zone) {
+          const t = lastY <= topEdge ? 1 : 1 - (lastY - topEdge) / zone;
+          dy = -Math.ceil(28 + t * 72);
+        } else if (!overTrash(lastX, lastY) && lastY > trashTop - zone && lastY <= trashTop) {
+          const t = 1 - (trashTop - lastY) / zone;
+          dy = Math.ceil(28 + t * 72);
+        }
+        if (dy) {
+          const root = scrollRoot();
+          const prev = root.scrollTop;
+          window.scrollBy(0, dy);
+          if (root.scrollTop === prev) root.scrollTop = Math.max(0, prev + dy);
+          if (root.scrollTop !== prev && !overTrash(lastX, lastY)) {
+            liveReorder(el, parent, lastX, lastY);
+          }
+        }
+        scrollRaf = requestAnimationFrame(applyEdgeScroll);
+      };
       const onMove = (move) => {
+        lastX = move.clientX;
+        lastY = move.clientY;
         ghost.style.left = `${move.clientX + 12}px`;
         ghost.style.top = `${move.clientY - 18}px`;
         const hot = overTrash(move.clientX, move.clientY);
@@ -2346,6 +3010,7 @@
         if (!hot) liveReorder(el, parent, move.clientX, move.clientY);
       };
       const onUp = () => {
+        cancelAnimationFrame(scrollRaf);
         document.removeEventListener('pointermove', onMove);
         document.removeEventListener('pointerup', onUp);
         el.classList.remove('is-seed-drag');
@@ -2377,6 +3042,7 @@
       };
       document.addEventListener('pointermove', onMove);
       document.addEventListener('pointerup', onUp);
+      scrollRaf = requestAnimationFrame(applyEdgeScroll);
     };
 
     const writeTextState = (key, value) => {
@@ -2403,38 +3069,40 @@
       if (!node || !node.getBoundingClientRect) return;
       const box = node.getBoundingClientRect();
       const pad = 8;
-      const tools = [sizeSel, colorPick, colorPalette, boldBtn, ruleBtn, doneBtn].filter((el) => !el.hidden);
-      const gap = 8;
-      const widths = tools.map((el) => el.offsetWidth || (el === colorPick ? 34 : el === colorPalette ? 160 : 56));
-      const heights = tools.map((el) => el.offsetHeight || 34);
-      const total = widths.reduce((sum, w) => sum + w + gap, -gap);
-      const rowH = Math.max(34, ...heights);
-      const fitsRight = box.right + pad + total <= window.innerWidth - pad;
+      const panelOn = !colorPalette.hidden;
+      const el = panelOn ? colorPalette : doneBtn;
+      if (!el || el.hidden) return;
+      const w = el.offsetWidth || (panelOn ? 180 : 72);
+      const h = el.offsetHeight || (panelOn ? 92 : 28);
+      const fitsRight = box.right + pad + w <= window.innerWidth - pad;
       let left;
       let top;
       if (fitsRight) {
         left = box.right + pad;
         top = box.top;
       } else {
-        left = Math.max(pad, Math.min(box.left, window.innerWidth - pad - total));
+        left = Math.max(pad, Math.min(box.left, window.innerWidth - pad - w));
         top = box.bottom + pad;
-        if (top + rowH > window.innerHeight - pad) top = Math.max(pad, box.top - rowH - pad);
+        if (top + h > window.innerHeight - pad) top = Math.max(pad, box.top - h - pad);
       }
-      let x = left;
-      tools.forEach((el, i) => {
-        el.style.left = `${x}px`;
-        el.style.top = `${top}px`;
-        x += widths[i] + gap;
-      });
+      el.style.left = `${left}px`;
+      el.style.top = `${top}px`;
+    };
+
+    const dockEditChrome = () => {
+      paletteActions.append(sizeSel, ruleBtn, boldBtn, doneBtn);
+      colorWrap.hidden = colorPick.hidden;
     };
 
     const hideColorPick = () => {
       colorPick.hidden = true;
+      colorWrap.hidden = true;
       colorPalette.hidden = true;
+      document.body.append(sizeSel, ruleBtn, boldBtn, doneBtn);
     };
 
     const paintColorPalette = () => {
-      colorPalette.replaceChildren();
+      paletteSwatches.querySelectorAll('[data-color-token]').forEach((el) => el.remove());
       listColorTokens().forEach((name) => {
         const hex = tokenColorHex(name);
         if (!hex) return;
@@ -2444,13 +3112,16 @@
         btn.title = name;
         btn.setAttribute('aria-label', name);
         btn.style.background = `var(${name})`;
-        colorPalette.append(btn);
+        paletteSwatches.insertBefore(btn, colorWrap);
       });
     };
 
     const showColorPickFor = (valueEl) => {
       const hex = hexInputValue(valueEl?.textContent);
       colorPick.hidden = false;
+      colorWrap.hidden = false;
+      colorPalette.hidden = false;
+      paintColorPalette();
       if (hex) colorPick.value = hex;
     };
 
@@ -2593,53 +3264,98 @@
         paintColorPalette();
         colorPalette.hidden = false;
       }
+      dockEditChrome();
       placeDone(node);
     };
 
+    const mediaKindOf = (file) => {
+      const type = String(file?.type || '').toLowerCase();
+      if (type.startsWith('video/')) return 'video';
+      if (type.startsWith('image/')) return 'image';
+      const name = String(file?.name || '').toLowerCase();
+      if (/\.(mp4|webm|mov|m4v|ogv)$/.test(name)) return 'video';
+      return 'image';
+    };
+
+    const resolveMediaEl = (el) => {
+      if (!el) return null;
+      if (el.matches?.('img, video, svg')) return el;
+      return el.querySelector?.('img, video, svg')
+        || el.closest?.('.comp-media, .shot, figure, .shot__frame')?.querySelector?.('img, video, svg')
+        || null;
+    };
+
+    const ensureMediaEl = (el) => {
+      const live = resolveMediaEl(el);
+      if (live) return live;
+      const frame = el?.querySelector?.('.shot__frame')
+        || el?.closest?.('.comp-media, .shot, figure')?.querySelector?.('.shot__frame');
+      if (!frame) return el;
+      const img = document.createElement('img');
+      img.alt = '';
+      frame.prepend(img);
+      return img;
+    };
+
     const applyMediaFile = (el, file, url) => {
-      const isVideo = file.type.startsWith('video/');
-      const isImage = file.type.startsWith('image/');
-      const tag = el.tagName.toLowerCase();
+      const kind = mediaKindOf(file);
+      const isVideo = kind === 'video';
+      const isImage = kind === 'image';
+      let node = ensureMediaEl(el);
+      if (!node) return el;
+      const tag = node.tagName.toLowerCase();
 
       const swap = (next) => {
-        next.dataset.editKey = el.dataset.editKey || '';
-        el.replaceWith(next);
+        next.dataset.editKey = node.dataset.editKey || el?.dataset?.editKey || '';
+        node.replaceWith(next);
         return next;
+      };
+
+      const stampShot = (media) => {
+        const shot = media.closest?.('.shot, [data-gallery]');
+        if (!shot) return;
+        shot.setAttribute('data-lightbox-src', url);
+        const alt = media.getAttribute?.('alt') || file?.name || '';
+        if (alt) shot.setAttribute('data-lightbox-alt', alt);
       };
 
       if (tag === 'video') {
         if (isVideo) {
-          el.querySelectorAll('source').forEach((source) => {
+          node.querySelectorAll('source').forEach((source) => {
             source.src = url;
           });
-          el.src = url;
-          el.load();
-          return el;
+          node.src = url;
+          node.load();
+          stampShot(node);
+          return node;
         }
         if (isImage) {
-          el.poster = url;
-          return el;
+          node.poster = url;
+          stampShot(node);
+          return node;
         }
       }
 
       if (tag === 'img') {
         if (isImage) {
-          el.src = url;
-          if (el.hasAttribute('data-src')) el.setAttribute('data-src', url);
-          const thumb = el.closest('.gallery-thumb');
+          node.src = url;
+          node.setAttribute('src', url);
+          if (node.hasAttribute('data-src')) node.setAttribute('data-src', url);
+          const thumb = node.closest('.gallery-thumb');
           if (thumb) thumb.setAttribute('data-src', url);
-          const shot = el.closest('.shot, [data-gallery]');
-          if (shot?.hasAttribute('data-lightbox-src')) shot.setAttribute('data-lightbox-src', url);
-          return el;
+          stampShot(node);
+          return node;
         }
         if (isVideo) {
           const video = document.createElement('video');
           video.controls = true;
           video.playsInline = true;
           video.src = url;
-          video.style.cssText = el.getAttribute('style') || '';
-          video.className = el.className;
-          return swap(video);
+          video.style.cssText = node.getAttribute('style') || '';
+          video.className = node.className;
+          const next = swap(video);
+          stampShot(next);
+          return next;
         }
       }
 
@@ -2650,13 +3366,15 @@
           media.playsInline = true;
         }
         media.src = url;
-        const box = el.getBoundingClientRect();
+        const box = node.getBoundingClientRect();
         media.style.width = '100%';
         media.style.maxWidth = `${Math.round(box.width)}px`;
         media.style.display = 'block';
-        return swap(media);
+        const next = swap(media);
+        stampShot(next);
+        return next;
       }
-      return el;
+      return node;
     };
 
     const captureMediaSnap = (el) => {
@@ -2718,9 +3436,10 @@
     };
 
     const pickMedia = (el) => {
-      if (!el) return;
-      const key = ensureKey(el, 'media');
-      if (!(key in originals.media)) originals.media[key] = captureMediaSnap(el);
+      const target = ensureMediaEl(el);
+      if (!target) return;
+      const key = ensureKey(target, 'media');
+      if (!(key in originals.media)) originals.media[key] = captureMediaSnap(target);
       if (!fileInput) {
         fileInput = document.createElement('input');
         fileInput.type = 'file';
@@ -2732,24 +3451,28 @@
         const file = fileInput.files?.[0];
         fileInput.value = '';
         if (!file) return;
-        const node = nodeByKey(key) || el;
-        const beforeBlob = await idbGet('blobs', `${slug}::${key}`);
+        const node = ensureMediaEl(nodeByKey(key) || target);
+        if (!node) return;
+        if (node !== target && !node.dataset.editKey) node.dataset.editKey = key;
+        const beforeBlob = await idbGet('blobs', `${slug}::${key}`).catch(() => null);
         const beforeSnap = captureMediaSnap(node);
         const beforeRec = state.media[key] ? { ...state.media[key] } : null;
-        await idbSet('blobs', `${slug}::${key}`, file);
-        const afterRec = { ...(beforeRec || {}), name: file.name, type: file.type };
-        state.media[key] = afterRec;
         const prevUrl = objectUrls.get(key);
         if (prevUrl) URL.revokeObjectURL(prevUrl);
         const url = URL.createObjectURL(file);
         objectUrls.set(key, url);
         applyMediaFile(node, file, url);
+        const afterRec = { ...(beforeRec || {}), name: file.name, type: file.type || mediaKindOf(file) };
+        state.media[key] = afterRec;
+        try {
+          await idbSet('blobs', `${slug}::${key}`, file);
+        } catch (_) { /* keep live preview even if cache write fails */ }
         record({
           undo: async () => {
-            const cur = nodeByKey(key);
+            const cur = ensureMediaEl(nodeByKey(key));
             if (!cur) return;
             if (beforeBlob instanceof Blob) {
-              await idbSet('blobs', `${slug}::${key}`, beforeBlob);
+              await idbSet('blobs', `${slug}::${key}`, beforeBlob).catch(() => {});
               restoreMediaSnap(cur, beforeSnap, beforeBlob);
               state.media[key] = beforeRec;
               return;
@@ -2759,9 +3482,9 @@
             else delete state.media[key];
           },
           redo: async () => {
-            const cur = nodeByKey(key);
+            const cur = ensureMediaEl(nodeByKey(key));
             if (!cur) return;
-            await idbSet('blobs', `${slug}::${key}`, file);
+            await idbSet('blobs', `${slug}::${key}`, file).catch(() => {});
             const nextUrl = URL.createObjectURL(file);
             const old = objectUrls.get(key);
             if (old) URL.revokeObjectURL(old);
@@ -2780,8 +3503,8 @@
       const box = activeBox.getBoundingClientRect();
       mediaBar.hidden = false;
       handle.hidden = false;
-      handleH.hidden = false;
-      const showMedia = isMediaBox(activeBox);
+      handleH.hidden = isIntrinsicHeight(activeBox);
+      const showMedia = isMediaBox(activeBox) || isShotSurface(activeBox) || !!activeBox.querySelector?.('img, video');
       mediaBar.querySelectorAll('[data-media-only]').forEach((row) => {
         row.hidden = !showMedia;
       });
@@ -2803,7 +3526,8 @@
         btn.classList.toggle('is-on', btn.dataset.align === (activeBox.dataset.align || 'left'));
       });
       mediaBar.querySelectorAll('[data-fit]').forEach((btn) => {
-        btn.classList.toggle('is-on', btn.dataset.fit === (activeBox.dataset.fit || 'fit'));
+        const fallback = isShotSurface(activeBox) ? 'fill' : 'fit';
+        btn.classList.toggle('is-on', btn.dataset.fit === (activeBox.dataset.fit || fallback));
       });
     };
 
@@ -2890,7 +3614,7 @@
       activeBox = box;
       box.setAttribute('data-seed-editing-media', '');
       if (!box.dataset.align) box.dataset.align = 'left';
-      if (!box.dataset.fit) box.dataset.fit = 'fit';
+      if (!box.dataset.fit) box.dataset.fit = 'fill';
       document.documentElement.classList.add('is-inline-editing');
       placeMediaChrome();
     };
@@ -2908,19 +3632,31 @@
     const bindResizeHandle = (el, axis) => {
       el.addEventListener('pointerdown', (event) => {
         if (!activeBox) return;
+        if (event.detail > 1) {
+          event.preventDefault();
+          return;
+        }
         event.preventDefault();
         const startX = event.clientX;
         const startY = event.clientY;
         const startBox = activeBox.getBoundingClientRect();
-        const parentW = activeBox.parentElement?.getBoundingClientRect().width || window.innerWidth;
+        const asideFrame = activeBox.matches('.comp-media') ? activeBox : activeBox.closest('.comp-media');
+        const asideParent = asideFrame?.parentElement?.matches?.('.info-grid, .pain-text-list')
+          ? asideFrame.parentElement
+          : null;
+        const parentW = asideParent
+          ? Math.max(200, asideParent.getBoundingClientRect().width - 120)
+          : (activeBox.parentElement?.getBoundingClientRect().width || window.innerWidth);
         const onMove = (move) => {
-          const nextW = axis === 'x'
-            ? Math.max(120, Math.min(parentW, startBox.width + (move.clientX - startX)))
-            : startBox.width;
-          const nextH = axis === 'y'
-            ? Math.max(80, startBox.height + (move.clientY - startY))
-            : startBox.height;
-          writeLayout(activeBox, { ...readLayout(activeBox), width: nextW, height: nextH });
+          const layout = readLayout(activeBox);
+          if (axis === 'x') {
+            const nextW = Math.max(120, Math.min(parentW, startBox.width + (move.clientX - startX)));
+            writeLayout(activeBox, { ...layout, width: nextW });
+          } else if (!isIntrinsicHeight(activeBox)) {
+            const minH = (isShotSurface(activeBox) || isAsideHost(activeBox) || isAsideFrame(activeBox)) ? 96 : 80;
+            const nextH = Math.max(minH, startBox.height + (move.clientY - startY));
+            writeLayout(activeBox, { ...layout, height: nextH });
+          }
           placeMediaChrome();
         };
         const onUp = () => {
@@ -2930,6 +3666,16 @@
         };
         document.addEventListener('pointermove', onMove);
         document.addEventListener('pointerup', onUp);
+      });
+      el.addEventListener('dblclick', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!activeBox) return;
+        const layout = readLayout(activeBox);
+        if (axis === 'x') writeLayout(activeBox, { ...layout, width: null });
+        else writeLayout(activeBox, { ...layout, height: null });
+        persistLayout(activeBox);
+        placeMediaChrome();
       });
     };
     bindResizeHandle(handle, 'x');
@@ -2977,8 +3723,12 @@
         if (prev) URL.revokeObjectURL(prev);
         const url = URL.createObjectURL(blob);
         objectUrls.set(key, url);
-        applyMediaFile(node, blob, url);
+        applyMediaFile(ensureMediaEl(node) || node, blob, url);
       }
+      document.querySelectorAll('.market-formula, .stat-grid, .stat-row, .info-grid, .plain-grid, .point, .finding').forEach((box) => {
+        if (isAsideHost(box)) return;
+        writeLayout(box, { ...readLayout(box), height: null });
+      });
     };
 
     document.addEventListener('contextmenu', (event) => {
@@ -2994,26 +3744,29 @@
       }
       const onGraphic = !!(node.closest('img, video') || (node.closest('svg') && !node.closest('text, tspan, foreignObject')));
       const text = onGraphic && !node.closest('text, tspan') ? null : textTargetOf(raw.nodeType === 3 ? raw : node);
-      const media = mediaTargetOf(node);
+      const inAsideShot = !!node.closest('.comp-media');
+      const media = mediaTargetOf(node) || (inAsideShot ? node.closest('.comp-media').querySelector('img, video, svg') : null);
       const variant = variantHostOf(node);
       const resize = resizeBoxOf(node);
       const both = text && media && isSvgText(text);
       const heading = headingGroupOf(node);
-      const itemHit = itemMatchOf(node);
+      const itemHit = inAsideShot ? null : itemMatchOf(node);
+      const aside = asideHostOf(node);
       const block = blockOf(node);
       const blank = isBlankHit(node);
       const stack = nearestStack(node, event.clientY);
       const insertAt = blank && stack ? insertPointFromY(stack, event.clientY) : null;
-      if (!text && !media && !variant && !resize && !heading && !itemHit && !insertAt && !block) return;
+      if (!text && !media && !variant && !resize && !heading && !itemHit && !insertAt && !block && !aside) return;
       event.preventDefault();
       event.stopPropagation();
       showMenu(event, {
         text: insertAt ? null : text,
-        media: insertAt ? null : (both || !text ? media : null),
+        media: insertAt ? null : (inAsideShot || both || !text ? media : null),
         variant: insertAt ? null : variant,
         resize: insertAt || media ? null : resize,
         heading: insertAt ? null : heading,
         itemHit: insertAt ? null : itemHit,
+        aside: insertAt ? null : aside,
         block: insertAt ? null : block,
         insertAt,
       });
@@ -3044,6 +3797,56 @@
       }
       const insertId = event.target.closest('[data-edit-insert-id]')?.dataset.editInsertId;
       if (insertId && menuInsertAt) insertBlock(insertId, menuInsertAt);
+      if (event.target.closest('[data-edit-cols-stepper]')) {
+        event.preventDefault();
+        event.stopPropagation();
+        const colsStep = event.target.closest('[data-edit-cols-step]');
+        if (colsStep && !colsStep.disabled && menuVariant) {
+          const spec = specOf(menuVariant);
+          const range = colsRangeOf(spec, menuVariant);
+          const delta = Number.parseInt(colsStep.dataset.editColsStep, 10);
+          if (range && Number.isFinite(delta)) {
+            const next = Math.min(range.max, Math.max(range.min, range.value + delta));
+            if (next !== range.value) applyVariant(menuVariant, `cols-${next}`);
+            refreshOpenMenu();
+          }
+        }
+        return;
+      }
+      if (event.target.closest('[data-edit-bg-color]')) return;
+      if (event.target.closest('[data-edit-aside-check]') && menuAside) {
+        event.preventDefault();
+        event.stopPropagation();
+        const host = menuAside;
+        const before = asideOn(host);
+        const beforePos = asidePosOf(host);
+        writeAside(host, !before);
+        persist();
+        record({
+          undo: () => { writeAside(host, before, beforePos); persist(); },
+          redo: () => { writeAside(host, !before, before ? beforePos : 'right'); persist(); },
+        });
+        refreshOpenMenu();
+        return;
+      }
+      const asidePosBtn = event.target.closest('[data-edit-aside-pos]');
+      if (asidePosBtn && menuAside) {
+        event.preventDefault();
+        event.stopPropagation();
+        const host = menuAside;
+        const beforePos = asidePosOf(host);
+        const nextPos = asidePosBtn.dataset.editAsidePos === 'left' ? 'left' : 'right';
+        if (nextPos !== beforePos) {
+          writeAside(host, true, nextPos);
+          persist();
+          record({
+            undo: () => { writeAside(host, true, beforePos); persist(); },
+            redo: () => { writeAside(host, true, nextPos); persist(); },
+          });
+        }
+        refreshOpenMenu();
+        return;
+      }
       const checkHost = event.target.closest('[data-edit-variant-check]');
       const variantId = checkHost?.querySelector('[data-edit-variant]')?.dataset.editVariant
         || event.target.closest('[data-edit-variant]')?.dataset.editVariant;
@@ -3055,15 +3858,37 @@
         }
       }
       if (event.target.closest('[data-edit-text-action]') && menuText) startTextEdit(menuText);
-      if (event.target.closest('[data-edit-image-action]') && menuMedia) pickMedia(menuMedia);
+      if (event.target.closest('[data-edit-image-action]') && (menuMedia || menuResize)) {
+        pickMedia(menuMedia || menuResize);
+        hideMenu();
+        return;
+      }
       if (event.target.closest('[data-edit-layout-action]') && (menuMedia || menuResize)) {
         startMediaAdjust(menuMedia || menuResize);
+        hideMenu();
+        return;
       }
       if (event.target.closest('[data-edit-add-item]') && menuItemHit) addItemAt(menuItemHit);
       if (event.target.closest('[data-edit-del-item]') && menuItemHit) removeItem(menuItemHit);
       if (event.target.closest('[data-edit-del-group]') && menuHeading) removeGroup(menuHeading);
       if (event.target.closest('[data-edit-del-block]') && menuBlock) removeBlock(menuBlock);
       hideMenu();
+    });
+
+    menu.addEventListener('input', (event) => {
+      const color = event.target.closest('[data-edit-bg-color-input]');
+      if (!color || !menuVariant) return;
+      writeInfoBg(menuVariant, true, color.value);
+    });
+    menu.addEventListener('change', (event) => {
+      const color = event.target.closest('[data-edit-bg-color-input]');
+      if (!color || !menuVariant) return;
+      const host = menuVariant;
+      const key = ensureKey(host, 'variant');
+      const after = snapshotVariant(host);
+      if (JSON.stringify(after) === JSON.stringify(originals.variants[key])) delete state.variants[key];
+      else state.variants[key] = after;
+      persist();
     });
 
     doneBtn.addEventListener('click', (event) => {
@@ -3155,13 +3980,15 @@
     });
     colorPick.addEventListener('pointerdown', () => rememberRange());
     colorPalette.addEventListener('pointerdown', (event) => {
-      event.preventDefault();
       event.stopPropagation();
       rememberRange();
+      if (event.target.closest?.('.seed-edit-color, .seed-edit-color-wrap, .seed-edit-done, .seed-edit-bold, .seed-edit-size, .seed-edit-rule')) return;
+      event.preventDefault();
     });
     colorPalette.addEventListener('click', (event) => {
-      event.preventDefault();
       event.stopPropagation();
+      if (event.target.closest?.('.seed-edit-color, .seed-edit-color-wrap, .seed-edit-done, .seed-edit-bold, .seed-edit-size, .seed-edit-rule')) return;
+      event.preventDefault();
       const btn = event.target.closest?.('[data-color-token]');
       if (!btn || !activeText || isSvgText(activeText)) return;
       const hex = tokenColorHex(btn.dataset.colorToken);
@@ -3295,6 +4122,12 @@
     }, true);
 
     enhanceColorTokens();
+    hydrateEditorial();
+    document.querySelectorAll('.comp-media .shot').forEach(ensureAsideCaption);
+    document.querySelectorAll('.market-formula, .stat-grid, .stat-row, .info-grid, .plain-grid, .point, .finding').forEach((box) => {
+      if (isAsideHost(box)) return;
+      writeLayout(box, { ...readLayout(box), height: null });
+    });
     const isCatalog = !!document.querySelector('.report-shell[data-catalog]');
     idbGet('state', slug).then(async (saved) => {
       if (saved && (saved.texts || saved.media || saved.images || saved.markup || saved.variants)) {
@@ -3303,6 +4136,13 @@
         state.variants = saved.variants || {};
         state.markup = isCatalog ? '' : (saved.markup || '');
         await applyStateToDom();
+        stripItemAsides();
+        hydrateEditorial();
+        document.querySelectorAll('.info-grid[data-aside], .pain-text-list[data-aside], .plain-grid[data-aside]').forEach((host) => {
+          if (host.querySelector(':scope > .comp-media')) wrapAsideMain(host);
+          host.querySelectorAll(':scope > .comp-media .shot').forEach(ensureAsideCaption);
+        });
+        if (!isCatalog) persist().catch(() => {});
       }
     }).catch(() => {});
   };
