@@ -541,11 +541,10 @@
 .shot-plan__label span { color: var(--c-text-4); }
 .shot-plan__label h4 { color: var(--c-text); }
 
-/* 表：浅底表头、横竖弱线、左列加粗；强调列用 .is-accent */
+/* 表：浅底表头、横竖弱线、外框左右底边、左列加粗；强调列用 .is-accent */
 .plain-table-wrap {
   overflow-x: auto;
-  border-top: 2px solid var(--c-text);
-  border-bottom: 1px solid var(--c-line);
+  border: 1px solid var(--c-line);
 }
 .plain-table-wrap table {
   width: 100%;
@@ -886,9 +885,7 @@ input.token-color::-moz-color-swatch { border: 0; }
 
 /* 格子 A：每格左侧竖线（含第一格）。格子 B：四周框 + 内部分割。 */
 .plain-grid[data-grid="b"],
-.info-grid[data-grid="b"][data-layout="cols"],
-.info-grid[data-grid="b"][data-layout="2"],
-.info-grid[data-grid="b"][data-layout="split"],
+.info-grid[data-grid="b"],
 .stat-grid[data-grid="b"] {
   column-gap: 0;
   row-gap: 0;
@@ -896,9 +893,7 @@ input.token-color::-moz-color-swatch { border: 0; }
   border-left: 1px solid var(--c-line);
 }
 .plain-grid[data-grid="b"] .plain,
-.info-grid[data-grid="b"][data-layout="cols"] .info,
-.info-grid[data-grid="b"][data-layout="2"] .info,
-.info-grid[data-grid="b"][data-layout="split"] .info,
+.info-grid[data-grid="b"] .info,
 .stat-grid[data-grid="b"] .stat-card {
   min-height: 0;
   padding: 24px 22px 26px;
@@ -907,7 +902,6 @@ input.token-color::-moz-color-swatch { border: 0; }
   border-right: 1px solid var(--c-line);
   border-bottom: 1px solid var(--c-line);
 }
-.info-grid[data-grid="b"][data-layout="2"] .info { min-height: 0; }
 .stat-grid[data-grid="b"].is-compact .stat-card { padding: 20px 22px; }
 
 /* 编号信息：勾选背景后给内容铺底，色用 --info-bg */

@@ -817,8 +817,8 @@ html = f"""<!doctype html>
   <link rel="stylesheet" href="assets/template.css?v=6">
   <link rel="stylesheet" href="assets/flow.css?v=6">
   <link rel="stylesheet" href="assets/source.css?v=21">
-  <link rel="stylesheet" href="assets/lib.css?v=35">
-  <link rel="stylesheet" href="assets/v2.css?v=11">
+  <link rel="stylesheet" href="assets/lib.css?v=36">
+  <link rel="stylesheet" href="assets/v2.css?v=12">
 </head>
 <body>
   <div class="theme-control" id="themeControl" aria-label="主题控制">
@@ -892,10 +892,10 @@ html = f"""<!doctype html>
     </div>
   </div>
 {LIGHTBOX}
-  <link rel="stylesheet" href="editor/seed-edit.css?v=37">
+  <link rel="stylesheet" href="editor/seed-edit.css?v=38">
   <script src="design-system/design-data.js"></script>
   <script src="design-system/theme-runtime.js"></script>
-  <script src="editor/seed-edit.js?v=37"></script>
+  <script src="editor/seed-edit.js?v=38"></script>
   <script src="assets/template.js"></script>
   <script src="assets/source.js"></script>
   <script src="assets/network.js?v=16"></script>

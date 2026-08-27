@@ -335,10 +335,14 @@
       fillShot(mediaShot, { keepCaption: true });
     };
     if (isIntrinsicHeight(box)) {
+      box.classList.remove('is-sized');
       box.style.removeProperty('height');
       box.style.removeProperty('min-height');
       box.style.removeProperty('max-height');
+      box.style.removeProperty('overflow');
       box.style.removeProperty('overflow-y');
+      box.style.removeProperty('grid-template-rows');
+      box.style.removeProperty('grid-auto-rows');
     } else if (layout.height) {
       const h = Math.round(layout.height);
       box.style.maxHeight = 'none';
@@ -2102,6 +2106,7 @@
     document.documentElement.classList.add('seed-edit-on');
 
     const slug = slugOf();
+    const isCatalog = !!document.querySelector('.report-shell[data-catalog]');
     const objectUrls = new Map();
     const originals = { texts: {}, media: {}, variants: {} };
     const state = { texts: {}, media: {}, variants: {}, markup: '' };
@@ -2500,6 +2505,7 @@
     };
 
     const persist = async () => {
+      if (isCatalog) return;
       const root = markupRootOf();
       if (root) state.markup = root.innerHTML;
       await idbSet('state', slug, {
@@ -4128,23 +4134,24 @@
       if (isAsideHost(box)) return;
       writeLayout(box, { ...readLayout(box), height: null });
     });
-    const isCatalog = !!document.querySelector('.report-shell[data-catalog]');
-    idbGet('state', slug).then(async (saved) => {
-      if (saved && (saved.texts || saved.media || saved.images || saved.markup || saved.variants)) {
-        state.texts = saved.texts || {};
-        state.media = saved.media || saved.images || {};
-        state.variants = saved.variants || {};
-        state.markup = isCatalog ? '' : (saved.markup || '');
-        await applyStateToDom();
-        stripItemAsides();
-        hydrateEditorial();
-        document.querySelectorAll('.info-grid[data-aside], .pain-text-list[data-aside], .plain-grid[data-aside]').forEach((host) => {
-          if (host.querySelector(':scope > .comp-media')) wrapAsideMain(host);
-          host.querySelectorAll(':scope > .comp-media .shot').forEach(ensureAsideCaption);
-        });
-        if (!isCatalog) persist().catch(() => {});
-      }
-    }).catch(() => {});
+    if (!isCatalog) {
+      idbGet('state', slug).then(async (saved) => {
+        if (saved && (saved.texts || saved.media || saved.images || saved.markup || saved.variants)) {
+          state.texts = saved.texts || {};
+          state.media = saved.media || saved.images || {};
+          state.variants = saved.variants || {};
+          state.markup = saved.markup || '';
+          await applyStateToDom();
+          stripItemAsides();
+          hydrateEditorial();
+          document.querySelectorAll('.info-grid[data-aside], .pain-text-list[data-aside], .plain-grid[data-aside]').forEach((host) => {
+            if (host.querySelector(':scope > .comp-media')) wrapAsideMain(host);
+            host.querySelectorAll(':scope > .comp-media .shot').forEach(ensureAsideCaption);
+          });
+          persist().catch(() => {});
+        }
+      }).catch(() => {});
+    }
   };
 
   window.SeedEdit = { mount };
