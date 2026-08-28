@@ -3,7 +3,16 @@
     '.theme-control', '.report-chrome', '.report-chrome-hotspot', '.document-nav',
     '.report-pager',     '.seed-edit-menu', '.seed-edit-done', '.seed-edit-svg-input',
     '.seed-edit-color', '.seed-edit-palette', '.seed-edit-media', '.seed-edit-handle', '.seed-edit-handle-h',
-    '.seed-edit-ghost', '.seed-edit-grip', '.seed-edit-bold', '.seed-edit-size', '.seed-edit-rule', '.seed-edit-trash', '.topbar', 'nav.toc', '.tools',
+    '.seed-edit-ghost', '.seed-edit-grip', '.seed-edit-bold', '.seed-edit-size', '.seed-edit-rule', '.seed-edit-trash',
+    '.seed-edit-dock', '.seed-edit-toast', '.seed-edit-banner', '.seed-edit-drop', '.topbar', 'nav.toc', '.tools',
+  ].join(', ');
+
+  const EDIT_CHROME_SEL = [
+    '.seed-edit-menu', '.seed-edit-done', '.seed-edit-svg-input',
+    '.seed-edit-color', '.seed-edit-palette', '.seed-edit-media',
+    '.seed-edit-handle', '.seed-edit-handle-h', '.seed-edit-ghost',
+    '.seed-edit-grip', '.seed-edit-bold', '.seed-edit-size',
+    '.seed-edit-rule', '.seed-edit-trash', '.seed-edit-dock', '.seed-edit-toast', '.seed-edit-banner', '.seed-edit-drop',
   ].join(', ');
 
   const BLOCK_TAGS = new Set([
@@ -24,11 +33,12 @@
   };
 
   const openDb = () => new Promise((resolve, reject) => {
-    const req = indexedDB.open('seed-report-edit', 1);
+    const req = indexedDB.open('seed-report-edit', 2);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains('state')) db.createObjectStore('state');
       if (!db.objectStoreNames.contains('blobs')) db.createObjectStore('blobs');
+      if (!db.objectStoreNames.contains('handles')) db.createObjectStore('handles');
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -45,6 +55,35 @@
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
   }));
+
+  const blobToBase64 = (blob) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = String(reader.result || '');
+      const comma = text.indexOf(',');
+      resolve(comma >= 0 ? text.slice(comma + 1) : text);
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+
+  const extOfFile = (file) => {
+    const fromName = (file?.name || '').match(/\.([a-z0-9]+)$/i);
+    if (fromName) return fromName[1].toLowerCase();
+    const type = file?.type || '';
+    if (type.includes('png')) return 'png';
+    if (type.includes('webp')) return 'webp';
+    if (type.includes('gif')) return 'gif';
+    if (type.includes('mp4')) return 'mp4';
+    if (type.includes('webm')) return 'webm';
+    if (type.includes('jpeg') || type.includes('jpg')) return 'jpg';
+    return 'bin';
+  };
+
+  const mediaFileName = (key, file) => {
+    const id = String(key || 'm').replace(/[^a-zA-Z0-9]/g, '').slice(-16) || 'media';
+    return `${id}.${extOfFile(file)}`;
+  };
 
   const isSvgText = (node) => node instanceof SVGTextElement || node instanceof SVGTSpanElement;
 
@@ -590,9 +629,120 @@
 
   const readMarkup = (node) => (isSvgText(node) ? node.textContent : node.innerHTML);
 
+  const PHRASING_TAGS = new Set([
+    'P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'SPAN', 'STRONG', 'EM', 'B', 'I',
+    'A', 'LABEL', 'SMALL', 'LI', 'TD', 'TH', 'DT', 'DD', 'BUTTON', 'FIGCAPTION',
+  ]);
+  const ASSIGN_BLOCK_RE = /^(DIV|P|H1|H2|H3|H4|H5|H6|SECTION|ARTICLE|HEADER|FOOTER|UL|OL|TABLE|FIGURE|BLOCKQUOTE)$/;
+  const COPIED_BLOCK_SEL = [
+    '.research-lead', '.slide-head', '.subsection', '.finding', '.point',
+    '.source-note', '.info', '.plain', '.stat-card', '.pain-topic', '.transport-card',
+  ].join(', ');
+
+  const unwrapAssignedHtml = (host, value) => {
+    const html = String(value ?? '');
+    if (!html || !host || isSvgText(host)) return html;
+    const wrap = document.createElement('div');
+    wrap.innerHTML = html;
+    let guard = 12;
+    while (guard--) {
+      const kids = [...wrap.children];
+      if (kids.length !== 1) break;
+      const kid = kids[0];
+      const hostClass = host.classList?.[0];
+      const copiedSelf = !!(hostClass && kid.classList?.contains(hostClass));
+      const copiedBlock = kid.matches?.(COPIED_BLOCK_SEL);
+      const illegal = PHRASING_TAGS.has(host.tagName) && ASSIGN_BLOCK_RE.test(kid.tagName);
+      const nestedP = host.tagName === 'P' && kid.tagName === 'P';
+      if (copiedSelf || copiedBlock || illegal || nestedP) {
+        wrap.innerHTML = kid.innerHTML;
+        continue;
+      }
+      break;
+    }
+    if (PHRASING_TAGS.has(host.tagName)) {
+      wrap.querySelectorAll('div, section, article, header').forEach((el) => {
+        const span = document.createElement('span');
+        while (el.firstChild) span.appendChild(el.firstChild);
+        el.replaceWith(span);
+      });
+    }
+    return wrap.innerHTML;
+  };
+
   const writeMarkup = (node, value) => {
     if (isSvgText(node)) node.textContent = value;
-    else node.innerHTML = value;
+    else node.innerHTML = unwrapAssignedHtml(node, value);
+  };
+
+  const textKeyOf = (s) => String(s || '').replace(/\s+/g, ' ').trim();
+
+  const leadChunksOf = (lead) => {
+    const chunks = [];
+    const visit = (node) => {
+      if (node.nodeType !== 1) return;
+      const hasBlock = [...node.children].some((c) => ASSIGN_BLOCK_RE.test(c.tagName));
+      if (node !== lead && hasBlock) {
+        [...node.children].forEach(visit);
+        return;
+      }
+      if (node !== lead) {
+        const key = textKeyOf(node.textContent);
+        if (key) chunks.push({ html: node.innerHTML.trim(), key });
+        return;
+      }
+      [...node.children].forEach(visit);
+    };
+    visit(lead);
+    const unique = [];
+    const seen = new Set();
+    chunks.forEach((chunk) => {
+      if (seen.has(chunk.key)) return;
+      seen.add(chunk.key);
+      unique.push(chunk);
+    });
+    return unique.filter((a) => !unique.some((b) => (
+      b !== a && b.key.includes(a.key) && a.key.length < b.key.length
+    )));
+  };
+
+  const normalizeRepeatedContent = (root = document) => {
+    let changed = false;
+    root.querySelectorAll('.research-lead').forEach((lead) => {
+      if (lead.parentElement?.closest?.('.research-lead')) return;
+      const chunks = leadChunksOf(lead);
+      if (!chunks.length) return;
+      const html = chunks.map((chunk) => `<p>${chunk.html}</p>`).join('');
+      if (html !== lead.innerHTML) {
+        lead.innerHTML = html;
+        changed = true;
+      }
+    });
+    root.querySelectorAll('.flow-stack').forEach((stack) => {
+      const kids = [...stack.children];
+      let prev = '';
+      kids.forEach((el) => {
+        if (!el.matches?.('.research-lead, .subsection, .source-note, .point')) {
+          prev = '';
+          return;
+        }
+        const key = `${el.className.split(' ')[0]}|${textKeyOf(el.textContent)}`;
+        if (prev && key === prev) {
+          el.remove();
+          changed = true;
+          return;
+        }
+        prev = key;
+      });
+    });
+    root.querySelectorAll('figcaption b, figcaption span').forEach((el) => {
+      const inner = el.querySelector(':scope > div');
+      if (!inner || el.children.length !== 1) return;
+      while (inner.firstChild) el.appendChild(inner.firstChild);
+      inner.remove();
+      changed = true;
+    });
+    return changed;
   };
 
   const VARIANT_SPECS = [
@@ -2058,7 +2208,7 @@
   };
 
   const insertPointFromY = (parent, clientY) => {
-    const kids = [...parent.children].filter((el) => el.nodeType === 1 && !el.matches?.('.seed-edit-ghost'));
+    const kids = [...parent.children].filter((el) => el.nodeType === 1 && !el.matches?.('.seed-edit-ghost, .seed-edit-drop'));
     for (const el of kids) {
       const box = el.getBoundingClientRect();
       if (clientY < box.top + box.height / 2) return { parent, before: el };
@@ -2082,7 +2232,7 @@
 
   const isBlankHit = (node) => {
     if (!node || isChrome(node)) return false;
-    if (node.closest?.('.seed-edit-menu, .seed-edit-done, .seed-edit-bold, .seed-edit-media, .seed-edit-handle, .seed-edit-handle-h')) return false;
+    if (node.closest?.('.seed-edit-menu, .seed-edit-done, .seed-edit-bold, .seed-edit-media, .seed-edit-handle, .seed-edit-handle-h, .seed-edit-dock, .seed-edit-toast')) return false;
     if (node.matches?.('.flow-stack, .report-slide, .report-section, .report-stage, .report-slides, .report-shell, body, html')) return true;
     return false;
   };
@@ -2095,8 +2245,8 @@
 
   const stripSortAttrs = (root) => {
     (root || document).querySelectorAll('[data-seed-sort-title]').forEach((el) => el.removeAttribute('data-seed-sort-title'));
-    (root || document).querySelectorAll('.is-seed-drag, .is-seed-item-host').forEach((el) => {
-      el.classList.remove('is-seed-drag', 'is-seed-item-host');
+    (root || document).querySelectorAll('.is-seed-drag, .is-seed-item-host, .is-seed-drop-host').forEach((el) => {
+      el.classList.remove('is-seed-drag', 'is-seed-item-host', 'is-seed-drop-host');
     });
   };
 
@@ -2505,17 +2655,192 @@
     };
 
     const persist = async () => {
-      if (isCatalog) return;
-      const root = markupRootOf();
-      if (root) state.markup = root.innerHTML;
-      await idbSet('state', slug, {
-        texts: state.texts,
-        media: state.media,
-        variants: state.variants,
-        images: state.media,
-        markup: state.markup,
-      });
+      if (isCatalog) return persist._tail;
+      if (persist._tail) {
+        persist._dirty = true;
+        return persist._tail;
+      }
+      persist._tail = (async () => {
+        try {
+          do {
+            persist._dirty = false;
+            normalizeRepeatedContent(document);
+            const wrote = await writeToFolder().catch(() => false);
+            const root = markupRootOf();
+            if (root) state.markup = root.innerHTML;
+            await idbSet('state', slug, {
+              texts: state.texts,
+              media: state.media,
+              variants: state.variants,
+              images: state.media,
+              markup: state.markup,
+            });
+            if (!wrote && !persist._warned) {
+              persist._warned = true;
+              if (location.protocol !== 'file:') {
+                toast('修改还没写进文件夹。请双击「打开报告.command」再编辑。');
+              }
+            }
+          } while (persist._dirty);
+        } finally {
+          persist._tail = null;
+        }
+      })();
+      return persist._tail;
     };
+
+    const toast = (msg) => {
+      let el = document.querySelector('.seed-edit-toast');
+      if (!el) {
+        el = document.createElement('div');
+        el.className = 'seed-edit-toast';
+        document.body.appendChild(el);
+      }
+      el.textContent = msg;
+      el.hidden = false;
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => { el.hidden = true; }, 3600);
+    };
+
+    const isTransientSrc = (val) => !!val && (val.startsWith('blob:') || val.startsWith('data:'));
+
+    const blobForNode = async (el) => {
+      const key = el.getAttribute('data-edit-key');
+      if (key) {
+        const stored = await idbGet('blobs', `${slug}::${key}`).catch(() => null);
+        if (stored instanceof Blob) return stored;
+      }
+      const src = el.getAttribute('src') || el.getAttribute('poster') || '';
+      if (!isTransientSrc(src)) return null;
+      try {
+        const res = await fetch(src);
+        if (res.ok) return res.blob();
+      } catch { /* ignore */ }
+      return null;
+    };
+
+    const applyLocalMediaPath = (el, rel) => {
+      if (el.hasAttribute('src')) el.setAttribute('src', rel);
+      if (el.hasAttribute('poster') && isTransientSrc(el.getAttribute('poster'))) el.setAttribute('poster', rel);
+      if (el.hasAttribute('data-src')) el.setAttribute('data-src', rel);
+      const shot = el.closest?.('.shot, [data-gallery], .gallery-thumb');
+      if (shot?.hasAttribute('data-lightbox-src')) shot.setAttribute('data-lightbox-src', rel);
+      if (el.closest?.('.gallery-thumb')) el.closest('.gallery-thumb').setAttribute('data-src', rel);
+    };
+
+    const collectFolderPayload = async () => {
+      const media = {};
+      const rewrites = [];
+      const nodes = [...document.querySelectorAll('img, video, source, [data-src], [data-lightbox-src]')];
+      for (const el of nodes) {
+        const src = el.getAttribute('src') || el.getAttribute('poster') || el.getAttribute('data-src') || el.getAttribute('data-lightbox-src') || '';
+        if (!isTransientSrc(src)) continue;
+        const key = el.getAttribute('data-edit-key') || '';
+        const rec = key ? state.media[key] : null;
+        const blob = await blobForNode(el);
+        if (!(blob instanceof Blob)) continue;
+        const name = mediaFileName(key || src, rec || blob);
+        media[name] = await blobToBase64(blob);
+        rewrites.push({ el, rel: `lib/media/${name}` });
+      }
+
+      const root = document.documentElement.cloneNode(true);
+      root.querySelectorAll(EDIT_CHROME_SEL).forEach((node) => node.remove());
+      stripSortAttrs(root);
+      root.classList.remove('seed-edit-on');
+      delete root.dataset.seedEditMounted;
+      root.querySelectorAll('[contenteditable]').forEach((node) => node.removeAttribute('contenteditable'));
+      const cloneNodes = [...root.querySelectorAll('img, video, source, [data-src], [data-lightbox-src]')];
+      rewrites.forEach(({ el, rel }) => {
+        const idx = nodes.indexOf(el);
+        if (idx >= 0 && cloneNodes[idx]) applyLocalMediaPath(cloneNodes[idx], rel);
+      });
+      root.querySelectorAll('[data-edit-key], [data-edit-text]').forEach((node) => {
+        node.removeAttribute('data-edit-key');
+        node.removeAttribute('data-edit-text');
+      });
+      root.querySelectorAll('[spellcheck]').forEach((node) => node.removeAttribute('spellcheck'));
+      root.querySelectorAll('link[href^="chrome-extension:"], link[href^="moz-extension:"], script[src^="chrome-extension:"], script[src^="moz-extension:"]').forEach((node) => node.remove());
+      root.removeAttribute('data-media-switch-bound');
+      if (!root.className) root.removeAttribute('class');
+      return { html: `<!doctype html>\n${root.outerHTML}`, media, rewrites };
+    };
+
+    const writeViaPost = async (payload) => {
+      const res = await fetch('/__seed_save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      return res.ok;
+    };
+
+    const writeViaDirectory = async (payload) => {
+      if (!window.showDirectoryPicker) return false;
+      let dir = await idbGet('handles', slug).catch(() => null);
+      if (!dir) return false;
+      let perm = await dir.queryPermission({ mode: 'readwrite' });
+      if (perm !== 'granted') perm = await dir.requestPermission({ mode: 'readwrite' });
+      if (perm !== 'granted') return false;
+      const lib = await dir.getDirectoryHandle('lib', { create: true });
+      const mediaDir = await lib.getDirectoryHandle('media', { create: true });
+      for (const [name, b64] of Object.entries(payload.media || {})) {
+        const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+        const file = await mediaDir.getFileHandle(name, { create: true });
+        const writable = await file.createWritable();
+        await writable.write(bytes);
+        await writable.close();
+      }
+      const htmlFile = await dir.getFileHandle('index.html', { create: true });
+      const writable = await htmlFile.createWritable();
+      await writable.write(payload.html);
+      await writable.close();
+      return true;
+    };
+
+    const writeToFolder = async () => {
+      const payload = await collectFolderPayload();
+      const ok = await writeViaPost(payload).catch(() => false)
+        || await writeViaDirectory(payload).catch(() => false);
+      if (ok) payload.rewrites.forEach(({ el, rel }) => applyLocalMediaPath(el, rel));
+      return ok;
+    };
+
+    const pickReportFolder = async () => {
+      if (!window.showDirectoryPicker) {
+        toast('请双击文件夹里的「打开报告.command」再编辑，修改才会写入文件。');
+        return;
+      }
+      try {
+        const dir = await window.showDirectoryPicker({
+          id: `seed-${slug}`,
+          mode: 'readwrite',
+          startIn: 'documents',
+        });
+        await dir.getFileHandle('index.html');
+        await idbSet('handles', slug, dir);
+        const ok = await writeToFolder();
+        if (ok) document.querySelector('.seed-edit-banner')?.remove();
+        toast(ok ? '已写入此文件夹。把整个文件夹发给别人即可继续改。' : '没能写入，请确认选的是报告文件夹。');
+      } catch (err) {
+        if (err && err.name === 'AbortError') return;
+        toast('请选择包含 index.html 的报告文件夹。');
+      }
+    };
+
+    if (!isCatalog && location.protocol === 'file:') {
+      const banner = document.createElement('div');
+      banner.className = 'seed-edit-banner';
+      banner.innerHTML = [
+        '<p>直接打开 HTML 时，修改只留在这台电脑的浏览器里，文件夹不会更新。</p>',
+        '<p>请双击本文件夹里的 <b>打开报告.command</b> 再编辑；或点右边授权写入。</p>',
+        '<button type="button" data-seed-pick-folder>选择报告文件夹</button>',
+      ].join('');
+      document.body.appendChild(banner);
+      banner.querySelector('[data-seed-pick-folder]').addEventListener('click', () => {
+        pickReportFolder().catch((err) => toast(err.message || String(err)));
+      });
+    }
 
     const nodeByKey = (key) => {
       const live = document.querySelector(`[data-edit-key="${CSS.escape(key)}"]`);
@@ -2536,22 +2861,33 @@
     };
 
     const runHistory = async (dir) => {
-      if (activeText || sorting) return;
+      if (sorting) return;
+      if (activeText) {
+        if (!activeText.isConnected) stopTextEdit({ commit: false });
+        else return;
+      }
       if (activeBox) stopMediaAdjust();
       if (dir === 'undo') {
         if (histAt < 0) return;
-        applyingHist = true;
-        await Promise.resolve(history[histAt].undo());
+        const op = history[histAt];
         histAt -= 1;
-        applyingHist = false;
+        applyingHist = true;
+        try {
+          await Promise.resolve(op.undo());
+        } finally {
+          applyingHist = false;
+        }
         persist();
         return;
       }
       if (histAt >= history.length - 1) return;
-      applyingHist = true;
       histAt += 1;
-      await Promise.resolve(history[histAt].redo());
-      applyingHist = false;
+      applyingHist = true;
+      try {
+        await Promise.resolve(history[histAt].redo());
+      } finally {
+        applyingHist = false;
+      }
       persist();
     };
 
@@ -2710,25 +3046,58 @@
       if (formula) syncFormula(formula);
     };
 
+    const snapshotHtml = (el) => {
+      const clone = el.cloneNode(true);
+      clone.removeAttribute('contenteditable');
+      clone.removeAttribute('data-edit-text');
+      clone.querySelectorAll('[contenteditable], [data-edit-text]').forEach((node) => {
+        node.removeAttribute('contenteditable');
+        node.removeAttribute('data-edit-text');
+      });
+      return clone.outerHTML;
+    };
+
+    const endTextEditForStruct = (nodes = []) => {
+      if (!activeText) return;
+      const inside = nodes.some((n) => n && (n === activeText || n.contains?.(activeText)));
+      stopTextEdit({ commit: !inside && activeText.isConnected });
+    };
+
     const recordRemove = (nodes) => {
+      endTextEditForStruct(nodes);
       const snap = nodes.map((el) => ({
         el,
+        html: snapshotHtml(el),
         parent: el.parentElement,
-        before: el.nextSibling,
+        before: el.nextElementSibling,
       }));
       const parents = [...new Set(snap.map((s) => s.parent).filter(Boolean))];
       nodes.forEach((el) => el.remove());
       parents.forEach(syncHost);
+      const restore = () => {
+        [...snap].reverse().forEach((item) => {
+          const parent = item.parent?.isConnected ? item.parent : null;
+          if (!parent) return;
+          if (item.el?.parentNode === parent) return;
+          let node = item.el && !item.el.parentNode ? item.el : null;
+          if (!node) {
+            const wrap = document.createElement('div');
+            wrap.innerHTML = item.html;
+            node = wrap.firstElementChild;
+            item.el = node;
+          }
+          if (!node) return;
+          node.removeAttribute('contenteditable');
+          node.removeAttribute('data-edit-text');
+          const ref = item.before && item.before.parentNode === parent ? item.before : null;
+          parent.insertBefore(node, ref);
+        });
+        parents.forEach(syncHost);
+      };
       record({
-        undo: () => {
-          snap.forEach(({ el, parent, before }) => {
-            if (!parent) return;
-            parent.insertBefore(el, before);
-          });
-          parents.forEach(syncHost);
-        },
+        undo: restore,
         redo: () => {
-          nodes.forEach((el) => el.remove());
+          snap.forEach((item) => item.el?.remove());
           parents.forEach(syncHost);
         },
       });
@@ -2736,6 +3105,7 @@
     };
 
     const recordInsert = (nodes, parent, before) => {
+      endTextEditForStruct();
       placeNodes(nodes, parent, before);
       syncHost(parent);
       record({
@@ -2752,6 +3122,7 @@
     };
 
     const recordMove = (el, fromParent, fromBefore, toParent, toBefore) => {
+      endTextEditForStruct([el]);
       record({
         undo: () => {
           if (!fromParent) return;
@@ -2825,6 +3196,10 @@
     ghost.className = 'seed-edit-ghost';
     ghost.hidden = true;
     document.body.appendChild(ghost);
+    const drop = document.createElement('div');
+    drop.className = 'seed-edit-drop';
+    drop.hidden = true;
+    drop.dataset.axis = 'y';
     const trash = document.createElement('div');
     trash.className = 'seed-edit-trash';
     trash.hidden = true;
@@ -2872,6 +3247,8 @@
       document.documentElement.classList.remove('is-seed-sorting', 'is-seed-sorting-items');
       ghost.hidden = true;
       ghost.classList.remove('is-item');
+      drop.remove();
+      drop.hidden = true;
       grip.hidden = true;
       gripTarget = null;
       sorting = false;
@@ -2879,23 +3256,84 @@
       trash.classList.remove('is-hot');
     };
 
-    const enterBlockSort = (stack) => {
+    const sortableStacks = () => [...document.querySelectorAll('.flow-stack')].filter((stack) => {
+      const slide = stack.closest('.report-slide, .report-section, [data-chapter]');
+      if (!slide) return true;
+      if (slide.matches('.is-chapter-cover, .report-notes')) return false;
+      const chapter = slide.getAttribute('data-chapter');
+      return chapter !== 'cover' && chapter !== 'notes';
+    });
+
+    const itemSpecOf = (node) => ITEM_SPECS.find((spec) => node?.closest?.(spec.host));
+
+    const itemListParentOf = (host) => host?.querySelector?.(':scope > .comp-main') || host;
+
+    const itemHostsOf = (spec) => (spec ? [...document.querySelectorAll(spec.host)] : []);
+
+    const closestRectEl = (els, clientX, clientY) => {
+      let best = null;
+      let bestDist = Infinity;
+      els.forEach((el) => {
+        const box = el.getBoundingClientRect();
+        if (box.width <= 0 && box.height <= 0) return;
+        const dx = clientX < box.left ? box.left - clientX : clientX > box.right ? clientX - box.right : 0;
+        const dy = clientY < box.top ? box.top - clientY : clientY > box.bottom ? clientY - box.bottom : 0;
+        const dist = Math.hypot(dx, dy);
+        if (dist < bestDist) {
+          best = el;
+          bestDist = dist;
+        }
+      });
+      return best;
+    };
+
+    const dropParentAt = (el, mode, spec, clientX, clientY) => {
+      const hit = document.elementFromPoint(clientX, clientY);
+      if (mode === 'item') {
+        const hosts = itemHostsOf(spec);
+        if (!hosts.length) return el.parentElement;
+        const fromHit = hit?.closest?.(spec.host);
+        const host = (fromHit && hosts.includes(fromHit)) ? fromHit : closestRectEl(hosts, clientX, clientY);
+        return itemListParentOf(host) || itemListParentOf(hosts[0]);
+      }
+      const stacks = sortableStacks();
+      if (!stacks.length) return el.parentElement;
+      const fromHit = hit?.closest?.('.flow-stack');
+      if (fromHit && stacks.includes(fromHit)) return fromHit;
+      return closestRectEl(stacks, clientX, clientY) || stacks[0];
+    };
+
+    const dropHostShell = (parent, mode, spec) => {
+      if (!parent) return null;
+      if (mode === 'item' && spec) return parent.closest(spec.host) || parent;
+      return parent;
+    };
+
+    const markDropHost = (parent, mode, spec) => {
+      document.querySelectorAll('.is-seed-drop-host').forEach((node) => node.classList.remove('is-seed-drop-host'));
+      dropHostShell(parent, mode, spec)?.classList.add('is-seed-drop-host');
+    };
+
+    const enterBlockSort = () => {
       sorting = true;
       document.documentElement.classList.add('is-seed-sorting');
-      [...stack.children].forEach((el) => {
-        if (el.nodeType !== 1) return;
-        el.dataset.seedSortTitle = blockTitleOf(el);
+      sortableStacks().forEach((stack) => {
+        [...stack.children].forEach((kid) => {
+          if (kid.nodeType !== 1 || kid === drop) return;
+          kid.dataset.seedSortTitle = blockTitleOf(kid);
+        });
       });
     };
 
-    const enterItemSort = (host) => {
+    const enterItemSort = (spec) => {
       sorting = true;
-      host.classList.add('is-seed-item-host');
       document.documentElement.classList.add('is-seed-sorting-items');
-      const spec = ITEM_SPECS.find((s) => host.matches(s.host));
-      const items = spec ? [...host.querySelectorAll(spec.item)] : [...host.children];
-      items.forEach((el) => {
-        el.dataset.seedSortTitle = itemTitleOf(el);
+      itemHostsOf(spec).forEach((host) => {
+        host.classList.add('is-seed-item-host');
+        const items = spec ? [...host.querySelectorAll(spec.item)] : [...host.children];
+        items.forEach((kid) => {
+          kid.dataset.seedSortTitle = itemTitleOf(kid);
+        });
       });
     };
 
@@ -2917,44 +3355,38 @@
       return 'y';
     };
 
-    const liveReorder = (el, parent, clientX, clientY) => {
+    const sortKidsOf = (el, parent) => {
       const asideMedia = parent.querySelector(':scope > .comp-media');
       const kids = [...parent.children].filter((n) => {
-        if (n.nodeType !== 1 || n === el) return false;
+        if (n.nodeType !== 1 || n === el || n === drop) return false;
         if (n.matches?.('.comp-media')) return false;
         if (parent.matches?.('.market-formula')) return n.matches('.market-factor:not(.market-result)');
         return true;
       });
-      if (!kids.length) {
-        if (asideMedia) parent.insertBefore(el, asideMedia);
-        else parent.appendChild(el);
-        return;
-      }
-      let best = kids[0];
-      let bestDist = Infinity;
-      kids.forEach((kid) => {
+      return { asideMedia, kids };
+    };
+
+    const placeDrop = (el, mode, spec, clientX, clientY) => {
+      const parent = dropParentAt(el, mode, spec, clientX, clientY);
+      if (!parent) return;
+      const { asideMedia, kids } = sortKidsOf(el, parent);
+      const axis = flowAxisOf(parent, kids);
+      drop.dataset.axis = axis;
+      let before = null;
+      for (const kid of kids) {
         const box = kid.getBoundingClientRect();
-        const cx = box.left + box.width / 2;
-        const cy = box.top + box.height / 2;
-        const dist = (clientX - cx) ** 2 + (clientY - cy) ** 2;
-        if (dist < bestDist) {
-          bestDist = dist;
-          best = kid;
+        const mid = axis === 'x' ? box.left + box.width / 2 : box.top + box.height / 2;
+        const pos = axis === 'x' ? clientX : clientY;
+        if (pos < mid) {
+          before = kid;
+          break;
         }
-      });
-      const box = best.getBoundingClientRect();
-      const after = flowAxisOf(parent, kids) === 'x'
-        ? clientX > box.left + box.width / 2
-        : clientY > box.top + box.height / 2;
-      if (after) {
-        let next = best.nextElementSibling;
-        if (next === el) next = next.nextElementSibling;
-        if (next && next !== asideMedia) parent.insertBefore(el, next);
-        else if (asideMedia) parent.insertBefore(el, asideMedia);
-        else parent.appendChild(el);
-      } else {
-        parent.insertBefore(el, best);
       }
+      if (!before) before = asideMedia || null;
+      if (before) parent.insertBefore(drop, before);
+      else parent.appendChild(drop);
+      drop.hidden = false;
+      markDropHost(parent, mode, spec);
     };
 
     const startSortDrag = (el, parent, event, mode) => {
@@ -2962,8 +3394,9 @@
       event.preventDefault();
       const fromParent = parent;
       const fromBefore = el.nextSibling;
-      if (mode === 'item') enterItemSort(parent);
-      else enterBlockSort(parent);
+      const spec = mode === 'item' ? itemSpecOf(el) : null;
+      if (mode === 'item') enterItemSort(spec);
+      else enterBlockSort();
       el.classList.add('is-seed-drag');
       grip.hidden = true;
       trash.hidden = false;
@@ -2973,6 +3406,8 @@
       ghost.hidden = false;
       ghost.style.left = `${event.clientX + 12}px`;
       ghost.style.top = `${event.clientY - 18}px`;
+      const place = (x, y) => placeDrop(el, mode, spec, x, y);
+      place(event.clientX, event.clientY);
       let lastX = event.clientX;
       let lastY = event.clientY;
       let scrollRaf = 0;
@@ -3001,7 +3436,7 @@
           window.scrollBy(0, dy);
           if (root.scrollTop === prev) root.scrollTop = Math.max(0, prev + dy);
           if (root.scrollTop !== prev && !overTrash(lastX, lastY)) {
-            liveReorder(el, parent, lastX, lastY);
+            place(lastX, lastY);
           }
         }
         scrollRaf = requestAnimationFrame(applyEdgeScroll);
@@ -3013,14 +3448,18 @@
         ghost.style.top = `${move.clientY - 18}px`;
         const hot = overTrash(move.clientX, move.clientY);
         trash.classList.toggle('is-hot', hot);
-        if (!hot) liveReorder(el, parent, move.clientX, move.clientY);
+        if (!hot) place(move.clientX, move.clientY);
       };
       const onUp = () => {
         cancelAnimationFrame(scrollRaf);
         document.removeEventListener('pointermove', onMove);
         document.removeEventListener('pointerup', onUp);
-        el.classList.remove('is-seed-drag');
         const dropDelete = trash.classList.contains('is-hot');
+        const dropParent = drop.parentNode;
+        const dropBefore = drop.nextSibling;
+        drop.remove();
+        drop.hidden = true;
+        el.classList.remove('is-seed-drag');
         if (dropDelete) {
           if (fromParent) {
             if (fromBefore && fromBefore.parentNode === fromParent) fromParent.insertBefore(el, fromBefore);
@@ -3028,21 +3467,25 @@
           }
           clearSortAttrs();
           if (mode === 'item') {
-            const spec = ITEM_SPECS.find((s) => fromParent.matches(s.host));
-            const count = spec ? fromParent.querySelectorAll(spec.item).length : 1;
-            if (count <= 1) recordRemove([blockOf(fromParent) || fromParent]);
+            const host = spec ? el.closest(spec.host) || fromParent : fromParent;
+            const count = spec ? host.querySelectorAll(spec.item).length : 1;
+            if (count <= 1) recordRemove([blockOf(host) || host]);
             else recordRemove([el]);
           } else {
             recordRemove([el]);
           }
           return;
         }
+        if (dropParent && dropBefore !== el) {
+          dropParent.insertBefore(el, dropBefore);
+        }
         const toParent = el.parentElement;
         const toBefore = el.nextSibling;
         const moved = fromParent !== toParent || fromBefore !== toBefore;
         clearSortAttrs();
         if (moved) {
-          syncHost(parent);
+          syncHost(fromParent);
+          if (toParent !== fromParent) syncHost(toParent);
           recordMove(el, fromParent, fromBefore, toParent, toBefore);
         }
       };
@@ -3183,7 +3626,8 @@
       if (!activeText) return;
       const node = activeText;
       const key = node.dataset.editKey;
-      const value = svgInput ? svgInput.value : readMarkup(node);
+      const connected = node.isConnected;
+      const value = svgInput ? svgInput.value : (connected ? readMarkup(node) : beforeEdit);
       const previous = beforeEdit;
       node.removeAttribute('contenteditable');
       node.removeAttribute('data-edit-text');
@@ -3195,6 +3639,7 @@
       hideColorPick();
       clearSvgInput();
       activeText = null;
+      if (!connected) return;
       if (!commit) {
         if (key) {
           writeMarkup(node, previous);
@@ -3696,21 +4141,23 @@
           stripSortAttrs(root);
         }
       }
-      for (const [key, rec] of Object.entries(state.variants || {})) {
-        const node = nodeByKey(key);
-        if (!node) continue;
-        if (!(key in originals.variants)) originals.variants[key] = snapshotVariant(node);
-        const snap = typeof rec === 'string' ? { group: 'info', layout: rec, no: 'sm' } : rec;
-        restoreVariant(node, snap);
-      }
-      for (const [key, value] of Object.entries(state.texts || {})) {
-        const live = document.querySelector(`[data-edit-key="${CSS.escape(key)}"]`);
-        const path = key.split('::').slice(2).join('::');
-        const node = live || (restoredMarkup ? null : fromPath(path));
-        if (!node || node.closest('[data-css-var]')) continue;
-        node.dataset.editKey = key;
-        if (!(key in originals.texts)) originals.texts[key] = readMarkup(node);
-        writeMarkup(node, value);
+      if (!restoredMarkup) {
+        for (const [key, rec] of Object.entries(state.variants || {})) {
+          const node = nodeByKey(key);
+          if (!node) continue;
+          if (!(key in originals.variants)) originals.variants[key] = snapshotVariant(node);
+          const snap = typeof rec === 'string' ? { group: 'info', layout: rec, no: 'sm' } : rec;
+          restoreVariant(node, snap);
+        }
+        for (const [key, value] of Object.entries(state.texts || {})) {
+          const live = document.querySelector(`[data-edit-key="${CSS.escape(key)}"]`);
+          const path = key.split('::').slice(2).join('::');
+          const node = live || fromPath(path);
+          if (!node || node.closest('[data-css-var]')) continue;
+          node.dataset.editKey = key;
+          if (!(key in originals.texts)) originals.texts[key] = readMarkup(node);
+          writeMarkup(node, value);
+        }
       }
       document.querySelectorAll('.chart-value').forEach((el) => syncChartValue(el));
       if (!window.ThemeRuntime) {
@@ -3723,6 +4170,10 @@
         if (!node) continue;
         node.dataset.editKey = key;
         if (rec.layout) writeLayout(resizeBoxOf(node) || node, rec.layout);
+        const current = (ensureMediaEl(node) || node).getAttribute?.('src')
+          || node.getAttribute?.('src')
+          || '';
+        if (current && !isTransientSrc(current)) continue;
         const blob = await idbGet('blobs', `${slug}::${key}`);
         if (!(blob instanceof Blob)) continue;
         const prev = objectUrls.get(key);
@@ -4043,13 +4494,15 @@
     document.addEventListener('keydown', (event) => {
       const meta = event.metaKey || event.ctrlKey;
       if (meta && event.key.toLowerCase() === 'z') {
-        if (activeText) return;
+        if (activeText?.isConnected) return;
+        if (activeText) stopTextEdit({ commit: false });
         event.preventDefault();
         runHistory(event.shiftKey ? 'redo' : 'undo');
         return;
       }
       if (meta && event.key.toLowerCase() === 'y') {
-        if (activeText) return;
+        if (activeText?.isConnected) return;
+        if (activeText) stopTextEdit({ commit: false });
         event.preventDefault();
         runHistory('redo');
         return;
@@ -4137,10 +4590,17 @@
     if (!isCatalog) {
       idbGet('state', slug).then(async (saved) => {
         if (saved && (saved.texts || saved.media || saved.images || saved.markup || saved.variants)) {
-          state.texts = saved.texts || {};
+          const fromFile = location.protocol === 'file:';
           state.media = saved.media || saved.images || {};
-          state.variants = saved.variants || {};
-          state.markup = saved.markup || '';
+          if (fromFile) {
+            state.texts = saved.texts || {};
+            state.variants = saved.variants || {};
+            state.markup = saved.markup || '';
+          } else {
+            state.texts = {};
+            state.variants = {};
+            state.markup = '';
+          }
           await applyStateToDom();
           stripItemAsides();
           hydrateEditorial();
@@ -4148,9 +4608,10 @@
             if (host.querySelector(':scope > .comp-media')) wrapAsideMain(host);
             host.querySelectorAll(':scope > .comp-media .shot').forEach(ensureAsideCaption);
           });
-          persist().catch(() => {});
         }
-      }).catch(() => {});
+      }).catch(() => {}).finally(() => {
+        if (normalizeRepeatedContent(document)) persist();
+      });
     }
   };
 

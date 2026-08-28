@@ -86,12 +86,12 @@ description: >-
 ```
 Outputs/<slug>/
   index.html
-    lib/
-    lib/
+  打开报告.command                                    ← templates/editorial-flow/editor/open-report.command
+  lib/
     components.css, design-data.js, theme-runtime.js   ← templates/editorial-flow/design-system/
     template.css, flow.css, source.css, lib.css, v2.css
     template.js, source.js, network.js（用到关系网络才拷）
-    editor/seed-edit.css, seed-edit.js                 ← templates/editorial-flow/editor/
+    editor/seed-edit.css, seed-edit.js, serve.py       ← templates/editorial-flow/editor/
 ```
 
 HTML 里的路径按实际相对位置改。章结构：`.report-slide` 一章一块，块内 `.flow-stack` 上下叠。每章 `.slide-head` 下必须有 `.rule`。导航 `.toc` 要带 `data-component-id="navigation"`，链到各章 `id`。
@@ -140,11 +140,11 @@ token 从源稿现用值收敛，不另起一套。合并后只减不增。目�
 
 生成和规整的最后一步相同。编辑器只属于流式：`templates/editorial-flow/editor/`。不要挂到分屏模板，也不要在本说明旁再拷一份。
 
-改编辑器只改 `templates/editorial-flow/editor/`，再同步已经挂到产出里的 `lib/editor/`。
+改编辑器只改 `templates/editorial-flow/editor/`，再同步已经挂到产出里的 `lib/editor/` 或 `editor/`。
 
 **接到产出：**
 
-1. 从 `templates/editorial-flow/editor/` 把 `seed-edit.css`、`seed-edit.js` 拷到报告旁，建议 `lib/editor/`。
+1. 从 `templates/editorial-flow/editor/` 把 `seed-edit.css`、`seed-edit.js`、`serve.py` 拷到报告旁，建议 `lib/editor/`（旧产出也可能是根目录 `editor/`）。把 `open-report.command` 拷到报告根目录并改名为 `打开报告.command`。
 2. 设计语言从 `templates/editorial-flow/design-system/` 拷 `components.css`、`design-data.js`、`theme-runtime.js` 和 `fonts/`。不要读 `templates/editorial-page/design-system/`，也不要读仓库根的旧 `design-system/`。
 3. 在 HTML `<head>` 或文末引入（路径按实际相对位置改）：
 
@@ -154,10 +154,10 @@ token 从源稿现用值收敛，不另起一套。合并后只减不增。目�
 ```
 
 4. 脚本会自行挂上。不依赖分屏壳、不要求 `[data-report-stage]`。不要再复制一份编辑逻辑进报告自己的 JS。
-5. 报告改动存在浏览器 IndexedDB，刷新还在；**不会写回磁盘上的 HTML**。需要落盘就让用户导出或另存。目录页带 `data-catalog`，不读写 IndexedDB，始终以磁盘 HTML 为准。
+5. 用报告文件夹里的 `打开报告.command` 打开后再编辑。改动会写回磁盘上的 `index.html`（换图写入 `lib/media/`）。把**整个文件夹**发给别人，对方同样用「打开报告」即可看到结果并继续改。直接双击 HTML（`file://`）时修改只留在浏览器里，文件夹不会更新。目录页带 `data-catalog`，不读写 IndexedDB，也不写磁盘。
 6. 主题导入导出只在目录 `templates/editorial-flow/index.html`。报告壳 `report.html` 不要做主题栏。
 
-用法：文字右键 →「编辑」→「完成」（Esc 取消，Enter 提交；编辑时可选颜色，也可点旁边的 token 色块换成主题色；自定义文本还可改字号、插入整行弱分割线）；标题右键「删除本组」会删掉标题及其下组件；页面空白处右键「新增组件」插入目录里的父组件；悬停左侧六点手柄拖动排序（拖动时只显示标题，拖到底部垃圾桶可删除；组件排序时封面不显示）；编号信息等条目可右键新增/删除一条，也可在组件内拖拽排序。图片 / 视频 / SVG 图示右键 →「替换」或「尺寸」。封面右键切版式（左齐 / 居中 / 配图 / 图文分栏），配图封面可替换图片；图文分栏封面高度固定为一屏。编号信息右键改布局（格子 A / 格子 B / 列表 A / 列表 B），勾选「显示编号」后编号位置 / 类型 / 字号出现在菜单右侧，勾选「背景」后可设背景色，格子列数用 − N +（2–5）。编号信息和议题格右键可勾选「配图」；图在整组信息的左 / 右，配图面板在编号位置右侧，不要给每一条单独配图。配图右键可换裁切 / 可滚动 / 宽图 / 海报；拖配图高度时整组与左侧信息跟着变高。数字信息右键勾选前缀 / 后缀 / 说明，列数用 − N +（2–5）；横排数字是同一父组件的紧凑排。无编号信息和议题格可切格子 A / B，议题格列数 1–5。观点可切换色块 / 浅底；图可切换裁切 / 可滚动 / 宽图 / 海报，右键可新增一条并用 − N + 改列数（1–5）。图墙拖高后各行均分，铺满只裁切且不超出容器。图表改数字后曲线跟着动。⌘Z / Ctrl+Z 撤销，⌘⇧Z / Ctrl+Y 重做（含换图、删组、新增、排序）。尺寸可改对齐（左/中/右）、容器宽度（拖右边手柄）、高度（拖下边手柄）、填充（适应 fit / 铺满 fill）。表和折线图同样可拖宽高。图表改数字后纵轴刻度按新最大值重算。基础 token 右键改数值，立刻作用于整页并写入当前主题；颜色 token 点色块用取色器，也可改 hex。主题导入导出在目录页。SVG 上的字可编辑，点空白图形则整图替换。
+用法：文字右键 →「编辑」→「完成」（Esc 取消，Enter 提交；编辑时可选颜色，也可点旁边的 token 色块换成主题色；自定义文本还可改字号、插入整行弱分割线）；标题右键「删除本组」会删掉标题及其下组件；页面空白处右键「新增组件」插入目录里的父组件。悬停左侧六点手柄拖动排序（拖动时保留内容预览，蓝线标出插在哪两块之间；可拖到其他章节，条目可拖进其他同类型组件组；拖到底部垃圾桶可删除；组件排序时封面不显示）；编号信息等条目可右键新增/删除一条，也可拖拽排序。图片 / 视频 / SVG 图示右键 →「替换」或「尺寸」。封面右键切版式（左齐 / 居中 / 配图 / 图文分栏），配图封面可替换图片；图文分栏封面高度固定为一屏。编号信息右键改布局（格子 A / 格子 B / 列表 A / 列表 B），勾选「显示编号」后编号位置 / 类型 / 字号出现在菜单右侧，勾选「背景」后可设背景色，格子列数用 − N +（2–5）。编号信息和议题格右键可勾选「配图」；图在整组信息的左 / 右，配图面板在编号位置右侧，不要给每一条单独配图。配图右键可换裁切 / 可滚动 / 宽图 / 海报；拖配图高度时整组与左侧信息跟着变高。数字信息右键勾选前缀 / 后缀 / 说明，列数用 − N +（2–5）；横排数字是同一父组件的紧凑排。无编号信息和议题格可切格子 A / B，议题格列数 1–5。观点可切换色块 / 浅底；图可切换裁切 / 可滚动 / 宽图 / 海报，右键可新增一条并用 − N + 改列数（1–5）。图墙拖高后各行均分，铺满只裁切且不超出容器。图表改数字后曲线跟着动。⌘Z / Ctrl+Z 撤销，⌘⇧Z / Ctrl+Y 重做（含换图、删组、新增、排序）。尺寸可改对齐（左/中/右）、容器宽度（拖右边手柄）、高度（拖下边手柄）、填充（适应 fit / 铺满 fill）。表和折线图同样可拖宽高。图表改数字后纵轴刻度按新最大值重算。基础 token 右键改数值，立刻作用于整页并写入当前主题；颜色 token 点色块用取色器，也可改 hex。主题导入导出在目录页。SVG 上的字可编辑，点空白图形则整图替换。
 
 **编辑器必须做到（不要退回分屏白名单版）：**
 
