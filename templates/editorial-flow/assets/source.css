@@ -3469,6 +3469,8 @@ button:focus-visible, a:focus-visible {
   flex-direction: column;
   isolation: isolate;
   overflow: hidden;
+  height: 520px;
+  min-height: 420px;
   border: 1px solid var(--network-line);
   background: #fff;
 }
@@ -3554,7 +3556,14 @@ button:focus-visible, a:focus-visible {
   line-height: 1.7;
   pointer-events: none;
 }
-.hotel-city-network #networkSvg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.hotel-city-network #networkSvg,
+.hotel-city-network .connection-area > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
 .hotel-city-network .route-line { fill: none; stroke: var(--network-blue); stroke-width: 2; opacity: .63; }
 .hotel-city-network .route-line.rail { stroke: var(--network-warm); stroke-dasharray: 5 4; stroke-width: 2.2; }
 .hotel-city-network .route-line:hover { opacity: 1; stroke-width: 3; }

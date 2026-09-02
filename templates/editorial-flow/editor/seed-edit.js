@@ -1722,6 +1722,33 @@
     return String(n);
   };
 
+  const NS = 'http://www.w3.org/2000/svg';
+  const isLegendLine = (el) => {
+    const y1 = +el.getAttribute('y1');
+    const y2 = +el.getAttribute('y2');
+    return y1 < 28 && y2 < 28;
+  };
+  const chartSeriesGroups = (svg) => [...svg.querySelectorAll('g')].filter((g) => g.querySelector(':scope > circle.chart-point'));
+  const seriesKindOf = (g) => (g.querySelector('.chart-point--stations') ? 'stations' : 'trains');
+  const rebuildChartLines = (svg) => {
+    [...svg.querySelectorAll('line.chart-line')].filter((el) => !isLegendLine(el)).forEach((el) => el.remove());
+    const axis = svg.querySelector('.chart-axis');
+    chartSeriesGroups(svg).forEach((g) => {
+      const kind = seriesKindOf(g);
+      const circles = [...g.querySelectorAll('circle.chart-point')]
+        .sort((a, b) => (+a.getAttribute('cx') || 0) - (+b.getAttribute('cx') || 0));
+      for (let i = 0; i < circles.length - 1; i += 1) {
+        const line = document.createElementNS(NS, 'line');
+        line.setAttribute('class', `chart-line chart-line--${kind}`);
+        line.setAttribute('x1', circles[i].getAttribute('cx'));
+        line.setAttribute('y1', circles[i].getAttribute('cy'));
+        line.setAttribute('x2', circles[i + 1].getAttribute('cx'));
+        line.setAttribute('y2', circles[i + 1].getAttribute('cy'));
+        (axis || svg).after(line);
+      }
+    });
+  };
+
   const remapChart = (svg) => {
     if (!svg) return;
     const grids = [...svg.querySelectorAll('.chart-grid')]
@@ -1745,16 +1772,11 @@
       const t = ticks.length === 1 ? 1 : i / (ticks.length - 1);
       el.textContent = formatTick(maxV * t);
     });
-    const series = [
-      { point: '.chart-point--trains', value: '.chart-value:not(.chart-value--stations)', line: '.chart-line--trains' },
-      { point: '.chart-point--stations', value: '.chart-value--stations', line: '.chart-line--stations' },
-    ];
-    series.forEach((spec) => {
-      const circles = [...svg.querySelectorAll(spec.point)]
+    chartSeriesGroups(svg).forEach((g) => {
+      const circles = [...g.querySelectorAll('circle.chart-point')]
         .sort((a, b) => (+a.getAttribute('cx') || 0) - (+b.getAttribute('cx') || 0));
-      const texts = [...svg.querySelectorAll(spec.value)]
+      const texts = [...g.querySelectorAll('.chart-value')]
         .sort((a, b) => (+a.getAttribute('x') || 0) - (+b.getAttribute('x') || 0));
-      if (!circles.length) return;
       circles.forEach((circle, i) => {
         const textEl = texts[i];
         const value = parseChartNumber(textEl?.textContent);
@@ -1767,17 +1789,8 @@
         circle.setAttribute('cy', nextY.toFixed(1));
         textEl.setAttribute('y', (nextY + Number(textEl.dataset.seedDy)).toFixed(1));
       });
-      const lines = [...svg.querySelectorAll(spec.line)].filter((el) => el.tagName === 'line');
-      lines.forEach((line, i) => {
-        const a = circles[i];
-        const b = circles[i + 1];
-        if (!a || !b) return;
-        line.setAttribute('x1', a.getAttribute('cx'));
-        line.setAttribute('y1', a.getAttribute('cy'));
-        line.setAttribute('x2', b.getAttribute('cx'));
-        line.setAttribute('y2', b.getAttribute('cy'));
-      });
     });
+    rebuildChartLines(svg);
     svg.querySelectorAll('polyline').forEach((el) => {
       const nums = (el.getAttribute('points') || '').trim().split(/[\s,]+/).map(Number);
       if (nums.length < 4) return;
@@ -1890,6 +1903,330 @@
         (_, x, y) => `translate(${x} ${(parseFloat(y) * sy).toFixed(1)})`
       ));
     });
+  };
+
+  const CHART_X0 = 90;
+  const CHART_X1 = 1110;
+
+  const relayoutChartX = (svg) => {
+    if (!svg) return;
+    const dates = [...svg.querySelectorAll('.chart-date')]
+      .sort((a, b) => (+a.getAttribute('x') || 0) - (+b.getAttribute('x') || 0));
+    const n = dates.length;
+    if (!n) return;
+    const xs = dates.map((_, i) => (n === 1 ? (CHART_X0 + CHART_X1) / 2 : CHART_X0 + i * (CHART_X1 - CHART_X0) / (n - 1)));
+    dates.forEach((el, i) => {
+      el.setAttribute('x', xs[i].toFixed(1));
+      el.setAttribute('text-anchor', i === n - 1 ? 'end' : 'middle');
+    });
+    chartSeriesGroups(svg).forEach((g) => {
+      const circles = [...g.querySelectorAll('circle.chart-point')]
+        .sort((a, b) => (+a.getAttribute('cx') || 0) - (+b.getAttribute('cx') || 0));
+      const values = [...g.querySelectorAll('.chart-value')]
+        .sort((a, b) => (+a.getAttribute('x') || 0) - (+b.getAttribute('x') || 0));
+      circles.forEach((c, i) => {
+        if (xs[i] == null) return;
+        c.setAttribute('cx', xs[i].toFixed(1));
+      });
+      values.forEach((t, i) => {
+        if (xs[i] == null) return;
+        t.setAttribute('x', xs[i].toFixed(1));
+        t.setAttribute('text-anchor', i === n - 1 ? 'end' : 'middle');
+        delete t.dataset.seedDy;
+      });
+    });
+    rebuildChartLines(svg);
+    remapChart(svg);
+  };
+
+  const addChartPoint = (svg) => {
+    const dates = [...svg.querySelectorAll('.chart-date')];
+    const lastDate = dates[dates.length - 1];
+    if (!lastDate) return;
+    const next = lastDate.cloneNode(true);
+    next.textContent = `T${dates.length + 1}`;
+    lastDate.after(next);
+    chartSeriesGroups(svg).forEach((g) => {
+      const circles = [...g.querySelectorAll('circle.chart-point')];
+      const values = [...g.querySelectorAll('.chart-value')];
+      const lastC = circles[circles.length - 1];
+      const lastV = values[values.length - 1];
+      if (!lastC || !lastV) return;
+      const c = lastC.cloneNode(true);
+      const v = lastV.cloneNode(true);
+      v.textContent = '0';
+      delete v.dataset.seedDy;
+      lastC.after(c);
+      lastV.after(v);
+    });
+    relayoutChartX(svg);
+  };
+
+  const delChartPoint = (svg, index) => {
+    const dates = [...svg.querySelectorAll('.chart-date')]
+      .sort((a, b) => (+a.getAttribute('x') || 0) - (+b.getAttribute('x') || 0));
+    if (dates.length <= 2) return;
+    const i = Math.max(0, Math.min(dates.length - 1, index));
+    dates[i].remove();
+    chartSeriesGroups(svg).forEach((g) => {
+      const circles = [...g.querySelectorAll('circle.chart-point')]
+        .sort((a, b) => (+a.getAttribute('cx') || 0) - (+b.getAttribute('cx') || 0));
+      const values = [...g.querySelectorAll('.chart-value')]
+        .sort((a, b) => (+a.getAttribute('x') || 0) - (+b.getAttribute('x') || 0));
+      circles[i]?.remove();
+      values[i]?.remove();
+    });
+    relayoutChartX(svg);
+  };
+
+  const addChartSeries = (svg) => {
+    const groups = chartSeriesGroups(svg);
+    const src = groups[groups.length - 1];
+    if (!src) return;
+    const g = src.cloneNode(true);
+    const n = groups.length + 1;
+    const kind = seriesKindOf(src) === 'trains' ? 'stations' : 'trains';
+    g.setAttribute('aria-label', `系列 ${n}`);
+    g.querySelectorAll('circle.chart-point').forEach((el) => {
+      el.setAttribute('class', `chart-point chart-point--${kind}`);
+    });
+    g.querySelectorAll('.chart-value').forEach((el) => {
+      el.setAttribute('class', kind === 'stations' ? 'chart-value chart-value--stations' : 'chart-value');
+      el.textContent = '0';
+      delete el.dataset.seedDy;
+    });
+    src.after(g);
+    const legends = [...svg.querySelectorAll('.chart-legend')];
+    const lastL = legends[legends.length - 1];
+    if (lastL) {
+      const label = lastL.cloneNode(true);
+      label.textContent = `系列 ${n}`;
+      const x = (+lastL.getAttribute('x') || 1000) + 90;
+      label.setAttribute('x', String(x));
+      const prev = lastL.previousElementSibling;
+      const legendLine = prev?.matches?.('line.chart-line') ? prev.cloneNode(true) : null;
+      if (legendLine) {
+        legendLine.setAttribute('class', `chart-line chart-line--${kind}`);
+        legendLine.setAttribute('x1', String(x - 40));
+        legendLine.setAttribute('x2', String(x - 8));
+        lastL.after(legendLine);
+        legendLine.after(label);
+      } else lastL.after(label);
+    }
+    relayoutChartX(svg);
+  };
+
+  const delChartSeries = (svg, index) => {
+    const groups = chartSeriesGroups(svg);
+    if (groups.length <= 1) return;
+    const i = Math.max(0, Math.min(groups.length - 1, index));
+    groups[i].remove();
+    const legends = [...svg.querySelectorAll('.chart-legend')];
+    const lab = legends[i];
+    if (lab) {
+      const prev = lab.previousElementSibling;
+      if (prev?.matches?.('line.chart-line') && isLegendLine(prev)) prev.remove();
+      lab.remove();
+    }
+    relayoutChartX(svg);
+  };
+
+  const funnelMainGroups = (svg) => [...svg.querySelectorAll(':scope > g')]
+    .filter((g) => !g.querySelector('.funnel-node.is-muted, .funnel-value.is-muted'));
+
+  const layoutFunnelNodes = (svg) => {
+    const mains = funnelMainGroups(svg);
+    const n = mains.length;
+    if (!n) return;
+    const x0 = 110;
+    const x1 = 1090;
+    const y0 = 34;
+    const y1 = 154;
+    const pts = mains.map((_, i) => {
+      const t = n === 1 ? 0 : i / (n - 1);
+      return { x: x0 + t * (x1 - x0), y: y0 + t * (y1 - y0) };
+    });
+    mains.forEach((g, i) => g.setAttribute('transform', `translate(${pts[i].x.toFixed(1)} ${pts[i].y.toFixed(1)})`));
+    const mainPath = svg.querySelector('path.funnel-line:not(.is-muted)');
+    if (mainPath) {
+      mainPath.setAttribute('d', pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' '));
+      delete mainPath.dataset.seedD;
+    }
+    delete svg.dataset.seedFunnelH;
+  };
+
+  const addFunnelNode = (svg) => {
+    const mains = funnelMainGroups(svg);
+    const src = mains[mains.length - 1];
+    if (!src) return;
+    const g = src.cloneNode(true);
+    const value = g.querySelector('.funnel-value');
+    const label = g.querySelector('.funnel-label');
+    if (value) value.textContent = '0';
+    if (label) label.textContent = '新节点';
+    src.after(g);
+    layoutFunnelNodes(svg);
+  };
+
+  const delFunnelNode = (svg, group) => {
+    const mains = funnelMainGroups(svg);
+    if (mains.length <= 2) return;
+    const target = mains.includes(group) ? group : mains[mains.length - 1];
+    target?.remove();
+    layoutFunnelNodes(svg);
+  };
+
+  const tableOf = (host) => host?.querySelector?.('table') || (host?.matches?.('table') ? host : null);
+
+  const addTableRow = (table, afterRow) => {
+    const body = table.querySelector('tbody') || table;
+    const bodyRows = [...body.querySelectorAll(':scope > tr')];
+    const src = (afterRow && bodyRows.includes(afterRow) ? afterRow : null) || bodyRows[bodyRows.length - 1];
+    if (!src) return;
+    const row = src.cloneNode(true);
+    row.querySelectorAll('th, td').forEach((cell, i) => {
+      if (cell.classList.contains('rank') || (i === 0 && table.closest('.hotel-ranking-block, .network-node-table'))) {
+        cell.textContent = String(body.querySelectorAll('tr').length + 1);
+        return;
+      }
+      if (cell.querySelector('.hotel-tier')) {
+        cell.querySelector('.hotel-tier').textContent = '档位';
+        return;
+      }
+      if (cell.querySelector('.table-level')) {
+        cell.querySelector('.table-level').textContent = '待填';
+        const score = cell.querySelector('.table-score');
+        if (score) score.textContent = '';
+        return;
+      }
+      cell.textContent = cell.classList.contains('score') ? '0' : '待填';
+    });
+    src.after(row);
+  };
+
+  const addTableCol = (table, afterIndex) => {
+    const idx = Math.max(0, afterIndex);
+    table.querySelectorAll('tr').forEach((tr) => {
+      const cells = [...tr.children];
+      if (!cells.length) return;
+      const src = cells[Math.min(idx, cells.length - 1)];
+      const cell = src.cloneNode(true);
+      cell.classList.remove('is-accent');
+      if (tr.closest('thead')) {
+        if (cell.querySelector('.table-level')) {
+          cell.querySelector('.table-level').textContent = '新列';
+          const score = cell.querySelector('.table-score');
+          if (score) score.textContent = '';
+        } else cell.textContent = '新列';
+      } else if (cell.querySelector('.hotel-tier')) {
+        cell.querySelector('.hotel-tier').textContent = '档位';
+      } else {
+        cell.textContent = cell.classList.contains('score') || cell.classList.contains('total') ? '0' : '待填';
+        if (src.classList.contains('score')) cell.className = 'score';
+      }
+      src.after(cell);
+    });
+  };
+
+  const delTableRow = (table, row) => {
+    const rows = [...(table.querySelector('tbody') || table).querySelectorAll(':scope > tr')];
+    if (rows.length <= 1) return;
+    (row && rows.includes(row) ? row : rows[rows.length - 1]).remove();
+  };
+
+  const delTableCol = (table, colIndex) => {
+    const first = table.querySelector('tr');
+    if (!first || first.children.length <= 2) return;
+    let i = Math.max(0, Math.min(first.children.length - 1, colIndex));
+    if (table.closest('.hotel-ranking-block, .network-node-table') && i === 0) return;
+    table.querySelectorAll('tr').forEach((tr) => tr.children[i]?.remove());
+  };
+
+  const renumberTable = (host) => {
+    const table = tableOf(host);
+    if (!table) return;
+    const rankLike = !!host.closest?.('.hotel-ranking-block, .network-node-table') || host.matches?.('.hotel-ranking-block, .network-node-table');
+    if (rankLike) {
+      table.querySelectorAll('tbody tr').forEach((tr, i) => {
+        const cell = tr.querySelector('td.rank, td:first-child');
+        if (cell) cell.textContent = String(i + 1);
+      });
+    }
+    const count = host.querySelector?.('.hotel-ranking-count');
+    if (count) {
+      const n = table.querySelectorAll('tbody tr').length;
+      count.textContent = `${n} / ${n}`;
+    }
+    host.querySelectorAll?.('.destination-list .destination-row, [class~="destination-row"]').forEach((row, i) => {
+      const rank = row.querySelector('.rank');
+      if (rank) rank.textContent = String(i + 1).padStart(2, '0');
+    });
+  };
+
+  const refreshNetworkLines = (host) => {
+    if (!host?.querySelector) return;
+    const svg = host.querySelector('.connection-area svg');
+    const origins = [...host.querySelectorAll('.city-button')];
+    const dests = [...host.querySelectorAll('.destination-row')];
+    if (svg && origins.length && dests.length) {
+      svg.replaceChildren();
+      origins.forEach((_, i) => {
+        const yi = 28 + i * 58;
+        const yj = 36 + (i % dests.length) * 64;
+        const path = document.createElementNS(NS, 'path');
+        path.setAttribute('class', i % 2 ? 'route-line rail' : 'route-line');
+        path.setAttribute('d', `M0 ${yi} C80 ${yi}, 120 ${yj}, 200 ${yj}`);
+        svg.append(path);
+      });
+    }
+    const status = host.querySelector('.network-status');
+    if (status) status.textContent = `${Math.min(origins.length, dests.length)} 条通路`;
+  };
+
+  const addNetworkItem = (host, kind) => {
+    if (kind === 'origin') {
+      const list = host.querySelector('.city-list');
+      const src = list?.querySelector('.city-button:last-of-type');
+      if (!src) return;
+      const node = src.cloneNode(true);
+      node.classList.remove('active');
+      const title = node.querySelector('strong');
+      const meta = node.querySelector('small');
+      if (title) title.textContent = `起点 ${list.querySelectorAll('.city-button').length + 1}`;
+      if (meta) meta.textContent = '0 条';
+      src.after(node);
+      refreshNetworkLines(host);
+      return;
+    }
+    const list = host.querySelector('.destination-list') || host.querySelector('.city-column.destinations > div:last-child');
+    const src = list?.querySelector('.destination-row:last-of-type');
+    if (!src) return;
+    const node = src.cloneNode(true);
+    node.classList.remove('active');
+    const title = node.querySelector('strong');
+    const meta = node.querySelector('small');
+    if (title) title.textContent = `终点 ${String(list.querySelectorAll('.destination-row').length + 1).padStart(2, '0')}`;
+    if (meta) meta.textContent = '方式 A';
+    src.after(node);
+    renumberTable(host);
+    refreshNetworkLines(host);
+  };
+
+  const delNetworkItem = (host, el) => {
+    if (el?.matches?.('.city-button')) {
+      const list = host.querySelectorAll('.city-button');
+      if (list.length <= 1) return;
+      el.remove();
+      refreshNetworkLines(host);
+      return;
+    }
+    if (el?.matches?.('.destination-row')) {
+      const list = host.querySelectorAll('.destination-row');
+      if (list.length <= 1) return;
+      el.remove();
+      renumberTable(host);
+      refreshNetworkLines(host);
+    }
   };
 
   const syncChartValueLegacy = (svg) => {
@@ -2071,10 +2408,13 @@
     { id: 'point', label: '观点', html: '<aside class="point"><span>观点</span><p>待填。一句立场。</p></aside>' },
     { id: 'pain', label: '议题格', html: '<div class="pain-text-list" data-cols="2"><article class="pain-topic"><header class="pain-topic-head"><h3><span class="pain-topic-index">01</span>议题名称</h3><p class="pain-topic-summary">一句概括：这一格要回答什么问题。</p></header><div class="pain-topic-body"><ul class="pain-detail-list"><li>待填</li></ul></div></article></div>' },
     { id: 'finding', label: '自定义文本', html: '<article class="finding"><p>待填。可改字号、颜色、加粗，可插入弱分割线。</p></article>' },
-    { id: 'table', label: '表格', html: '<div class="plain-table-wrap"><table class="airline-matrix"><thead><tr><th>维度</th><th><span class="table-level">对象 A</span><span class="table-score">对照档</span></th><th class="is-accent"><span class="table-level">对象 B</span><span class="table-score">强调档</span></th></tr></thead><tbody><tr><td>指标</td><td>待填</td><td>待填</td></tr></tbody></table></div>' },
-    { id: 'chart', label: '折线图', html: '<figure class="rail-growth-chart" aria-label="折线图"><div class="rail-growth-chart-scroll"><svg viewBox="0 0 640 220" role="img"><line class="chart-grid" x1="56" y1="170" x2="600" y2="170"/><line class="chart-axis" x1="56" y1="30" x2="56" y2="170"/><line class="chart-line" x1="80" y1="150" x2="320" y2="110"/><line class="chart-line" x1="320" y1="110" x2="560" y2="50"/><circle class="chart-point" cx="80" cy="150" r="4"/><circle class="chart-point" cx="320" cy="110" r="4"/><circle class="chart-point" cx="560" cy="50" r="4"/><text class="chart-value" x="80" y="140" text-anchor="middle">10</text><text class="chart-value" x="320" y="100" text-anchor="middle">40</text><text class="chart-value" x="560" y="40" text-anchor="middle">90</text><text class="chart-date" x="80" y="198" text-anchor="middle">T1</text><text class="chart-date" x="320" y="198" text-anchor="middle">T2</text><text class="chart-date" x="560" y="198" text-anchor="end">T3</text></svg></div></figure>' },
+    { id: 'table', label: '表格', html: '<div class="plain-table-wrap"><table class="airline-matrix"><thead><tr><th>维度</th><th><span class="table-level">对象 A</span><span class="table-score">对照档</span></th><th><span class="table-level">对象 B</span><span class="table-score">对照档</span></th><th class="is-accent"><span class="table-level">对象 C</span><span class="table-score">强调档</span></th></tr></thead><tbody><tr><td>覆盖率</td><td>待填</td><td>待填</td><td>待填</td></tr><tr><td>申请截止</td><td>待填</td><td>待填</td><td>待填</td></tr><tr><td>基础价格</td><td>待填</td><td>待填</td><td>待填</td></tr></tbody></table></div>' },
+    { id: 'chart', label: '折线图', html: '<figure class="rail-growth-chart" aria-label="折线图：同一指标随时间变化"><div class="rail-growth-chart-scroll"><svg viewBox="0 0 1160 230" role="img"><line class="chart-grid" x1="68" y1="178" x2="1120" y2="178"/><line class="chart-grid" x1="68" y1="141.5" x2="1120" y2="141.5"/><line class="chart-grid" x1="68" y1="105" x2="1120" y2="105"/><line class="chart-grid" x1="68" y1="68.5" x2="1120" y2="68.5"/><line class="chart-grid" x1="68" y1="32" x2="1120" y2="32"/><line class="chart-axis" x1="68" y1="32" x2="68" y2="178"/><text class="chart-tick" x="56" y="182" text-anchor="end">0</text><text class="chart-tick" x="56" y="145.5" text-anchor="end">100</text><text class="chart-tick" x="56" y="109" text-anchor="end">200</text><text class="chart-tick" x="56" y="72.5" text-anchor="end">300</text><text class="chart-tick" x="56" y="36" text-anchor="end">400</text><text class="chart-axis-label" x="17" y="112" text-anchor="middle" transform="rotate(-90 17 112)">数量</text><line class="chart-line chart-line--stations" x1="90" y1="176.2" x2="430" y2="168.9"/><line class="chart-line chart-line--stations" x1="430" y1="168.9" x2="770" y2="133.8"/><line class="chart-line chart-line--stations" x1="770" y1="133.8" x2="1110" y2="118.5"/><line class="chart-line chart-line--trains" x1="90" y1="174.4" x2="430" y2="164.1"/><line class="chart-line chart-line--trains" x1="430" y1="164.1" x2="770" y2="94.8"/><line class="chart-line chart-line--trains" x1="770" y1="94.8" x2="1110" y2="45.1"/><g aria-label="系列 B"><circle class="chart-point chart-point--stations" cx="90" cy="176.2" r="4"/><circle class="chart-point chart-point--stations" cx="430" cy="168.9" r="4"/><circle class="chart-point chart-point--stations" cx="770" cy="133.8" r="4"/><circle class="chart-point chart-point--stations" cx="1110" cy="118.5" r="4"/><text class="chart-value chart-value--stations" x="90" y="195" text-anchor="middle">5</text><text class="chart-value chart-value--stations" x="430" y="188" text-anchor="middle">25</text><text class="chart-value chart-value--stations" x="770" y="153" text-anchor="middle">121</text><text class="chart-value chart-value--stations" x="1110" y="138" text-anchor="end">163</text></g><g aria-label="系列 A"><circle class="chart-point chart-point--trains" cx="90" cy="174.4" r="4"/><circle class="chart-point chart-point--trains" cx="430" cy="164.1" r="4"/><circle class="chart-point chart-point--trains" cx="770" cy="94.8" r="4"/><circle class="chart-point chart-point--trains" cx="1110" cy="45.1" r="4"/><text class="chart-value" x="90" y="158" text-anchor="middle">10</text><text class="chart-value" x="430" y="148" text-anchor="middle">38</text><text class="chart-value" x="770" y="79" text-anchor="middle">228</text><text class="chart-value" x="1110" y="30" text-anchor="end">364</text></g><text class="chart-date" x="90" y="218" text-anchor="middle">T1</text><text class="chart-date" x="430" y="218" text-anchor="middle">T2</text><text class="chart-date" x="770" y="218" text-anchor="middle">T3</text><text class="chart-date" x="1110" y="218" text-anchor="end">T4</text><line class="chart-line chart-line--trains" x1="820" y1="18" x2="852" y2="18"/><text class="chart-legend" x="860" y="22">系列 A</text><line class="chart-line chart-line--stations" x1="960" y1="18" x2="992" y2="18"/><text class="chart-legend" x="1000" y="22">系列 B</text></svg></div></figure>' },
     { id: 'ansoff', label: '四象限矩阵', html: '<div class="ansoff-wrap"><div class="ansoff-grid" aria-label="四象限矩阵"><div class="ansoff-corner"></div><div class="ansoff-col-head"><span class="ansoff-kicker">横轴 · 低</span><span class="ansoff-title">象限 · 左</span></div><div class="ansoff-col-head"><span class="ansoff-kicker">横轴 · 高</span><span class="ansoff-title">象限 · 右</span></div><div class="ansoff-row-head"><span class="ansoff-kicker">纵轴 · 高</span></div><div class="ansoff-cell"><span class="cell-tag">I</span><h4>象限名称</h4><p>待填。</p></div><div class="ansoff-cell"><span class="cell-tag">II</span><h4>象限名称</h4><p>待填。</p></div><div class="ansoff-row-head"><span class="ansoff-kicker">纵轴 · 低</span></div><div class="ansoff-cell"><span class="cell-tag">III</span><h4>象限名称</h4><p>待填。</p></div><div class="ansoff-cell"><span class="cell-tag">IV</span><h4>象限名称</h4><p>待填。</p></div></div></div>' },
-    { id: 'rank', label: '排行榜', html: '<section class="hotel-ranking-block"><div class="hotel-ranking-head"><div><h4>排行榜标题</h4><p>待填。</p></div></div><div class="hotel-ranking-scroll"><table><thead><tr><th>#</th><th>名称</th><th>分值</th></tr></thead><tbody><tr><td class="rank">1</td><td class="hotel-name">对象 01</td><td class="score total">0</td></tr><tr><td class="rank">2</td><td class="hotel-name">对象 02</td><td class="score total">0</td></tr></tbody></table></div></section>' },
+    { id: 'rank', label: '排行榜', html: '<section class="hotel-ranking-block"><div class="hotel-ranking-head"><div><h4>排行榜标题</h4><p>按综合分降序。目录展示前 12 行；报告里窗口可滚动看全部。</p></div><span class="hotel-ranking-count">12 / 12</span></div><div class="plain-table-wrap hotel-ranking-scroll" tabindex="0"><table class="poi-table hotel-ranking-table"><thead><tr><th>排名</th><th>对象名称</th><th>档位</th><th>综合分</th><th>指标 A</th><th>指标 B</th><th>指标 C</th><th>指标 D</th></tr></thead><tbody><tr><td class="rank">1</td><td class="hotel-name">对象名称 01</td><td class="hotel-tier-cell"><span class="hotel-tier tier-luxury">档位 A</span></td><td class="score total">99.20</td><td class="score">54</td><td class="score">2,116</td><td class="score">7,703</td><td class="score">9,166</td></tr><tr><td class="rank">2</td><td class="hotel-name">对象名称 02</td><td class="hotel-tier-cell"><span class="hotel-tier tier-luxury">档位 A</span></td><td class="score total">93.43</td><td class="score">38</td><td class="score">823</td><td class="score">9,918</td><td class="score">12,173</td></tr><tr><td class="rank">3</td><td class="hotel-name">对象名称 03</td><td class="hotel-tier-cell"><span class="hotel-tier tier-luxury">档位 A</span></td><td class="score total">91.48</td><td class="score">38</td><td class="score">1,297</td><td class="score">2,982</td><td class="score">5,043</td></tr><tr><td class="rank">4</td><td class="hotel-name">对象名称 04</td><td class="hotel-tier-cell"><span class="hotel-tier tier-upscale">档位 B</span></td><td class="score total">87.05</td><td class="score">37</td><td class="score">500</td><td class="score">1,806</td><td class="score">3,330</td></tr><tr><td class="rank">5</td><td class="hotel-name">对象名称 05</td><td class="hotel-tier-cell"><span class="hotel-tier tier-luxury">档位 A</span></td><td class="score total">86.92</td><td class="score">37</td><td class="score">294</td><td class="score">3,394</td><td class="score">4,046</td></tr><tr><td class="rank">6</td><td class="hotel-name">对象名称 06</td><td class="hotel-tier-cell"><span class="hotel-tier tier-luxury">档位 A</span></td><td class="score total">80.71</td><td class="score">18</td><td class="score">336</td><td class="score">5,755</td><td class="score">4,858</td></tr><tr><td class="rank">7</td><td class="hotel-name">对象名称 07</td><td class="hotel-tier-cell"><span class="hotel-tier tier-upscale">档位 B</span></td><td class="score total">75.79</td><td class="score">15</td><td class="score">259</td><td class="score">2,243</td><td class="score">3,164</td></tr><tr><td class="rank">8</td><td class="hotel-name">对象名称 08</td><td class="hotel-tier-cell"><span class="hotel-tier tier-luxury">档位 A</span></td><td class="score total">75.10</td><td class="score">16</td><td class="score">172</td><td class="score">2,773</td><td class="score">1,912</td></tr><tr><td class="rank">9</td><td class="hotel-name">对象名称 09</td><td class="hotel-tier-cell"><span class="hotel-tier tier-upscale">档位 B</span></td><td class="score total">70.73</td><td class="score">11</td><td class="score">748</td><td class="score">428</td><td class="score">672</td></tr><tr><td class="rank">10</td><td class="hotel-name">对象名称 10</td><td class="hotel-tier-cell"><span class="hotel-tier tier-upscale">档位 B</span></td><td class="score total">68.81</td><td class="score">8</td><td class="score">177</td><td class="score">3,601</td><td class="score">2,430</td></tr><tr><td class="rank">11</td><td class="hotel-name">对象名称 11</td><td class="hotel-tier-cell"><span class="hotel-tier tier-luxury">档位 A</span></td><td class="score total">68.21</td><td class="score">14</td><td class="score">178</td><td class="score">221</td><td class="score">870</td></tr><tr><td class="rank">12</td><td class="hotel-name">对象名称 12</td><td class="hotel-tier-cell"><span class="hotel-tier tier-upscale">档位 B</span></td><td class="score total">64.48</td><td class="score">5</td><td class="score">193</td><td class="score">3,496</td><td class="score">2,514</td></tr></tbody></table></div></section>' },
+    { id: 'funnel', label: '漏斗图', html: '<figure class="hotel-funnel-chart" aria-label="漏斗：样本如何逐级收窄"><div class="hotel-funnel-chart-scroll"><svg viewBox="0 0 1200 300" xmlns="http://www.w3.org/2000/svg" role="img"><path class="funnel-line" d="M110 34 L600 94 L1090 154"/><path class="funnel-line is-muted" d="M110 34 L410 190"/><g transform="translate(110 34)"><circle class="funnel-node" r="7"/><text class="funnel-value" x="0" y="48" text-anchor="middle">6,326</text><text class="funnel-label" x="0" y="74" text-anchor="middle">总量 · 平台样本</text></g><g transform="translate(600 94)"><circle class="funnel-node" r="7"/><text class="funnel-value" x="0" y="48" text-anchor="middle">161</text><text class="funnel-label" x="0" y="74" text-anchor="middle">有证据的样本</text></g><g transform="translate(1090 154)"><circle class="funnel-node" r="7"/><text class="funnel-value" x="0" y="48" text-anchor="middle">100</text><text class="funnel-label" x="0" y="74" text-anchor="middle">审核后的优选</text></g><g transform="translate(410 190)"><circle class="funnel-node is-muted" r="7"/><text class="funnel-value is-muted" x="0" y="48" text-anchor="middle">300</text><text class="funnel-label is-muted" x="0" y="74" text-anchor="middle">旁路 · 长尾核验</text></g></svg></div></figure>' },
+    { id: 'network', label: '关系网络', html: '<div class="hotel-city-network"><div class="section-head"><div><p>左侧选起点，右侧选终点，中间看两种关系是否连通。用于点对点供给、覆盖或通路。</p></div><div class="legend"><span><i></i>方式 A</span><span class="train"><i></i>方式 B</span></div></div><section class="network-shell" aria-label="起点与终点连线"><div class="network-toolbar"><b>显示方式</b><div class="mode-filter" role="group" aria-label="关系类型筛选"><button class="active" data-mode="all" type="button">全部</button><button data-mode="flight" type="button">方式 A</button><button data-mode="rail" type="button">方式 B</button></div><span class="network-status">3 条通路</span></div><div class="network-stage"><aside class="city-column origins"><p class="column-label">起点</p><div class="city-list"><button class="city-button active" type="button"><strong>起点 A</strong><small>2 条</small></button><button class="city-button" type="button"><strong>起点 B</strong><small>1 条</small></button><button class="city-button" type="button"><strong>起点 C</strong><small>1 条</small></button></div></aside><div class="connection-area"><svg viewBox="0 0 200 220" preserveAspectRatio="none" aria-hidden="true"><path class="route-line" d="M0 28 C80 28, 120 36, 200 36"/><path class="route-line rail" d="M0 28 C80 28, 120 100, 200 100"/><path class="route-line" d="M0 86 C80 86, 120 164, 200 164"/></svg></div><aside class="city-column destinations"><p class="column-label">终点候选</p><div class="destination-list"><div class="destination-row active"><span class="rank">01</span><strong>终点 01</strong><small>双方式</small></div><div class="destination-row"><span class="rank">02</span><strong>终点 02</strong><small>方式 A</small></div><div class="destination-row"><span class="rank">03</span><strong>终点 03</strong><small>方式 B</small></div></div></aside></div></section></div>' },
+    { id: 'nodes', label: '节点表', html: '<div class="network-node-table"><div class="section-head top20-head"><div><h2>节点表</h2><p>终点按连通数排序。列：类型、信号、已核起点数、方式。</p></div></div><div class="table-wrap"><table><thead><tr><th>#</th><th>终点</th><th>类型</th><th>信号</th><th>已核起点</th><th>方式</th></tr></thead><tbody><tr><td>1</td><td>终点 01</td><td>类型甲</td><td>待填</td><td>15</td><td>方式 A</td></tr><tr><td>2</td><td>终点 02</td><td>类型甲</td><td>待填</td><td>14</td><td>方式 A / B</td></tr><tr><td>3</td><td>终点 03</td><td>类型乙</td><td>待填</td><td>13</td><td>方式 B</td></tr><tr><td>4</td><td>终点 04</td><td>类型乙</td><td>待填</td><td>11</td><td>方式 A</td></tr></tbody></table></div></div>' },
     { id: 'shot', label: '图', html: '<div class="shot-grid" data-cols="2"><figure class="shot" data-kind="photo"><div class="shot__frame"><img alt=""></div><figcaption><b>图片标题</b><span>一句说明。右键替换图片。</span></figcaption></figure></div>' },
     { id: 'transport', label: '图文卡', html: '<div class="transport-cards"><article class="transport-card"><div class="transport-card-copy"><h3>方案名称</h3><p>一句对比。</p><div class="transport-facts"><div class="transport-fact"><span>属性</span><strong>待填</strong></div></div></div></article></div>' },
   ];
@@ -2272,6 +2612,7 @@
     let menuInsertAt = null;
     let menuHeading = null;
     let menuItemHit = null;
+    let menuGridHit = null;
     let menuAside = null;
     let menuBlock = null;
     let menuAt = { x: 0, y: 0 };
@@ -2286,12 +2627,16 @@
       '<button type="button" data-edit-layout-action>尺寸</button>',
       '<div class="seed-edit-menu__rule" data-edit-struct-rule hidden></div>',
       '<button type="button" data-edit-add-item hidden>新增一条</button>',
+      '<button type="button" data-edit-add-row hidden>新增一行</button>',
+      '<button type="button" data-edit-add-col hidden>新增一列</button>',
       '<div class="seed-edit-menu__insert" data-edit-insert hidden>',
       '<button type="button" data-edit-insert-toggle>新增组件</button>',
       '<div class="seed-edit-menu__sub" data-edit-insert-list hidden></div>',
       '</div>',
       '<div class="seed-edit-menu__rule" data-edit-delete-rule hidden></div>',
       '<button type="button" data-edit-del-item hidden>删除本条</button>',
+      '<button type="button" data-edit-del-row hidden>删除此行</button>',
+      '<button type="button" data-edit-del-col hidden>删除此列</button>',
       '<button type="button" data-edit-del-group hidden>删除本组</button>',
       '<button type="button" data-edit-del-block hidden>删除组件</button>',
       '</div>',
@@ -2308,7 +2653,11 @@
     const structRule = menu.querySelector('[data-edit-struct-rule]');
     const deleteRule = menu.querySelector('[data-edit-delete-rule]');
     const addItemBtn = menu.querySelector('[data-edit-add-item]');
+    const addRowBtn = menu.querySelector('[data-edit-add-row]');
+    const addColBtn = menu.querySelector('[data-edit-add-col]');
     const delItemBtn = menu.querySelector('[data-edit-del-item]');
+    const delRowBtn = menu.querySelector('[data-edit-del-row]');
+    const delColBtn = menu.querySelector('[data-edit-del-col]');
     const delGroupBtn = menu.querySelector('[data-edit-del-group]');
     const delBlockBtn = menu.querySelector('[data-edit-del-block]');
     const insertWrap = menu.querySelector('[data-edit-insert]');
@@ -2412,6 +2761,7 @@
       menuInsertAt = null;
       menuHeading = null;
       menuItemHit = null;
+      menuGridHit = null;
       menuAside = null;
       menuBlock = null;
     };
@@ -2584,13 +2934,14 @@
       if (menuSide.childElementCount) menuSide.hidden = false;
     };
 
-    const showMenu = (event, { text, media, variant, resize, heading, itemHit, block, insertAt, aside } = {}) => {
+    const showMenu = (event, { text, media, variant, resize, heading, itemHit, block, insertAt, aside, gridHit } = {}) => {
       menuText = text || null;
       menuMedia = media || null;
       menuVariant = variant || null;
       menuResize = resize || null;
       menuHeading = heading || null;
       menuItemHit = itemHit || null;
+      menuGridHit = gridHit || null;
       menuAside = aside || null;
       menuBlock = block || null;
       menuInsertAt = insertAt || null;
@@ -2602,26 +2953,63 @@
       const canDelGroup = !!(menuHeading?.nodes?.length);
       const canDelBlock = !!(menuBlock && !canDelGroup);
       const canInsert = !!menuInsertAt;
+      const grid = menuGridHit;
+      const gridKind = grid?.kind || '';
+      const canAddRow = !!grid;
+      const canAddCol = !!grid && (gridKind === 'table' || gridKind === 'rank' || gridKind === 'chart' || gridKind === 'network');
+      const canDelRow = !!grid && (
+        (gridKind === 'funnel' && !!grid.target && funnelMainGroups(grid.svg).length > 2)
+        || (gridKind === 'network' && !!grid.target && (
+          (grid.target.matches('.city-button') && grid.host.querySelectorAll('.city-button').length > 1)
+          || (grid.target.matches('.destination-row') && grid.host.querySelectorAll('.destination-row').length > 1)
+        ))
+        || ((gridKind === 'table' || gridKind === 'rank') && (grid.table?.querySelectorAll('tbody tr').length || 0) > 1)
+        || (gridKind === 'chart' && chartSeriesGroups(grid.svg).length > 1)
+      );
+      const canDelCol = !!grid && (
+        ((gridKind === 'table' || gridKind === 'rank') && (grid.table?.querySelector('tr')?.children.length || 0) > 2)
+        || (gridKind === 'chart' && (grid.svg?.querySelectorAll('.chart-date').length || 0) > 2)
+      );
+      addRowBtn.textContent = gridKind === 'chart' ? '新增系列'
+        : gridKind === 'funnel' ? '新增节点'
+        : gridKind === 'network' ? '新增起点'
+        : '新增一行';
+      addColBtn.textContent = gridKind === 'chart' ? '新增数据点'
+        : gridKind === 'network' ? '新增终点'
+        : '新增一列';
+      delRowBtn.textContent = gridKind === 'chart' ? '删除此系列'
+        : gridKind === 'funnel' ? '删除此节点'
+        : gridKind === 'network' && grid.target?.matches?.('.destination-row') ? '删除此终点'
+        : gridKind === 'network' ? '删除此起点'
+        : '删除此行';
+      delColBtn.textContent = gridKind === 'chart' ? '删除此数据点' : '删除此列';
       addItemBtn.hidden = !canAddItem;
+      addRowBtn.hidden = !canAddRow;
+      addColBtn.hidden = !canAddCol;
       delItemBtn.hidden = !canDelItem;
+      delRowBtn.hidden = !canDelRow;
+      delColBtn.hidden = !canDelCol;
       delGroupBtn.hidden = !canDelGroup;
       delBlockBtn.hidden = !canDelBlock;
       insertWrap.hidden = !canInsert;
       insertList.hidden = true;
       const hasPrimary = !textBtn.hidden || !imageBtn.hidden || !layoutBtn.hidden;
-      structRule.hidden = !(hasPrimary && (canAddItem || canInsert));
+      structRule.hidden = !(hasPrimary && (canAddItem || canAddRow || canAddCol || canInsert));
       paintVariantMenu(menuVariant);
       paintAsideCheck(menuAside);
-      const hasDelete = canDelItem || canDelGroup || canDelBlock;
+      const hasDelete = canDelItem || canDelRow || canDelCol || canDelGroup || canDelBlock;
       deleteRule.hidden = !hasDelete;
       if (hasDelete) {
         menuMain.append(deleteRule);
         if (!delItemBtn.hidden) menuMain.append(delItemBtn);
+        if (!delRowBtn.hidden) menuMain.append(delRowBtn);
+        if (!delColBtn.hidden) menuMain.append(delColBtn);
         if (!delGroupBtn.hidden) menuMain.append(delGroupBtn);
         if (!delBlockBtn.hidden) menuMain.append(delBlockBtn);
       }
       const hasAction = hasPrimary || menuVariant || menuAside
-        || canAddItem || canDelItem || canDelGroup || canDelBlock || canInsert;
+        || canAddItem || canAddRow || canAddCol
+        || canDelItem || canDelRow || canDelCol || canDelGroup || canDelBlock || canInsert;
       if (!hasAction) return;
       for (const el of menuMain.children) {
         if (el.hidden) continue;
@@ -3184,12 +3572,131 @@
       recordRemove([block]);
     };
 
+    const refreshDataHost = (host) => {
+      if (!host) return;
+      const chart = host.matches?.('.rail-growth-chart') ? host : host.querySelector?.('.rail-growth-chart');
+      if (chart) {
+        const svg = chart.querySelector('svg');
+        relayoutChartX(svg);
+      }
+      const funnel = host.matches?.('.hotel-funnel-chart') ? host : host.querySelector?.('.hotel-funnel-chart');
+      if (funnel) {
+        const svg = funnel.querySelector('svg');
+        layoutFunnelNodes(svg);
+        layoutFunnelHeight(funnel);
+      }
+      const network = host.matches?.('.hotel-city-network') ? host : host.querySelector?.('.hotel-city-network');
+      if (network) refreshNetworkLines(network);
+      renumberTable(host);
+    };
+
+    const mutateHost = (host, fn) => {
+      if (!host) return;
+      endTextEditForStruct();
+      const before = host.innerHTML;
+      fn();
+      const after = host.innerHTML;
+      if (before === after) return;
+      record({
+        undo: () => { host.innerHTML = before; refreshDataHost(host); },
+        redo: () => { host.innerHTML = after; refreshDataHost(host); },
+      });
+      refreshDataHost(host);
+      persist();
+    };
+
+    const gridHitOf = (node) => {
+      if (!node?.closest) return null;
+      const chart = node.closest('.rail-growth-chart');
+      if (chart) {
+        const svg = chart.querySelector('svg');
+        if (!svg) return { kind: 'chart', host: chart, svg: null, col: 0, row: 0 };
+        const dates = [...svg.querySelectorAll('.chart-date')]
+          .sort((a, b) => (+a.getAttribute('x') || 0) - (+b.getAttribute('x') || 0));
+        const groups = chartSeriesGroups(svg);
+        const dateEl = node.closest('.chart-date');
+        const valueEl = node.closest('.chart-value');
+        const groupEl = node.closest('g');
+        let col = dates.length - 1;
+        if (dateEl) col = Math.max(0, dates.indexOf(dateEl));
+        else if (valueEl) {
+          const x = +valueEl.getAttribute('x');
+          col = dates.reduce((best, d, i) => (
+            Math.abs((+d.getAttribute('x') || 0) - x) < Math.abs((+dates[best].getAttribute('x') || 0) - x) ? i : best
+          ), 0);
+        }
+        const row = groupEl && groups.includes(groupEl) ? groups.indexOf(groupEl) : groups.length - 1;
+        return { kind: 'chart', host: chart, svg, col, row };
+      }
+      const funnel = node.closest('.hotel-funnel-chart');
+      if (funnel) {
+        const svg = funnel.querySelector('svg');
+        const group = node.closest('g');
+        return { kind: 'funnel', host: funnel, svg, target: group };
+      }
+      const network = node.closest('.hotel-city-network');
+      if (network) {
+        const origin = node.closest('.city-button');
+        const dest = node.closest('.destination-row');
+        return { kind: 'network', host: network, target: dest || origin };
+      }
+      const rank = node.closest('.hotel-ranking-block');
+      const nodeTable = node.closest('.network-node-table');
+      const wrap = node.closest('.plain-table-wrap');
+      const host = rank || nodeTable || wrap;
+      if (!host) return null;
+      const table = host.querySelector('table');
+      if (!table) return null;
+      const cell = node.closest('th, td');
+      const row = cell?.parentElement;
+      return {
+        kind: rank ? 'rank' : 'table',
+        host,
+        table,
+        cell,
+        row,
+        col: cell ? cell.cellIndex : Math.max(0, (table.querySelector('tr')?.children.length || 1) - 1),
+      };
+    };
+
+    const applyGridAction = (hit, action) => {
+      if (!hit) return;
+      mutateHost(hit.host, () => {
+        if (hit.kind === 'chart' && hit.svg) {
+          if (action === 'add-row') addChartSeries(hit.svg);
+          else if (action === 'add-col') addChartPoint(hit.svg);
+          else if (action === 'del-row') delChartSeries(hit.svg, hit.row);
+          else if (action === 'del-col') delChartPoint(hit.svg, hit.col);
+          return;
+        }
+        if (hit.kind === 'funnel' && hit.svg) {
+          if (action === 'add-row') addFunnelNode(hit.svg);
+          else if (action === 'del-row') delFunnelNode(hit.svg, hit.target);
+          return;
+        }
+        if (hit.kind === 'network') {
+          if (action === 'add-row') addNetworkItem(hit.host, 'origin');
+          else if (action === 'add-col') addNetworkItem(hit.host, 'dest');
+          else if (action === 'del-row' || action === 'del-col') delNetworkItem(hit.host, hit.target);
+          return;
+        }
+        if (hit.table) {
+          if (action === 'add-row') addTableRow(hit.table, hit.row);
+          else if (action === 'add-col') addTableCol(hit.table, hit.col ?? 0);
+          else if (action === 'del-row') delTableRow(hit.table, hit.row);
+          else if (action === 'del-col') delTableCol(hit.table, hit.col ?? 0);
+          renumberTable(hit.host);
+        }
+      });
+    };
+
     const insertBlock = (id, at) => {
       const spec = BLOCK_TEMPLATES.find((t) => t.id === id);
       if (!spec || !at?.parent) return;
       const nodes = htmlToNodes(spec.html);
       if (!nodes.length) return;
       recordInsert(nodes, at.parent, at.before || null);
+      nodes.forEach((n) => refreshDataHost(n));
     };
 
     const ghost = document.createElement('div');
@@ -3270,39 +3777,6 @@
 
     const itemHostsOf = (spec) => (spec ? [...document.querySelectorAll(spec.host)] : []);
 
-    const closestRectEl = (els, clientX, clientY) => {
-      let best = null;
-      let bestDist = Infinity;
-      els.forEach((el) => {
-        const box = el.getBoundingClientRect();
-        if (box.width <= 0 && box.height <= 0) return;
-        const dx = clientX < box.left ? box.left - clientX : clientX > box.right ? clientX - box.right : 0;
-        const dy = clientY < box.top ? box.top - clientY : clientY > box.bottom ? clientY - box.bottom : 0;
-        const dist = Math.hypot(dx, dy);
-        if (dist < bestDist) {
-          best = el;
-          bestDist = dist;
-        }
-      });
-      return best;
-    };
-
-    const dropParentAt = (el, mode, spec, clientX, clientY) => {
-      const hit = document.elementFromPoint(clientX, clientY);
-      if (mode === 'item') {
-        const hosts = itemHostsOf(spec);
-        if (!hosts.length) return el.parentElement;
-        const fromHit = hit?.closest?.(spec.host);
-        const host = (fromHit && hosts.includes(fromHit)) ? fromHit : closestRectEl(hosts, clientX, clientY);
-        return itemListParentOf(host) || itemListParentOf(hosts[0]);
-      }
-      const stacks = sortableStacks();
-      if (!stacks.length) return el.parentElement;
-      const fromHit = hit?.closest?.('.flow-stack');
-      if (fromHit && stacks.includes(fromHit)) return fromHit;
-      return closestRectEl(stacks, clientX, clientY) || stacks[0];
-    };
-
     const dropHostShell = (parent, mode, spec) => {
       if (!parent) return null;
       if (mode === 'item' && spec) return parent.closest(spec.host) || parent;
@@ -3366,27 +3840,72 @@
       return { asideMedia, kids };
     };
 
-    const placeDrop = (el, mode, spec, clientX, clientY) => {
-      const parent = dropParentAt(el, mode, spec, clientX, clientY);
-      if (!parent) return;
-      const { asideMedia, kids } = sortKidsOf(el, parent);
-      const axis = flowAxisOf(parent, kids);
-      drop.dataset.axis = axis;
-      let before = null;
-      for (const kid of kids) {
-        const box = kid.getBoundingClientRect();
-        const mid = axis === 'x' ? box.left + box.width / 2 : box.top + box.height / 2;
-        const pos = axis === 'x' ? clientX : clientY;
-        if (pos < mid) {
-          before = kid;
-          break;
-        }
+    const sortParentsOf = (mode, spec) => {
+      if (mode === 'item') {
+        const seen = new Set();
+        const parents = [];
+        itemHostsOf(spec).forEach((host) => {
+          const p = itemListParentOf(host);
+          if (p && !seen.has(p)) {
+            seen.add(p);
+            parents.push(p);
+          }
+        });
+        return parents;
       }
-      if (!before) before = asideMedia || null;
-      if (before) parent.insertBefore(drop, before);
-      else parent.appendChild(drop);
+      return sortableStacks();
+    };
+
+    const collectInsertPoints = (el, mode, spec) => {
+      const points = [];
+      sortParentsOf(mode, spec).forEach((parent) => {
+        const { asideMedia, kids } = sortKidsOf(el, parent);
+        kids.forEach((kid) => points.push({ parent, before: kid }));
+        points.push({ parent, before: asideMedia || null });
+      });
+      return points;
+    };
+
+    const originInsertIndex = (el, parent, points) => {
+      const { kids, asideMedia } = sortKidsOf(el, parent);
+      const next = kids.find((kid) => {
+        const pos = el.compareDocumentPosition(kid);
+        return !!(pos & Node.DOCUMENT_POSITION_FOLLOWING) && !(pos & Node.DOCUMENT_POSITION_CONTAINED_BY);
+      }) || asideMedia || null;
+      const idx = points.findIndex((p) => p.parent === parent && p.before === next);
+      if (idx >= 0) return idx;
+      let n = 0;
+      for (const p of points) {
+        if (p.parent === parent) break;
+        n += 1;
+      }
+      return n + kids.filter((kid) => !!(el.compareDocumentPosition(kid) & Node.DOCUMENT_POSITION_PRECEDING)).length;
+    };
+
+    const viewportMidY = () => {
+      const topbar = document.querySelector('.report-shell.is-flow > .topbar, .topbar');
+      const topEdge = topbar ? topbar.getBoundingClientRect().bottom : 0;
+      const trashTop = trash.hidden ? window.innerHeight : trash.getBoundingClientRect().top;
+      return (topEdge + Math.min(window.innerHeight, trashTop)) / 2;
+    };
+
+    const centerDrop = () => {
+      if (drop.hidden || !drop.parentNode) return;
+      const box = drop.getBoundingClientRect();
+      const dy = (box.top + box.height / 2) - viewportMidY();
+      if (Math.abs(dy) < 1) return;
+      const root = document.scrollingElement || document.documentElement;
+      root.scrollTop = Math.max(0, root.scrollTop + dy);
+    };
+
+    const applyInsertPoint = (el, mode, spec, point) => {
+      if (!point?.parent) return;
+      const { kids } = sortKidsOf(el, point.parent);
+      drop.dataset.axis = flowAxisOf(point.parent, kids);
+      if (point.before) point.parent.insertBefore(drop, point.before);
+      else point.parent.appendChild(drop);
       drop.hidden = false;
-      markDropHost(parent, mode, spec);
+      markDropHost(point.parent, mode, spec);
     };
 
     const startSortDrag = (el, parent, event, mode) => {
@@ -3406,40 +3925,75 @@
       ghost.hidden = false;
       ghost.style.left = `${event.clientX + 12}px`;
       ghost.style.top = `${event.clientY - 18}px`;
-      const place = (x, y) => placeDrop(el, mode, spec, x, y);
-      place(event.clientX, event.clientY);
+      const { kids: originKids } = sortKidsOf(el, fromParent);
+      const axis = flowAxisOf(fromParent, originKids);
+      drop.dataset.axis = axis;
+      const points = () => collectInsertPoints(el, mode, spec);
+      fromParent.insertBefore(drop, el);
+      drop.hidden = false;
+      markDropHost(fromParent, mode, spec);
+      let originIndex = originInsertIndex(el, fromParent, points());
+      let appliedIndex = originIndex;
+      const posOf = (x, y) => (axis === 'x' ? x : y);
+      let originPos = posOf(event.clientX, event.clientY);
+      const STEP = 52;
+      const EDGE = 56;
+      const ARM = 12;
       let lastX = event.clientX;
       let lastY = event.clientY;
-      let scrollRaf = 0;
+      let armed = false;
+      let edgeRaf = 0;
+      let lastEdgeAt = 0;
       const overTrash = (x, y) => {
         const box = trash.getBoundingClientRect();
         return y >= box.top && x >= 0 && x <= window.innerWidth;
       };
-      const scrollRoot = () => document.scrollingElement || document.documentElement;
-      const applyEdgeScroll = () => {
-        if (!sorting) return;
+      const moveToIndex = (index) => {
+        const list = points();
+        if (!list.length) return false;
+        const next = Math.max(0, Math.min(list.length - 1, index));
+        if (next === appliedIndex && drop.parentNode) return false;
+        appliedIndex = next;
+        applyInsertPoint(el, mode, spec, list[next]);
+        centerDrop();
+        return true;
+      };
+      const edgeDir = () => {
         const topbar = document.querySelector('.report-shell.is-flow > .topbar, .topbar');
         const topEdge = topbar ? topbar.getBoundingClientRect().bottom : 0;
         const trashTop = trash.hidden ? window.innerHeight : trash.getBoundingClientRect().top;
-        const zone = 140;
-        let dy = 0;
-        if (lastY < topEdge + zone) {
-          const t = lastY <= topEdge ? 1 : 1 - (lastY - topEdge) / zone;
-          dy = -Math.ceil(28 + t * 72);
-        } else if (!overTrash(lastX, lastY) && lastY > trashTop - zone && lastY <= trashTop) {
-          const t = 1 - (trashTop - lastY) / zone;
-          dy = Math.ceil(28 + t * 72);
+        if (axis === 'x') {
+          if (lastX < EDGE) return -1;
+          if (lastX > window.innerWidth - EDGE) return 1;
+          return 0;
         }
-        if (dy) {
-          const root = scrollRoot();
-          const prev = root.scrollTop;
-          window.scrollBy(0, dy);
-          if (root.scrollTop === prev) root.scrollTop = Math.max(0, prev + dy);
-          if (root.scrollTop !== prev && !overTrash(lastX, lastY)) {
-            place(lastX, lastY);
+        if (lastY < topEdge + EDGE) return -1;
+        if (!overTrash(lastX, lastY) && lastY > trashTop - EDGE) return 1;
+        return 0;
+      };
+      const applyEdgeStep = () => {
+        if (!sorting) return;
+        const dir = (!armed || overTrash(lastX, lastY)) ? 0 : edgeDir();
+        if (dir) {
+          const now = performance.now();
+          const topbar = document.querySelector('.report-shell.is-flow > .topbar, .topbar');
+          const topEdge = topbar ? topbar.getBoundingClientRect().bottom : 0;
+          const trashTop = trash.hidden ? window.innerHeight : trash.getBoundingClientRect().top;
+          const t = axis === 'x'
+            ? (dir < 0 ? 1 - Math.max(0, lastX) / EDGE : 1 - Math.max(0, window.innerWidth - lastX) / EDGE)
+            : (dir < 0
+              ? (lastY <= topEdge ? 1 : 1 - (lastY - topEdge) / EDGE)
+              : 1 - (trashTop - lastY) / EDGE);
+          const interval = 170 - Math.max(0, Math.min(1, t)) * 100;
+          if (now - lastEdgeAt >= interval) {
+            lastEdgeAt = now;
+            if (moveToIndex(appliedIndex + dir)) {
+              originIndex = appliedIndex;
+              originPos = posOf(lastX, lastY);
+            }
           }
         }
-        scrollRaf = requestAnimationFrame(applyEdgeScroll);
+        edgeRaf = requestAnimationFrame(applyEdgeStep);
       };
       const onMove = (move) => {
         lastX = move.clientX;
@@ -3448,10 +4002,16 @@
         ghost.style.top = `${move.clientY - 18}px`;
         const hot = overTrash(move.clientX, move.clientY);
         trash.classList.toggle('is-hot', hot);
-        if (!hot) place(move.clientX, move.clientY);
+        if (!armed) {
+          if (Math.abs(posOf(move.clientX, move.clientY) - originPos) < ARM) return;
+          armed = true;
+        }
+        if (hot || edgeDir()) return;
+        const next = originIndex + Math.round((posOf(move.clientX, move.clientY) - originPos) / STEP);
+        moveToIndex(next);
       };
       const onUp = () => {
-        cancelAnimationFrame(scrollRaf);
+        cancelAnimationFrame(edgeRaf);
         document.removeEventListener('pointermove', onMove);
         document.removeEventListener('pointerup', onUp);
         const dropDelete = trash.classList.contains('is-hot');
@@ -3491,7 +4051,7 @@
       };
       document.addEventListener('pointermove', onMove);
       document.addEventListener('pointerup', onUp);
-      scrollRaf = requestAnimationFrame(applyEdgeScroll);
+      edgeRaf = requestAnimationFrame(applyEdgeStep);
     };
 
     const writeTextState = (key, value) => {
@@ -4213,7 +4773,8 @@
       const blank = isBlankHit(node);
       const stack = nearestStack(node, event.clientY);
       const insertAt = blank && stack ? insertPointFromY(stack, event.clientY) : null;
-      if (!text && !media && !variant && !resize && !heading && !itemHit && !insertAt && !block && !aside) return;
+      const gridHit = insertAt ? null : gridHitOf(node);
+      if (!text && !media && !variant && !resize && !heading && !itemHit && !insertAt && !block && !aside && !gridHit) return;
       event.preventDefault();
       event.stopPropagation();
       showMenu(event, {
@@ -4225,6 +4786,7 @@
         itemHit: insertAt ? null : itemHit,
         aside: insertAt ? null : aside,
         block: insertAt ? null : block,
+        gridHit,
         insertAt,
       });
     }, true);
@@ -4326,7 +4888,11 @@
         return;
       }
       if (event.target.closest('[data-edit-add-item]') && menuItemHit) addItemAt(menuItemHit);
+      if (event.target.closest('[data-edit-add-row]') && menuGridHit) applyGridAction(menuGridHit, 'add-row');
+      if (event.target.closest('[data-edit-add-col]') && menuGridHit) applyGridAction(menuGridHit, 'add-col');
       if (event.target.closest('[data-edit-del-item]') && menuItemHit) removeItem(menuItemHit);
+      if (event.target.closest('[data-edit-del-row]') && menuGridHit) applyGridAction(menuGridHit, 'del-row');
+      if (event.target.closest('[data-edit-del-col]') && menuGridHit) applyGridAction(menuGridHit, 'del-col');
       if (event.target.closest('[data-edit-del-group]') && menuHeading) removeGroup(menuHeading);
       if (event.target.closest('[data-edit-del-block]') && menuBlock) removeBlock(menuBlock);
       hideMenu();

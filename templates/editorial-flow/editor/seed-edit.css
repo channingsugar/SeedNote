@@ -655,7 +655,8 @@
   overflow-y: auto;
 }
 .network-shell[style*="height"] .city-list,
-.network-shell[style*="height"] #destinationList {
+.network-shell[style*="height"] #destinationList,
+.network-shell[style*="height"] .destination-list {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
@@ -727,6 +728,11 @@ html.seed-edit-on { --seed-edit-grip: 18px; }
 }
 .seed-edit-grip[hidden] { display: none !important; }
 .seed-edit-grip:hover { opacity: 1; }
+
+html.is-seed-sorting,
+html.is-seed-sorting-items {
+  scroll-behavior: auto !important;
+}
 
 html.is-seed-sorting .flow-stack > *:not(.seed-edit-drop),
 html.is-seed-sorting-items .is-seed-item-host > [data-seed-sort-title],
