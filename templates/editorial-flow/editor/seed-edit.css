@@ -465,21 +465,9 @@
   width: 100%;
   height: 100%;
 }
-.plain-grid[style*="height"]:not([data-aside]),
-.info-grid[style*="height"]:not([data-aside]),
-.stat-grid[style*="height"] {
-  height: auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  overflow: visible !important;
-}
-.info-grid[data-aside][style*="height"],
-.pain-text-list[data-aside][style*="height"],
-.plain-grid[data-aside][style*="height"],
 .info-grid[data-aside][style*="min-height"],
 .pain-text-list[data-aside][style*="min-height"],
 .plain-grid[data-aside][style*="min-height"] {
-  height: auto !important;
   max-height: none !important;
   overflow: visible !important;
 }

@@ -400,6 +400,41 @@
   border-bottom: 1px solid var(--c-line);
 }
 
+/* 拉高后：同行顶对齐，整组按最高项的高度在容器里垂直居中 */
+.stat-grid.is-sized,
+.stat-row.is-sized,
+.info-grid.is-sized:not([data-aside]),
+.plain-grid.is-sized:not([data-aside]),
+.pain-text-list.is-sized:not([data-aside]) {
+  align-items: start;
+  align-content: center;
+}
+.info-grid[data-aside].is-aside-sized[data-layout="cols"] > .comp-main,
+.info-grid[data-aside].is-aside-sized[data-layout="split"] > .comp-main,
+.info-grid[data-aside].is-aside-sized[data-layout="2"] > .comp-main,
+.pain-text-list[data-aside].is-aside-sized > .comp-main,
+.plain-grid[data-aside].is-aside-sized > .comp-main {
+  align-items: start;
+  align-content: center;
+}
+.info-grid[data-aside].is-aside-sized[data-layout="stack"] > .comp-main,
+.info-grid[data-aside].is-aside-sized[data-layout="row"] > .comp-main,
+.info-grid[data-aside].is-aside-sized[data-layout="label"] > .comp-main {
+  justify-content: center;
+}
+.info-grid[data-aside].is-aside-sized[data-layout="stack"] > .comp-main > .info,
+.info-grid[data-aside].is-aside-sized[data-layout="row"] > .comp-main > .info,
+.info-grid[data-aside].is-aside-sized[data-layout="label"] > .comp-main > .info {
+  flex: 0 0 auto;
+  align-items: start;
+}
+.point.is-sized { align-content: center; }
+.finding.is-sized {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 /* —— 观点（原 air-thesis / callout / decision-note） —— */
 .point {
   display: grid;

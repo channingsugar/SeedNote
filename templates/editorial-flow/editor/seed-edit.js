@@ -252,7 +252,8 @@
     if (box.matches?.('.shot, figure.shot') && box.closest('.comp-media')) return box;
     return (isAsideFrame(box) ? box : box?.closest?.('.comp-media'))?.querySelector?.('.shot') || null;
   };
-  const isIntrinsicHeight = (box) => !!(box && box.matches('.market-formula, .stat-grid, .stat-row, .info-grid, .plain-grid, .point, .finding') && !isAsideHost(box));
+  const isRowCenterHost = (box) => !!(box && box.matches('.stat-grid, .stat-row, .info-grid, .plain-grid, .pain-text-list, .point, .finding') && !isAsideHost(box));
+  const isIntrinsicHeight = (box) => !!(box && box.matches('.market-formula'));
   const parsePx = (value) => {
     if (!value || value === '100%' || value === 'auto') return null;
     const n = parseFloat(value);
@@ -396,8 +397,10 @@
         box.style.maxHeight = `${h}px`;
       } else {
         box.style.height = `${h}px`;
-        if (isRankBlock || isNetworkShell || isTableBox || isNodeTable || isFunnel) box.style.minHeight = `${h}px`;
-        else box.style.removeProperty('min-height');
+        if (isRankBlock || isNetworkShell || isTableBox || isNodeTable || isFunnel || isRowCenterHost(box)) {
+          box.style.minHeight = `${h}px`;
+        } else box.style.removeProperty('min-height');
+        if (isRowCenterHost(box)) box.classList.add('is-sized');
       }
       if (frame !== box && !isNetworkShell && !isGridBox && !isShotBox && !asideGroup) {
         frame.style.height = `${h}px`;
@@ -413,6 +416,8 @@
         const mediaShot = asideGroup.querySelector(':scope > .comp-media .shot');
         if (mediaShot) fillShot(mediaShot, { keepCaption: true });
         asideGroup.style.overflow = 'visible';
+      } else if (isRowCenterHost(box)) {
+        box.style.overflow = 'visible';
       } else if (isRankBlock || isNetworkShell || isGridBox || isMediaBox(box) || isChartBox || isTableBox || isNodeTable) {
         box.style.overflow = 'hidden';
       } else {
@@ -555,6 +560,7 @@
       } else if (!isMediaBox(box)) {
         box.style.removeProperty('overflow');
       }
+      if (isRowCenterHost(box)) box.classList.remove('is-sized');
       if (rankScroll) {
         rankScroll.style.removeProperty('height');
         rankScroll.style.removeProperty('min-height');
@@ -722,7 +728,7 @@
       const kids = [...stack.children];
       let prev = '';
       kids.forEach((el) => {
-        if (!el.matches?.('.research-lead, .subsection, .source-note, .point')) {
+        if (!el.matches?.('.research-lead')) {
           prev = '';
           return;
         }
@@ -2629,6 +2635,7 @@
       '<button type="button" data-edit-add-item hidden>新增一条</button>',
       '<button type="button" data-edit-add-row hidden>新增一行</button>',
       '<button type="button" data-edit-add-col hidden>新增一列</button>',
+      '<button type="button" data-edit-copy-block hidden>复制组件</button>',
       '<div class="seed-edit-menu__insert" data-edit-insert hidden>',
       '<button type="button" data-edit-insert-toggle>新增组件</button>',
       '<div class="seed-edit-menu__sub" data-edit-insert-list hidden></div>',
@@ -2655,6 +2662,7 @@
     const addItemBtn = menu.querySelector('[data-edit-add-item]');
     const addRowBtn = menu.querySelector('[data-edit-add-row]');
     const addColBtn = menu.querySelector('[data-edit-add-col]');
+    const copyBlockBtn = menu.querySelector('[data-edit-copy-block]');
     const delItemBtn = menu.querySelector('[data-edit-del-item]');
     const delRowBtn = menu.querySelector('[data-edit-del-row]');
     const delColBtn = menu.querySelector('[data-edit-del-col]');
@@ -2953,6 +2961,7 @@
       const canDelGroup = !!(menuHeading?.nodes?.length);
       const canDelBlock = !!(menuBlock && !canDelGroup);
       const canInsert = !!menuInsertAt;
+      const canCopyBlock = !!(menuBlock && !menuInsertAt);
       const grid = menuGridHit;
       const gridKind = grid?.kind || '';
       const canAddRow = !!grid;
@@ -2986,6 +2995,7 @@
       addItemBtn.hidden = !canAddItem;
       addRowBtn.hidden = !canAddRow;
       addColBtn.hidden = !canAddCol;
+      copyBlockBtn.hidden = !canCopyBlock;
       delItemBtn.hidden = !canDelItem;
       delRowBtn.hidden = !canDelRow;
       delColBtn.hidden = !canDelCol;
@@ -2994,7 +3004,7 @@
       insertWrap.hidden = !canInsert;
       insertList.hidden = true;
       const hasPrimary = !textBtn.hidden || !imageBtn.hidden || !layoutBtn.hidden;
-      structRule.hidden = !(hasPrimary && (canAddItem || canAddRow || canAddCol || canInsert));
+      structRule.hidden = !(hasPrimary && (canAddItem || canAddRow || canAddCol || canCopyBlock || canInsert));
       paintVariantMenu(menuVariant);
       paintAsideCheck(menuAside);
       const hasDelete = canDelItem || canDelRow || canDelCol || canDelGroup || canDelBlock;
@@ -3008,7 +3018,7 @@
         if (!delBlockBtn.hidden) menuMain.append(delBlockBtn);
       }
       const hasAction = hasPrimary || menuVariant || menuAside
-        || canAddItem || canAddRow || canAddCol
+        || canAddItem || canAddRow || canAddCol || canCopyBlock
         || canDelItem || canDelRow || canDelCol || canDelGroup || canDelBlock || canInsert;
       if (!hasAction) return;
       for (const el of menuMain.children) {
@@ -3570,6 +3580,19 @@
     const removeBlock = (block) => {
       if (!block) return;
       recordRemove([block]);
+    };
+
+    const copyBlock = (block) => {
+      if (!block?.parentElement) return;
+      const clone = block.cloneNode(true);
+      clone.removeAttribute('data-edit-key');
+      clone.removeAttribute('id');
+      clone.removeAttribute('data-seed-editing-media');
+      clone.querySelectorAll('[data-edit-key]').forEach((el) => el.removeAttribute('data-edit-key'));
+      clone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+      recordInsert([clone], block.parentElement, block.nextElementSibling);
+      refreshDataHost(clone);
+      clone.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     };
 
     const refreshDataHost = (host) => {
@@ -4742,8 +4765,7 @@
         objectUrls.set(key, url);
         applyMediaFile(ensureMediaEl(node) || node, blob, url);
       }
-      document.querySelectorAll('.market-formula, .stat-grid, .stat-row, .info-grid, .plain-grid, .point, .finding').forEach((box) => {
-        if (isAsideHost(box)) return;
+      document.querySelectorAll('.market-formula').forEach((box) => {
         writeLayout(box, { ...readLayout(box), height: null });
       });
     };
@@ -4890,6 +4912,7 @@
       if (event.target.closest('[data-edit-add-item]') && menuItemHit) addItemAt(menuItemHit);
       if (event.target.closest('[data-edit-add-row]') && menuGridHit) applyGridAction(menuGridHit, 'add-row');
       if (event.target.closest('[data-edit-add-col]') && menuGridHit) applyGridAction(menuGridHit, 'add-col');
+      if (event.target.closest('[data-edit-copy-block]') && menuBlock) copyBlock(menuBlock);
       if (event.target.closest('[data-edit-del-item]') && menuItemHit) removeItem(menuItemHit);
       if (event.target.closest('[data-edit-del-row]') && menuGridHit) applyGridAction(menuGridHit, 'del-row');
       if (event.target.closest('[data-edit-del-col]') && menuGridHit) applyGridAction(menuGridHit, 'del-col');
@@ -5149,9 +5172,13 @@
     enhanceColorTokens();
     hydrateEditorial();
     document.querySelectorAll('.comp-media .shot').forEach(ensureAsideCaption);
-    document.querySelectorAll('.market-formula, .stat-grid, .stat-row, .info-grid, .plain-grid, .point, .finding').forEach((box) => {
-      if (isAsideHost(box)) return;
+    document.querySelectorAll('.market-formula').forEach((box) => {
       writeLayout(box, { ...readLayout(box), height: null });
+    });
+    document.querySelectorAll('.stat-grid, .stat-row, .info-grid, .plain-grid, .pain-text-list, .point, .finding').forEach((box) => {
+      if (isAsideHost(box)) return;
+      const layout = readLayout(box);
+      if (layout.height) writeLayout(box, layout);
     });
     if (!isCatalog) {
       idbGet('state', slug).then(async (saved) => {
