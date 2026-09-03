@@ -814,7 +814,7 @@ html = f"""<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>知识汇报模板 · 流式 v2</title>
   <link rel="stylesheet" href="design-system/components.css">
-  <link rel="stylesheet" href="assets/template.css?v=6">
+  <link rel="stylesheet" href="assets/template.css?v=8">
   <link rel="stylesheet" href="assets/flow.css?v=6">
   <link rel="stylesheet" href="assets/source.css?v=21">
   <link rel="stylesheet" href="assets/lib.css?v=36">
@@ -872,7 +872,7 @@ html = f"""<!doctype html>
           <footer class="report-notes">
             <h2>怎么用</h2>
             <ol>
-              <li>这是流式模板。壳是文档栏：report-shell.is-flow、吸顶导航栏 <code>.topbar</code>、flow-stack 上下叠。封面右键切版式：左齐 / 居中 / 配图 / 图文分栏（<code>data-cover</code>：省略、<code>center</code>、<code>image</code>、<code>split</code>）；配图封面可右键替换图片。拖组件排序时封面不显示。</li>
+              <li>这是流式模板。壳是文档栏：report-shell.is-flow、吸顶导航栏 <code>.topbar</code>、flow-stack 上下叠。封面右键切版式：左齐 / 居中 / 配图 / 图文分栏（<code>data-cover</code>：省略、<code>center</code>、<code>image</code>、<code>split</code>）；配图封面可右键替换图片，也可勾选「动效背景」切换 Ribbon Field / Halftone Flow / Matrix Field / Stream Convergence。拖组件排序时封面不显示。</li>
               <li>合并后的父组件：<code>.stat-card</code> / <code>.stat-grid</code> 数字信息（横排数字是同一父组件的紧凑排：<code>.stat-grid.is-compact</code>；右键勾选前缀 / 后缀 / 说明，列数 2–5）；<code>.info</code> 编号信息（布局：格子 A 左侧竖线 / 格子 B 四周框 <code>data-grid="b"</code> / 列表 A <code>stack</code> / 列表 B <code>row</code>；<code>data-pos</code> 顶部 / 左侧；<code>data-index</code>：数字 / <code>alpha</code> / <code>q</code> 问题 / <code>label</code> 标签 / <code>off</code> 隐藏，即原无编号；<code>.is-lg</code> / <code>data-no="lg"</code> 大编号；格子列数 2–5；勾选「背景」<code>data-bg</code> 后可设 <code>--info-bg</code>（默认纯色 <code>--tint-2</code>，不用渐变）；整组右键勾选「配图」，图在一组信息的左 / 右 <code>data-aside</code>；配图可换裁切 / 可滚动 / 宽图 / 海报，底部保留 figcaption。尺寸只拖配图外框（和图片组一样），内部图高度始终铺满外框，拖高时整组与左侧信息跟着变高、不裁切文字和说明）；<code>.point</code> 观点（<code>.is-soft</code> 浅底）；<code>.shot</code> 图（<code>data-kind</code>：photo / crop / scroll / wide / poster；右键新增一条，列数 1–5；尺寸拖高后行均分、铺满裁切且不超出容器）。</li>
               <li>组件库必须带基础 token：间隔 <code>--s-in</code> / <code>--s-stack</code> / <code>--s-chapter</code>；字号 <code>--t-h1</code> / <code>--t-num</code> / <code>--t-no-lg</code> / <code>--t-body</code> / <code>--t-aux</code>；颜色 <code>--c-text</code> 档、<code>--c-line</code>、<code>--c-accent</code>、表数据栏 <code>--c-pos</code> / <code>--c-neg</code>；分割线 <code>.rule</code> / <code>.rule.is-soft</code>。</li>
               <li>仍独立：公式、议题格 <code>.pain-text-list</code> / <code>.pain-topic</code>、自定义文本 <code>.finding</code>、图文卡 <code>.transport-cards</code> / <code>.transport-card</code>、韦恩图、导语、来源、章头、分割线、导航栏 <code>.topbar</code>、折线图 <code>.rail-growth-chart</code>、四象限矩阵 <code>.ansoff-grid</code>、漏斗图 <code>.hotel-funnel-chart</code>、关系网络 <code>.hotel-city-network</code>、节点表 <code>.network-node-table</code>、排行榜 <code>.hotel-ranking-block</code>。关系网络和节点表是两个父组件，不要包在同一块里。</li>
@@ -892,10 +892,11 @@ html = f"""<!doctype html>
     </div>
   </div>
 {LIGHTBOX}
-  <link rel="stylesheet" href="editor/seed-edit.css?v=38">
+  <link rel="stylesheet" href="editor/seed-edit.css?v=42">
   <script src="design-system/design-data.js"></script>
   <script src="design-system/theme-runtime.js"></script>
-  <script src="editor/seed-edit.js?v=38"></script>
+  <script src="assets/cover-fx.js?v=2"></script>
+  <script src="editor/seed-edit.js?v=42"></script>
   <script src="assets/template.js"></script>
   <script src="assets/source.js"></script>
   <script src="assets/network.js?v=16"></script>

@@ -1451,6 +1451,41 @@
     return COVER_KINDS.has(kind) ? kind : 'left';
   };
 
+  const COVER_FX_SPECS = () => window.SeedCoverFx?.specs || [];
+  const coverFxIdOf = (host) => host?.getAttribute?.('data-fx') || '';
+  const coverFxOn = (host) => !!coverFxIdOf(host);
+  const readCoverFxParams = (host, spec) => {
+    const out = {};
+    (spec?.params || []).forEach((p) => {
+      const v = parseFloat(host.getAttribute(`data-fx-${p.key}`));
+      out[p.key] = Number.isFinite(v) ? v : p.def;
+    });
+    return out;
+  };
+  const writeCoverFx = (host, id, params) => {
+    if (!host?.matches?.('.chapter-cover')) return;
+    const spec = COVER_FX_SPECS().find((s) => s.id === id) || (!id ? null : COVER_FX_SPECS()[0]) || null;
+    const prev = spec ? readCoverFxParams(host, spec) : {};
+    [...host.attributes].forEach((attr) => {
+      if (attr.name === 'data-fx' || attr.name.startsWith('data-fx-')) host.removeAttribute(attr.name);
+    });
+    if (!id || !spec) {
+      host.classList.remove('has-fx');
+      window.SeedCoverFx?.stop?.(host);
+      host.querySelector('.chapter-cover__fx')?.remove();
+      return;
+    }
+    const kind = coverKindOf(host);
+    if (kind !== 'image' && kind !== 'split') writeCoverKind(host, 'image');
+    host.setAttribute('data-fx', spec.id);
+    const next = { ...prev, ...(params || {}) };
+    spec.params.forEach((p) => {
+      const v = next[p.key];
+      host.setAttribute(`data-fx-${p.key}`, String(v == null ? p.def : v));
+    });
+    window.SeedCoverFx?.apply?.(host);
+  };
+
   const snapshotVariant = (host) => {
     const spec = specOf(host);
     if (!spec) return null;
@@ -1631,6 +1666,10 @@
       host.setAttribute('data-kind', id === 'photo' ? 'crop' : id);
     } else if (spec.group === 'cover') {
       writeCoverKind(host, id);
+      if (coverFxOn(host)) {
+        if (id === 'image' || id === 'split') window.SeedCoverFx?.apply?.(host);
+        else window.SeedCoverFx?.stop?.(host);
+      }
     }
     return { before, after: snapshotVariant(host) };
   };
@@ -2772,6 +2811,7 @@
       menuGridHit = null;
       menuAside = null;
       menuBlock = null;
+      menuSide.classList.remove('seed-edit-menu__fx');
     };
 
     const paintVariantMenu = (host) => {
@@ -2893,6 +2933,65 @@
       if ((spec.group === 'shot' && !host.closest('.comp-media')) || spec.group === 'stat' || spec.group === 'plain') {
         appendColsStepper(menuMain, colsRangeOf(spec, host));
       }
+      if (spec.group === 'cover') paintCoverFx(host);
+    };
+
+    const paintCoverFx = (host) => {
+      menu.querySelectorAll('[data-edit-cover-fx], [data-edit-cover-fx-check], [data-edit-cover-fx-param]').forEach((el) => el.remove());
+      const fxOn = coverFxOn(host);
+      const check = document.createElement('label');
+      check.className = 'seed-edit-menu__check';
+      check.setAttribute('data-edit-cover-fx-check', '');
+      const title = document.createElement('span');
+      title.textContent = '动效背景';
+      const box = document.createElement('input');
+      box.type = 'checkbox';
+      box.dataset.editCoverFx = fxOn ? 'off' : 'on';
+      box.checked = fxOn;
+      check.append(title, box);
+      menuMain.append(check);
+      if (!fxOn) return;
+      menuSide.classList.add('seed-edit-menu__fx');
+      const head = document.createElement('div');
+      head.className = 'seed-edit-menu__label';
+      head.setAttribute('data-edit-cover-fx', '');
+      head.textContent = '动效';
+      menuSide.append(head);
+      const current = coverFxIdOf(host);
+      COVER_FX_SPECS().forEach((spec) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.editCoverFx = spec.id;
+        btn.textContent = spec.label;
+        btn.classList.toggle('is-on', spec.id === current);
+        menuSide.append(btn);
+      });
+      const spec = COVER_FX_SPECS().find((s) => s.id === current) || COVER_FX_SPECS()[0];
+      const vals = readCoverFxParams(host, spec);
+      (spec?.params || []).forEach((p) => {
+        const row = document.createElement('label');
+        row.className = 'seed-edit-menu__param';
+        row.setAttribute('data-edit-cover-fx-param', p.key);
+        const top = document.createElement('span');
+        top.className = 'seed-edit-menu__param-head';
+        const name = document.createElement('span');
+        name.textContent = p.label;
+        const num = document.createElement('span');
+        const value = vals[p.key] ?? p.def;
+        num.textContent = String(value);
+        top.append(name, num);
+        const input = document.createElement('input');
+        input.type = 'range';
+        input.min = String(p.min);
+        input.max = String(p.max);
+        input.step = String(p.step);
+        input.value = String(value);
+        input.dataset.editCoverFxParam = p.key;
+        row.append(top, input);
+        menuSide.append(row);
+      });
+      menuSide.hidden = false;
+      menu.classList.add('is-split');
     };
 
     const paintAsideCheck = (aside) => {
@@ -4596,6 +4695,30 @@
       persist();
     };
 
+    const snapCoverFx = (host) => {
+      const id = coverFxIdOf(host);
+      const spec = COVER_FX_SPECS().find((s) => s.id === id);
+      return { kind: coverKindOf(host), id, params: spec ? readCoverFxParams(host, spec) : {} };
+    };
+    const restoreCoverFx = (host, snap) => {
+      if (!host) return;
+      if (snap?.kind) writeCoverKind(host, snap.kind);
+      writeCoverFx(host, snap?.id || '', snap?.params);
+    };
+    const mutateCoverFx = (host, fn) => {
+      if (!host) return;
+      const before = snapCoverFx(host);
+      fn();
+      const after = snapCoverFx(host);
+      if (JSON.stringify(before) === JSON.stringify(after)) return;
+      record({
+        undo: () => { restoreCoverFx(host, before); persist(); },
+        redo: () => { restoreCoverFx(host, after); persist(); },
+      });
+      persist();
+    };
+    let coverFxParamBefore = null;
+
     const persistLayout = (box, { recordOp = true } = {}) => {
       const key = box.dataset.editKey || ensureKey(box, 'media');
       const rec = state.media[key] || {};
@@ -4855,6 +4978,24 @@
         return;
       }
       if (event.target.closest('[data-edit-bg-color]')) return;
+      if (event.target.closest('[data-edit-cover-fx-check]') && menuVariant) {
+        event.preventDefault();
+        event.stopPropagation();
+        const host = menuVariant;
+        mutateCoverFx(host, () => writeCoverFx(host, coverFxOn(host) ? '' : 'ribbon-field'));
+        refreshOpenMenu();
+        return;
+      }
+      const coverFxBtn = event.target.closest('button[data-edit-cover-fx]');
+      if (coverFxBtn && menuVariant && COVER_FX_SPECS().some((s) => s.id === coverFxBtn.dataset.editCoverFx)) {
+        event.preventDefault();
+        event.stopPropagation();
+        const host = menuVariant;
+        const spec = COVER_FX_SPECS().find((s) => s.id === coverFxBtn.dataset.editCoverFx);
+        mutateCoverFx(host, () => writeCoverFx(host, spec.id, readCoverFxParams(host, spec)));
+        refreshOpenMenu();
+        return;
+      }
       if (event.target.closest('[data-edit-aside-check]') && menuAside) {
         event.preventDefault();
         event.stopPropagation();
@@ -4921,20 +5062,48 @@
       hideMenu();
     });
 
+    menu.addEventListener('pointerdown', (event) => {
+      if (event.target.closest('[data-edit-cover-fx-param]') && menuVariant) {
+        coverFxParamBefore = snapCoverFx(menuVariant);
+      }
+    });
     menu.addEventListener('input', (event) => {
       const color = event.target.closest('[data-edit-bg-color-input]');
-      if (!color || !menuVariant) return;
-      writeInfoBg(menuVariant, true, color.value);
+      if (color && menuVariant) writeInfoBg(menuVariant, true, color.value);
+      const range = event.target.closest('input[data-edit-cover-fx-param]');
+      if (range && menuVariant) {
+        const key = range.dataset.editCoverFxParam;
+        const spec = COVER_FX_SPECS().find((s) => s.id === coverFxIdOf(menuVariant));
+        const next = { ...readCoverFxParams(menuVariant, spec), [key]: parseFloat(range.value) };
+        writeCoverFx(menuVariant, coverFxIdOf(menuVariant), next);
+        const label = range.closest('[data-edit-cover-fx-param]')?.querySelector('.seed-edit-menu__param-head span:last-child');
+        if (label) label.textContent = range.value;
+      }
     });
     menu.addEventListener('change', (event) => {
       const color = event.target.closest('[data-edit-bg-color-input]');
-      if (!color || !menuVariant) return;
-      const host = menuVariant;
-      const key = ensureKey(host, 'variant');
-      const after = snapshotVariant(host);
-      if (JSON.stringify(after) === JSON.stringify(originals.variants[key])) delete state.variants[key];
-      else state.variants[key] = after;
-      persist();
+      if (color && menuVariant) {
+        const host = menuVariant;
+        const key = ensureKey(host, 'variant');
+        const after = snapshotVariant(host);
+        if (JSON.stringify(after) === JSON.stringify(originals.variants[key])) delete state.variants[key];
+        else state.variants[key] = after;
+        persist();
+        return;
+      }
+      if (event.target.closest('input[data-edit-cover-fx-param]') && menuVariant && coverFxParamBefore) {
+        const after = snapCoverFx(menuVariant);
+        if (JSON.stringify(coverFxParamBefore) !== JSON.stringify(after)) {
+          const before = coverFxParamBefore;
+          const host = menuVariant;
+          record({
+            undo: () => { restoreCoverFx(host, before); persist(); },
+            redo: () => { restoreCoverFx(host, after); persist(); },
+          });
+          persist();
+        }
+        coverFxParamBefore = null;
+      }
     });
 
     doneBtn.addEventListener('click', (event) => {

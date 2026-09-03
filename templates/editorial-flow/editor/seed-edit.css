@@ -233,6 +233,26 @@
 .seed-edit-menu__row-label {
   min-width: 0;
 }
+.seed-edit-menu__fx {
+  min-width: 13.5rem;
+}
+.seed-edit-menu__param {
+  display: grid;
+  gap: 4px;
+  padding: 7px 12px 8px;
+}
+.seed-edit-menu__param-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--c-text-3, #6e6e73);
+  font: 500 11px/1.3 system-ui, sans-serif;
+}
+.seed-edit-menu__param input[type="range"] {
+  width: 100%;
+  margin: 0;
+  accent-color: var(--seed-edit-accent);
+}
 .seed-edit-menu__swatch {
   box-sizing: border-box;
   width: 18px;
