@@ -2761,7 +2761,7 @@
     sizeSel.className = 'seed-edit-size';
     sizeSel.hidden = true;
     sizeSel.setAttribute('aria-label', '字号');
-    sizeSel.innerHTML = '<option value="">字号</option><option value="12px">12</option><option value="14px">14</option><option value="15px">15</option><option value="16px">16</option><option value="20px">20</option>';
+    sizeSel.innerHTML = '<option value="">字号</option><option value="12px">12</option><option value="14px">14</option><option value="15px">15</option><option value="16px">16</option><option value="20px">20</option><option value="24px">24</option><option value="30px">30</option><option value="42px">42</option>';
     document.body.appendChild(sizeSel);
     const ruleBtn = document.createElement('button');
     ruleBtn.className = 'seed-edit-rule';
@@ -4375,10 +4375,12 @@
       doneBtn.hidden = false;
       if (isSvgText(node)) {
         boldBtn.hidden = true;
-        sizeSel.hidden = true;
         ruleBtn.hidden = true;
+        sizeSel.hidden = false;
+        syncSizeSelect(node);
         hideColorPick();
         startSvgTextEdit(node);
+        placeSizeBesideDone();
         return;
       }
       node.contentEditable = 'true';
@@ -4387,8 +4389,8 @@
       const tokenColor = !!node.closest?.('[data-token-kind="color"]');
       const finding = !!node.matches?.('.finding');
       boldBtn.hidden = tokenColor;
-      sizeSel.hidden = !finding;
-      sizeSel.value = '';
+      sizeSel.hidden = tokenColor;
+      syncSizeSelect(node);
       ruleBtn.hidden = !finding;
       if (tokenColor) showColorPickFor(node);
       else {
@@ -5133,9 +5135,45 @@
       document.execCommand('foreColor', false, hex);
     };
 
+    const syncSizeSelect = (node) => {
+      if (sizeSel.hidden || !node) {
+        sizeSel.value = '';
+        return;
+      }
+      const px = `${Math.round(parseFloat(window.getComputedStyle(node).fontSize) || 0)}px`;
+      sizeSel.value = [...sizeSel.options].some((o) => o.value === px) ? px : '';
+    };
+
+    const placeSizeBesideDone = () => {
+      if (sizeSel.hidden || !colorPalette.hidden) return;
+      const done = doneBtn.getBoundingClientRect();
+      const w = sizeSel.offsetWidth || 72;
+      sizeSel.style.left = `${Math.max(8, done.left - w - 6)}px`;
+      sizeSel.style.top = `${done.top}px`;
+    };
+
     const applyFontSize = (px) => {
-      if (!px) return;
+      if (!px || !activeText) return;
+      if (isSvgText(activeText)) {
+        activeText.style.fontSize = px;
+        activeText.setAttribute('font-size', String(parseFloat(px)));
+        if (svgInput) {
+          svgInput.style.fontSize = px;
+          svgInput.style.height = `${Math.max(parseFloat(px) + 10, 28)}px`;
+        }
+        return;
+      }
       restoreRange();
+      const sel = window.getSelection();
+      const range = sel.rangeCount ? sel.getRangeAt(0) : null;
+      const sliced = !!(range && !range.collapsed && activeText.contains(range.commonAncestorContainer));
+      if (!sliced) {
+        const all = document.createRange();
+        all.selectNodeContents(activeText);
+        sel.removeAllRanges();
+        sel.addRange(all);
+        savedRange = all.cloneRange();
+      }
       document.execCommand('styleWithCSS', false, true);
       document.execCommand('fontSize', false, '7');
       (activeText || document).querySelectorAll('font[size="7"]').forEach((el) => {
@@ -5164,9 +5202,9 @@
     });
     sizeSel.addEventListener('pointerdown', (event) => event.stopPropagation());
     sizeSel.addEventListener('change', () => {
-      if (!activeText || isSvgText(activeText)) return;
+      if (!activeText) return;
       applyFontSize(sizeSel.value);
-      sizeSel.value = '';
+      syncSizeSelect(activeText);
     });
     ruleBtn.addEventListener('pointerdown', (event) => {
       event.preventDefault();

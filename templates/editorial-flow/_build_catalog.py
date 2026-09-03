@@ -817,7 +817,7 @@ html = f"""<!doctype html>
   <link rel="stylesheet" href="assets/template.css?v=8">
   <link rel="stylesheet" href="assets/flow.css?v=6">
   <link rel="stylesheet" href="assets/source.css?v=21">
-  <link rel="stylesheet" href="assets/lib.css?v=36">
+  <link rel="stylesheet" href="assets/lib.css?v=39">
   <link rel="stylesheet" href="assets/v2.css?v=12">
 </head>
 <body>
@@ -896,9 +896,9 @@ html = f"""<!doctype html>
   <script src="design-system/design-data.js"></script>
   <script src="design-system/theme-runtime.js"></script>
   <script src="assets/cover-fx.js?v=2"></script>
-  <script src="editor/seed-edit.js?v=42"></script>
+  <script src="editor/seed-edit.js?v=43"></script>
   <script src="assets/template.js"></script>
-  <script src="assets/source.js"></script>
+  <script src="assets/source.js?v=2"></script>
   <script src="assets/network.js?v=16"></script>
 </body>
 </html>
