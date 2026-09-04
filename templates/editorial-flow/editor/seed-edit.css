@@ -717,25 +717,55 @@ html.seed-edit-on { --seed-edit-grip: 18px; }
   position: fixed;
   z-index: 84;
   box-sizing: border-box;
-  width: 24px;
-  height: 36px;
-  padding: 6px 7px;
+  width: 36px;
+  height: 48px;
+  padding: 7px 8px 16px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 8px;
   background:
-    radial-gradient(circle, var(--seed-edit-ink) 1.15px, transparent 1.35px) 8px 8px / 8px 7px no-repeat,
-    radial-gradient(circle, var(--seed-edit-ink) 1.15px, transparent 1.35px) 8px 15px / 8px 7px no-repeat,
-    radial-gradient(circle, var(--seed-edit-ink) 1.15px, transparent 1.35px) 8px 22px / 8px 7px no-repeat,
-    radial-gradient(circle, var(--seed-edit-ink) 1.15px, transparent 1.35px) 14px 8px / 8px 7px no-repeat,
-    radial-gradient(circle, var(--seed-edit-ink) 1.15px, transparent 1.35px) 14px 15px / 8px 7px no-repeat,
-    radial-gradient(circle, var(--seed-edit-ink) 1.15px, transparent 1.35px) 14px 22px / 8px 7px no-repeat;
-  background-color: color-mix(in srgb, var(--seed-edit-paper) 88%, transparent);
+    radial-gradient(circle, var(--seed-edit-ink) 1.15px, transparent 1.35px) 11px 8px / 8px 7px no-repeat,
+    radial-gradient(circle, var(--seed-edit-ink) 1.15px, transparent 1.35px) 11px 15px / 8px 7px no-repeat,
+    radial-gradient(circle, var(--seed-edit-ink) 1.15px, transparent 1.35px) 11px 22px / 8px 7px no-repeat,
+    radial-gradient(circle, var(--seed-edit-ink) 1.15px, transparent 1.35px) 17px 8px / 8px 7px no-repeat,
+    radial-gradient(circle, var(--seed-edit-ink) 1.15px, transparent 1.35px) 17px 15px / 8px 7px no-repeat,
+    radial-gradient(circle, var(--seed-edit-ink) 1.15px, transparent 1.35px) 17px 22px / 8px 7px no-repeat;
+  background-color: color-mix(in srgb, var(--seed-edit-paper) 92%, transparent);
   box-shadow: 0 0 0 1px var(--seed-edit-line);
   cursor: grab;
-  opacity: .7;
+  opacity: .82;
+}
+.seed-edit-grip::after {
+  content: attr(data-label);
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 4px;
+  color: var(--seed-edit-ink);
+  font: 650 9px/1 system-ui, sans-serif;
+  letter-spacing: 0;
+  text-align: center;
+  pointer-events: none;
+}
+.seed-edit-grip[data-mode="block"] {
+  box-shadow: 0 0 0 1.5px var(--seed-edit-accent);
+}
+.seed-edit-grip[data-mode="item"] {
+  box-shadow: 0 0 0 1px var(--seed-edit-line);
 }
 .seed-edit-grip[hidden] { display: none !important; }
 .seed-edit-grip:hover { opacity: 1; }
+
+.is-seed-hover-block {
+  outline: 2px solid color-mix(in srgb, var(--seed-edit-accent) 78%, transparent);
+  outline-offset: 6px;
+}
+hr.rule.is-seed-hover-block {
+  outline-offset: 10px;
+}
+.is-seed-hover-item {
+  outline: 2px dashed color-mix(in srgb, var(--seed-edit-accent) 78%, transparent);
+  outline-offset: 3px;
+}
 
 html.is-seed-sorting,
 html.is-seed-sorting-items {

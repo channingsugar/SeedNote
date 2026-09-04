@@ -877,7 +877,7 @@ html = f"""<!doctype html>
               <li>组件库必须带基础 token：间隔 <code>--s-in</code> / <code>--s-stack</code> / <code>--s-chapter</code>；字号 <code>--t-h1</code> / <code>--t-num</code> / <code>--t-no-lg</code> / <code>--t-body</code> / <code>--t-aux</code>；颜色 <code>--c-text</code> 档、<code>--c-line</code>、<code>--c-accent</code>、表数据栏 <code>--c-pos</code> / <code>--c-neg</code>；分割线 <code>.rule</code> / <code>.rule.is-soft</code>。</li>
               <li>仍独立：公式、议题格 <code>.pain-text-list</code> / <code>.pain-topic</code>、自定义文本 <code>.finding</code>、图文卡 <code>.transport-cards</code> / <code>.transport-card</code>、韦恩图、导语、来源、章头、分割线、导航栏 <code>.topbar</code>、折线图 <code>.rail-growth-chart</code>、四象限矩阵 <code>.ansoff-grid</code>、漏斗图 <code>.hotel-funnel-chart</code>、关系网络 <code>.hotel-city-network</code>、节点表 <code>.network-node-table</code>、排行榜 <code>.hotel-ranking-block</code>。关系网络和节点表是两个父组件，不要包在同一块里。</li>
               <li>同类块用父组件 + 变体，不要另起皮肤，也不要再收成 flow-block。</li>
-              <li>公式、韦恩图、提问、议题格、图文卡只保留内容。章头 <code>.slide-head</code>、分割线 <code>.rule</code>、导语 <code>.research-lead</code> 是独立组件，不要画进这些块。报告里章头下方仍必须紧跟强线，那是排版规则，不是组件自带的。</li>
+              <li>公式、韦恩图、提问、议题格、图文卡只保留内容。章头 <code>.slide-head</code>、分割线 <code>.rule</code>、导语 <code>.research-lead</code> 是独立组件，不要画进这些块。报告里章头下方仍必须紧跟强线，那是排版规则，不是组件自带的。编辑器排序 / 复制 / 删除章头时会带上紧跟的强线；独立分割线可靠近线条右键删除。</li>
               <li>报告中每个主标题（<code>.slide-head</code>）下方必须紧跟一条可见的<strong>强线</strong> <code>.rule</code>，不得省略，不得用下一块顶线替代，CSS 不得把这条线 <code>display:none</code>。小节标题下不加线，只用间隔。其余块之间不加线，只靠间距。表 / list / 卡内部只用 1px 弱线。编号信息不超过 4 条用 <code>data-layout="cols"</code>（编号在上），5 条及以上才用 <code>stack</code>。</li>
               <li>间距分三档。区内 <code>--s-in</code>（16，含章头→强线）；章内换排 <code>--s-stack</code>（40，含强线→第一块）；换章 <code>--s-chapter</code>（96）。来源贴在所属证据块下面，不要和换章同一档。</li>
               <li>格内条目留在该卡里。例如议题格的百分比、图文卡的属性行，不要抬成新的一排。</li>
@@ -892,11 +892,11 @@ html = f"""<!doctype html>
     </div>
   </div>
 {LIGHTBOX}
-  <link rel="stylesheet" href="editor/seed-edit.css?v=42">
+  <link rel="stylesheet" href="editor/seed-edit.css?v=44">
   <script src="design-system/design-data.js"></script>
   <script src="design-system/theme-runtime.js"></script>
   <script src="assets/cover-fx.js?v=2"></script>
-  <script src="editor/seed-edit.js?v=43"></script>
+  <script src="editor/seed-edit.js?v=50"></script>
   <script src="assets/template.js"></script>
   <script src="assets/source.js?v=2"></script>
   <script src="assets/network.js?v=16"></script>

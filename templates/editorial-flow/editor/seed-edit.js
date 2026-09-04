@@ -2528,6 +2528,64 @@
     return n && n.parentElement === stack ? n : null;
   };
 
+  const isChapterHeadBlock = (el) => {
+    if (!el?.matches) return false;
+    if (el.matches('.slide-head')) return true;
+    return !!(el.matches('.flow-lab') && el.querySelector(':scope > .slide-head'));
+  };
+
+  const isStrongRuleBlock = (el) => {
+    if (!el?.matches) return false;
+    if (el.matches('hr.rule') && !el.classList.contains('is-soft')) return true;
+    if (!el.matches('.flow-lab')) return false;
+    const kids = [...el.children];
+    return kids.length === 1 && kids[0].matches('hr.rule') && !kids[0].classList.contains('is-soft');
+  };
+
+  const attachedHeadRule = (el) => {
+    if (!isChapterHeadBlock(el)) return null;
+    let next = el.nextElementSibling;
+    while (next?.classList?.contains('seed-edit-drop')) next = next.nextElementSibling;
+    return isStrongRuleBlock(next) ? next : null;
+  };
+
+  const sortClusterOf = (el, mode = 'block') => {
+    if (!el || mode === 'item') return el ? [el] : [];
+    const rule = attachedHeadRule(el);
+    return rule ? [el, rule] : [el];
+  };
+
+  const RULE_HIT_PAD = 16;
+
+  const ruleAtPoint = (x, y) => {
+    const rules = document.querySelectorAll('.flow-stack hr.rule');
+    let best = null;
+    let bestDist = RULE_HIT_PAD + 1;
+    rules.forEach((hr) => {
+      const box = hr.getBoundingClientRect();
+      if (!box.width && !box.height) return;
+      if (x < box.left || x > box.right) return;
+      const mid = box.top + box.height / 2;
+      const dist = Math.abs(y - mid);
+      const pad = Math.max(RULE_HIT_PAD, box.height / 2 + 4);
+      if (dist <= pad && dist < bestDist) {
+        bestDist = dist;
+        best = hr;
+      }
+    });
+    return best;
+  };
+
+  const hitNodeAt = (x, y, rawNode) => {
+    const rule = ruleAtPoint(x, y);
+    if (!rule) return rawNode;
+    if (rawNode && rawNode !== rule && rawNode.closest?.('.slide-head, .subsection')) {
+      const head = rawNode.closest('.slide-head, .subsection');
+      if (head && (attachedHeadRule(head) === rule || head.nextElementSibling === rule)) return rawNode;
+    }
+    return rule;
+  };
+
   const itemMatchOf = (node) => {
     if (!node?.closest) return null;
     for (const spec of ITEM_SPECS) {
@@ -3667,20 +3725,17 @@
       persist();
     };
 
-    const recordMove = (el, fromParent, fromBefore, toParent, toBefore) => {
-      endTextEditForStruct([el]);
+    const recordMove = (nodes, fromParent, fromBefore, toParent, toBefore) => {
+      const list = (Array.isArray(nodes) ? nodes : [nodes]).filter(Boolean);
+      endTextEditForStruct(list);
       record({
         undo: () => {
-          if (!fromParent) return;
-          if (fromBefore && fromBefore.parentNode === fromParent) fromParent.insertBefore(el, fromBefore);
-          else fromParent.appendChild(el);
+          placeNodes(list, fromParent, fromBefore);
           syncHost(fromParent);
           if (toParent !== fromParent) syncHost(toParent);
         },
         redo: () => {
-          if (!toParent) return;
-          if (toBefore && toBefore.parentNode === toParent) toParent.insertBefore(el, toBefore);
-          else toParent.appendChild(el);
+          placeNodes(list, toParent, toBefore);
           syncHost(toParent);
           if (toParent !== fromParent) syncHost(fromParent);
         },
@@ -3727,20 +3782,24 @@
 
     const removeBlock = (block) => {
       if (!block) return;
-      recordRemove([block]);
+      recordRemove(sortClusterOf(block));
     };
 
     const copyBlock = (block) => {
       if (!block?.parentElement) return;
-      const clone = block.cloneNode(true);
-      clone.removeAttribute('data-edit-key');
-      clone.removeAttribute('id');
-      clone.removeAttribute('data-seed-editing-media');
-      clone.querySelectorAll('[data-edit-key]').forEach((el) => el.removeAttribute('data-edit-key'));
-      clone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
-      recordInsert([clone], block.parentElement, block.nextElementSibling);
-      refreshDataHost(clone);
-      clone.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      const cluster = sortClusterOf(block);
+      const clones = cluster.map((node) => {
+        const clone = node.cloneNode(true);
+        clone.removeAttribute('data-edit-key');
+        clone.removeAttribute('id');
+        clone.removeAttribute('data-seed-editing-media');
+        clone.querySelectorAll('[data-edit-key]').forEach((el) => el.removeAttribute('data-edit-key'));
+        clone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+        return clone;
+      });
+      recordInsert(clones, block.parentElement, cluster[cluster.length - 1].nextElementSibling);
+      clones.forEach((clone) => refreshDataHost(clone));
+      clones[0].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     };
 
     const refreshDataHost = (host) => {
@@ -3883,41 +3942,90 @@
     trash.hidden = true;
     trash.innerHTML = '<span class="seed-edit-trash__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28"><path fill="currentColor" d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg></span><span>拖到这里删除</span>';
     document.body.appendChild(trash);
-    const grip = document.createElement('button');
-    grip.className = 'seed-edit-grip';
-    grip.type = 'button';
-    grip.hidden = true;
-    grip.setAttribute('aria-label', '拖动排序');
-    document.body.appendChild(grip);
-    let gripTarget = null;
-    let gripMode = 'block';
+    const makeGrip = (mode) => {
+      const btn = document.createElement('button');
+      btn.className = 'seed-edit-grip';
+      btn.dataset.mode = mode;
+      btn.dataset.label = mode === 'item' ? '本条' : '组件';
+      btn.type = 'button';
+      btn.hidden = true;
+      btn.setAttribute('aria-label', mode === 'item' ? '拖动本条排序' : '拖动组件排序');
+      btn.title = mode === 'item' ? '拖动本条' : '拖动组件';
+      document.body.appendChild(btn);
+      return btn;
+    };
+    const gripBlock = makeGrip('block');
+    const gripItem = makeGrip('item');
+    let hoverBlock = null;
+    let hoverItem = null;
 
-    const placeGrip = (el, mode) => {
-      if (!el || sorting || activeText || activeBox) {
-        grip.hidden = true;
-        gripTarget = null;
+    const clearHoverMarks = () => {
+      document.querySelectorAll('.is-seed-hover-block, .is-seed-hover-item').forEach((el) => {
+        el.classList.remove('is-seed-hover-block', 'is-seed-hover-item');
+      });
+    };
+
+    const hideSortGrips = () => {
+      gripBlock.hidden = true;
+      gripItem.hidden = true;
+      hoverBlock = null;
+      hoverItem = null;
+      clearHoverMarks();
+    };
+
+    const placeGripBtn = (btn, el, extraTop = 0) => {
+      const box = el.getBoundingClientRect();
+      const gw = btn.offsetWidth || 36;
+      btn.hidden = false;
+      btn.style.left = `${Math.max(2, box.left - gw + 6)}px`;
+      btn.style.top = `${Math.max(4, box.top + extraTop)}px`;
+    };
+
+    const placeSortGrips = (node) => {
+      if (!node || sorting || activeText || activeBox) {
+        hideSortGrips();
         return;
       }
-      gripTarget = el;
-      gripMode = mode;
-      const box = el.getBoundingClientRect();
-      grip.hidden = false;
-      const gw = grip.offsetWidth || 24;
-      grip.style.left = `${Math.max(2, box.left - gw + 8)}px`;
-      grip.style.top = `${Math.max(4, box.top + 6)}px`;
+      const itemHit = itemMatchOf(node);
+      const block = blockOf(node);
+      const item = itemHit?.item || null;
+      const itemInside = !!(block && item && block.contains(item) && item !== block);
+      clearHoverMarks();
+      hoverBlock = block || null;
+      hoverItem = itemInside ? item : (!block && item ? item : null);
+
+      if (hoverBlock) {
+        hoverBlock.classList.add('is-seed-hover-block');
+        placeGripBtn(gripBlock, hoverBlock, 4);
+      } else {
+        gripBlock.hidden = true;
+      }
+
+      if (hoverItem) {
+        hoverItem.classList.add('is-seed-hover-item');
+        let extra = 6;
+        if (hoverBlock) {
+          const hb = hoverBlock.getBoundingClientRect();
+          const ib = hoverItem.getBoundingClientRect();
+          if (Math.abs(ib.left - hb.left) < 16 && Math.abs(ib.top - hb.top) < 48) extra = 46;
+        }
+        placeGripBtn(gripItem, hoverItem, extra);
+      } else {
+        gripItem.hidden = true;
+      }
+
+      if (gripBlock.hidden && gripItem.hidden) hideSortGrips();
     };
 
     const pointerNearGrip = (event) => {
-      if (event.target === grip || event.target.closest?.('.seed-edit-grip')) return true;
-      if (!gripTarget || grip.hidden) return false;
-      const g = grip.getBoundingClientRect();
-      const t = gripTarget.getBoundingClientRect();
-      const left = Math.min(g.left, t.left) - 10;
-      const right = Math.max(g.right, t.left + 20);
-      const top = Math.min(g.top, t.top) - 8;
-      const bottom = Math.max(g.bottom, t.top + 56);
-      return event.clientX >= left && event.clientX <= right
-        && event.clientY >= top && event.clientY <= bottom;
+      if (event.target?.closest?.('.seed-edit-grip')) return true;
+      const nearBtn = (btn) => {
+        if (btn.hidden) return false;
+        const g = btn.getBoundingClientRect();
+        return event.clientX >= g.left - 8 && event.clientX <= g.right + 8
+          && event.clientY >= g.top - 8 && event.clientY <= g.bottom + 8;
+      };
+      return nearBtn(gripBlock) || nearBtn(gripItem);
     };
 
     const clearSortAttrs = () => {
@@ -3927,8 +4035,7 @@
       ghost.classList.remove('is-item');
       drop.remove();
       drop.hidden = true;
-      grip.hidden = true;
-      gripTarget = null;
+      hideSortGrips();
       sorting = false;
       trash.hidden = true;
       trash.classList.remove('is-hot');
@@ -3945,8 +4052,6 @@
     const itemSpecOf = (node) => ITEM_SPECS.find((spec) => node?.closest?.(spec.host));
 
     const itemListParentOf = (host) => host?.querySelector?.(':scope > .comp-main') || host;
-
-    const itemHostsOf = (spec) => (spec ? [...document.querySelectorAll(spec.host)] : []);
 
     const dropHostShell = (parent, mode, spec) => {
       if (!parent) return null;
@@ -3970,15 +4075,15 @@
       });
     };
 
-    const enterItemSort = (spec) => {
+    const enterItemSort = (spec, originEl) => {
       sorting = true;
       document.documentElement.classList.add('is-seed-sorting-items');
-      itemHostsOf(spec).forEach((host) => {
-        host.classList.add('is-seed-item-host');
-        const items = spec ? [...host.querySelectorAll(spec.item)] : [...host.children];
-        items.forEach((kid) => {
-          kid.dataset.seedSortTitle = itemTitleOf(kid);
-        });
+      const host = spec ? originEl?.closest?.(spec.host) : originEl?.parentElement;
+      if (!host) return;
+      host.classList.add('is-seed-item-host');
+      const items = spec ? [...host.querySelectorAll(spec.item)] : [...host.children];
+      items.forEach((kid) => {
+        kid.dataset.seedSortTitle = itemTitleOf(kid);
       });
     };
 
@@ -4004,32 +4109,25 @@
       const asideMedia = parent.querySelector(':scope > .comp-media');
       const kids = [...parent.children].filter((n) => {
         if (n.nodeType !== 1 || n === el || n === drop) return false;
-        if (n.matches?.('.comp-media')) return false;
+        if (n.matches?.('.is-seed-drag, .comp-media')) return false;
         if (parent.matches?.('.market-formula')) return n.matches('.market-factor:not(.market-result)');
         return true;
       });
       return { asideMedia, kids };
     };
 
-    const sortParentsOf = (mode, spec) => {
+    const sortParentsOf = (mode, spec, originEl) => {
       if (mode === 'item') {
-        const seen = new Set();
-        const parents = [];
-        itemHostsOf(spec).forEach((host) => {
-          const p = itemListParentOf(host);
-          if (p && !seen.has(p)) {
-            seen.add(p);
-            parents.push(p);
-          }
-        });
-        return parents;
+        const host = spec ? originEl?.closest?.(spec.host) : null;
+        const parent = itemListParentOf(host);
+        return parent ? [parent] : [];
       }
       return sortableStacks();
     };
 
     const collectInsertPoints = (el, mode, spec) => {
       const points = [];
-      sortParentsOf(mode, spec).forEach((parent) => {
+      sortParentsOf(mode, spec, el).forEach((parent) => {
         const { asideMedia, kids } = sortKidsOf(el, parent);
         kids.forEach((kid) => points.push({ parent, before: kid }));
         points.push({ parent, before: asideMedia || null });
@@ -4083,12 +4181,14 @@
       if (sorting || activeText || activeBox) return;
       event.preventDefault();
       const fromParent = parent;
-      const fromBefore = el.nextSibling;
+      const cluster = sortClusterOf(el, mode);
+      const clusterLast = cluster[cluster.length - 1];
+      const fromBefore = clusterLast.nextSibling;
       const spec = mode === 'item' ? itemSpecOf(el) : null;
-      if (mode === 'item') enterItemSort(spec);
+      if (mode === 'item') enterItemSort(spec, el);
       else enterBlockSort();
-      el.classList.add('is-seed-drag');
-      grip.hidden = true;
+      cluster.forEach((node) => node.classList.add('is-seed-drag'));
+      hideSortGrips();
       trash.hidden = false;
       trash.classList.remove('is-hot');
       ghost.textContent = el.dataset.seedSortTitle || (mode === 'item' ? itemTitleOf(el) : blockTitleOf(el));
@@ -4103,13 +4203,11 @@
       fromParent.insertBefore(drop, el);
       drop.hidden = false;
       markDropHost(fromParent, mode, spec);
-      let originIndex = originInsertIndex(el, fromParent, points());
-      let appliedIndex = originIndex;
-      const posOf = (x, y) => (axis === 'x' ? x : y);
-      let originPos = posOf(event.clientX, event.clientY);
-      const STEP = 52;
+      let appliedIndex = originInsertIndex(el, fromParent, points());
       const EDGE = 56;
       const ARM = 12;
+      const startX = event.clientX;
+      const startY = event.clientY;
       let lastX = event.clientX;
       let lastY = event.clientY;
       let armed = false;
@@ -4118,6 +4216,56 @@
       const overTrash = (x, y) => {
         const box = trash.getBoundingClientRect();
         return y >= box.top && x >= 0 && x <= window.innerWidth;
+      };
+      const distToBox = (x, y, box) => {
+        const dx = x < box.left ? box.left - x : x > box.right ? x - box.right : 0;
+        const dy = y < box.top ? box.top - y : y > box.bottom ? y - box.bottom : 0;
+        return dx * dx + dy * dy;
+      };
+      const insertIndexAtPointer = (x, y) => {
+        const list = points();
+        if (!list.length) return 0;
+        const parents = [];
+        const seen = new Set();
+        list.forEach((point) => {
+          if (seen.has(point.parent)) return;
+          seen.add(point.parent);
+          parents.push(point.parent);
+        });
+        let parent = parents[0];
+        let parentDist = Infinity;
+        parents.forEach((node) => {
+          const shell = dropHostShell(node, mode, spec) || node;
+          const d = distToBox(x, y, shell.getBoundingClientRect());
+          if (d < parentDist) {
+            parentDist = d;
+            parent = node;
+          }
+        });
+        const { kids, asideMedia } = sortKidsOf(el, parent);
+        const flow = flowAxisOf(parent, kids);
+        let before = asideMedia || null;
+        if (kids.length) {
+          let nearest = kids[0];
+          let nearestDist = Infinity;
+          kids.forEach((kid) => {
+            const d = distToBox(x, y, kid.getBoundingClientRect());
+            if (d < nearestDist) {
+              nearestDist = d;
+              nearest = kid;
+            }
+          });
+          const box = nearest.getBoundingClientRect();
+          const after = flow === 'x' ? x > box.left + box.width / 2 : y > box.top + box.height / 2;
+          if (after) {
+            const next = kids[kids.indexOf(nearest) + 1];
+            before = next || asideMedia || null;
+          } else {
+            before = nearest;
+          }
+        }
+        const idx = list.findIndex((point) => point.parent === parent && point.before === before);
+        return idx >= 0 ? idx : appliedIndex;
       };
       const moveToIndex = (index) => {
         const list = points();
@@ -4158,10 +4306,7 @@
           const interval = 170 - Math.max(0, Math.min(1, t)) * 100;
           if (now - lastEdgeAt >= interval) {
             lastEdgeAt = now;
-            if (moveToIndex(appliedIndex + dir)) {
-              originIndex = appliedIndex;
-              originPos = posOf(lastX, lastY);
-            }
+            moveToIndex(appliedIndex + dir);
           }
         }
         edgeRaf = requestAnimationFrame(applyEdgeStep);
@@ -4174,12 +4319,11 @@
         const hot = overTrash(move.clientX, move.clientY);
         trash.classList.toggle('is-hot', hot);
         if (!armed) {
-          if (Math.abs(posOf(move.clientX, move.clientY) - originPos) < ARM) return;
+          if (Math.hypot(move.clientX - startX, move.clientY - startY) < ARM) return;
           armed = true;
         }
         if (hot || edgeDir()) return;
-        const next = originIndex + Math.round((posOf(move.clientX, move.clientY) - originPos) / STEP);
-        moveToIndex(next);
+        moveToIndex(insertIndexAtPointer(move.clientX, move.clientY));
       };
       const onUp = () => {
         cancelAnimationFrame(edgeRaf);
@@ -4190,34 +4334,31 @@
         const dropBefore = drop.nextSibling;
         drop.remove();
         drop.hidden = true;
-        el.classList.remove('is-seed-drag');
+        cluster.forEach((node) => node.classList.remove('is-seed-drag'));
         if (dropDelete) {
-          if (fromParent) {
-            if (fromBefore && fromBefore.parentNode === fromParent) fromParent.insertBefore(el, fromBefore);
-            else fromParent.appendChild(el);
-          }
+          placeNodes(cluster, fromParent, fromBefore && fromBefore.parentNode === fromParent ? fromBefore : null);
           clearSortAttrs();
           if (mode === 'item') {
             const host = spec ? el.closest(spec.host) || fromParent : fromParent;
             const count = spec ? host.querySelectorAll(spec.item).length : 1;
             if (count <= 1) recordRemove([blockOf(host) || host]);
-            else recordRemove([el]);
+            else recordRemove(cluster);
           } else {
-            recordRemove([el]);
+            recordRemove(cluster);
           }
           return;
         }
-        if (dropParent && dropBefore !== el) {
-          dropParent.insertBefore(el, dropBefore);
+        if (dropParent && dropBefore !== el && !cluster.includes(dropBefore)) {
+          placeNodes(cluster, dropParent, dropBefore);
         }
         const toParent = el.parentElement;
-        const toBefore = el.nextSibling;
+        const toBefore = clusterLast.nextSibling;
         const moved = fromParent !== toParent || fromBefore !== toBefore;
         clearSortAttrs();
         if (moved) {
           syncHost(fromParent);
           if (toParent !== fromParent) syncHost(toParent);
-          recordMove(el, fromParent, fromBefore, toParent, toBefore);
+          recordMove(cluster, fromParent, fromBefore, toParent, toBefore);
         }
       };
       document.addEventListener('pointermove', onMove);
@@ -4946,7 +5087,9 @@
 
     document.addEventListener('contextmenu', (event) => {
       const raw = event.target;
-      const node = raw instanceof Element ? raw : raw?.parentElement;
+      const rawNode = raw instanceof Element ? raw : raw?.parentElement;
+      const node = hitNodeAt(event.clientX, event.clientY, rawNode);
+      const ruleHit = node?.matches?.('hr.rule') ? node : null;
       if (!node || isChrome(node)) return;
       const colorHost = node.closest?.('[data-css-var][data-token-kind="color"]');
       if (colorHost) {
@@ -4956,20 +5099,20 @@
         return;
       }
       const onGraphic = !!(node.closest('img, video') || (node.closest('svg') && !node.closest('text, tspan, foreignObject')));
-      const text = onGraphic && !node.closest('text, tspan') ? null : textTargetOf(raw.nodeType === 3 ? raw : node);
+      const text = ruleHit || (onGraphic && !node.closest('text, tspan')) ? null : textTargetOf(raw.nodeType === 3 ? raw : node);
       const inAsideShot = !!node.closest('.comp-media');
       const media = mediaTargetOf(node) || (inAsideShot ? node.closest('.comp-media').querySelector('img, video, svg') : null);
       const variant = variantHostOf(node);
       const resize = resizeBoxOf(node);
       const both = text && media && isSvgText(text);
-      const heading = headingGroupOf(node);
-      const itemHit = inAsideShot ? null : itemMatchOf(node);
+      const heading = ruleHit ? null : headingGroupOf(node);
+      const itemHit = inAsideShot || ruleHit ? null : itemMatchOf(node);
       const aside = asideHostOf(node);
-      const block = blockOf(node);
-      const blank = isBlankHit(node);
+      const block = ruleHit || blockOf(node);
+      const blank = !ruleHit && isBlankHit(node);
       const stack = nearestStack(node, event.clientY);
       const insertAt = blank && stack ? insertPointFromY(stack, event.clientY) : null;
-      const gridHit = insertAt ? null : gridHitOf(node);
+      const gridHit = insertAt || ruleHit ? null : gridHitOf(node);
       if (!text && !media && !variant && !resize && !heading && !itemHit && !insertAt && !block && !aside && !gridHit) return;
       event.preventDefault();
       event.stopPropagation();
@@ -5307,8 +5450,10 @@
       if (event.button !== 0) return;
       if (sorting || activeText || activeBox) return;
       const onGrip = event.target.closest?.('.seed-edit-grip');
-      if (onGrip && gripTarget?.parentElement) {
-        startSortDrag(gripTarget, gripTarget.parentElement, event, gripMode);
+      if (onGrip) {
+        const mode = onGrip.dataset.mode === 'item' ? 'item' : 'block';
+        const el = mode === 'item' ? hoverItem : hoverBlock;
+        if (el?.parentElement) startSortDrag(el, el.parentElement, event, mode);
       }
     }, true);
 
@@ -5316,24 +5461,13 @@
       if (sorting || activeText || activeBox || !menu.hidden) return;
       if (event.target.closest?.('.seed-edit-menu, .seed-edit-done, .seed-edit-bold, .seed-edit-size, .seed-edit-rule, .seed-edit-color, .seed-edit-palette, .seed-edit-media, .seed-edit-handle, .seed-edit-handle-h, .seed-edit-trash')) return;
       if (pointerNearGrip(event)) return;
-      const node = event.target instanceof Element ? event.target : event.target?.parentElement;
+      const rawNode = event.target instanceof Element ? event.target : event.target?.parentElement;
+      const node = hitNodeAt(event.clientX, event.clientY, rawNode);
       if (!node || isChrome(node)) {
-        grip.hidden = true;
-        gripTarget = null;
+        hideSortGrips();
         return;
       }
-      const itemHit = itemMatchOf(node);
-      if (itemHit?.item) {
-        placeGrip(itemHit.item, 'item');
-        return;
-      }
-      const block = blockOf(node);
-      if (block) {
-        placeGrip(block, 'block');
-        return;
-      }
-      grip.hidden = true;
-      gripTarget = null;
+      placeSortGrips(node);
     });
 
     document.addEventListener('keydown', (event) => {
