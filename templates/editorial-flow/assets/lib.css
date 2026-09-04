@@ -400,20 +400,21 @@
   border-bottom: 1px solid var(--c-line);
 }
 
-/* 拉高后：同行顶对齐，整组按最高项的高度在容器里垂直居中 */
-.stat-grid.is-sized,
+/* 拉高后：格子 A 无背景时，同行顶对齐、整组在容器里垂直居中。
+   格子 B / 带背景必须铺满，否则描边断开、色块高度不一致。 */
+.stat-grid.is-sized:not([data-grid="b"]),
 .stat-row.is-sized,
-.info-grid.is-sized:not([data-aside]),
-.plain-grid.is-sized:not([data-aside]),
-.pain-text-list.is-sized:not([data-aside]) {
+.info-grid.is-sized:not([data-aside]):not([data-grid="b"]):not([data-bg]),
+.plain-grid.is-sized:not([data-aside]):not([data-grid="b"]),
+.pain-text-list.is-sized:not([data-aside]):not([data-grid="b"]) {
   align-items: start;
   align-content: center;
 }
-.info-grid[data-aside].is-aside-sized[data-layout="cols"] > .comp-main,
-.info-grid[data-aside].is-aside-sized[data-layout="split"] > .comp-main,
-.info-grid[data-aside].is-aside-sized[data-layout="2"] > .comp-main,
-.pain-text-list[data-aside].is-aside-sized > .comp-main,
-.plain-grid[data-aside].is-aside-sized > .comp-main {
+.info-grid[data-aside].is-aside-sized[data-layout="cols"]:not([data-grid="b"]):not([data-bg]) > .comp-main,
+.info-grid[data-aside].is-aside-sized[data-layout="split"]:not([data-grid="b"]):not([data-bg]) > .comp-main,
+.info-grid[data-aside].is-aside-sized[data-layout="2"]:not([data-grid="b"]):not([data-bg]) > .comp-main,
+.pain-text-list[data-aside].is-aside-sized:not([data-grid="b"]) > .comp-main,
+.plain-grid[data-aside].is-aside-sized:not([data-grid="b"]) > .comp-main {
   align-items: start;
   align-content: center;
 }
@@ -918,10 +919,14 @@ input.token-color::-moz-color-swatch { border: 0; }
   object-fit: cover;
 }
 
-/* 格子 A：每格左侧竖线（含第一格）。格子 B：四周框 + 内部分割。 */
+/* 格子 A：每格左侧竖线（含第一格）。格子 B：四周框 + 内部分割。
+   格子必须拉满同一行高度，描边才能接上（host 上+左，格子右+下）。 */
 .plain-grid[data-grid="b"],
 .info-grid[data-grid="b"],
-.stat-grid[data-grid="b"] {
+.stat-grid[data-grid="b"],
+.pain-text-list[data-grid="b"] {
+  align-items: stretch;
+  align-content: stretch;
   column-gap: 0;
   row-gap: 0;
   border-top: 1px solid var(--c-line);
@@ -930,26 +935,42 @@ input.token-color::-moz-color-swatch { border: 0; }
 .plain-grid[data-grid="b"] .plain,
 .info-grid[data-grid="b"] .info,
 .stat-grid[data-grid="b"] .stat-card {
+  box-sizing: border-box;
+  align-self: stretch;
   min-height: 0;
-  padding: 24px 22px 26px;
+  padding: calc(24px + var(--band-pad, 0px)) 22px calc(26px + var(--band-pad, 0px));
   border-left: 0;
   border-top: 0;
   border-right: 1px solid var(--c-line);
   border-bottom: 1px solid var(--c-line);
 }
-.stat-grid[data-grid="b"].is-compact .stat-card { padding: 20px 22px; }
+.pain-text-list[data-grid="b"] .pain-topic {
+  box-sizing: border-box;
+  align-self: stretch;
+  min-height: 0;
+  padding-top: calc(28px + var(--band-pad, 0px));
+  padding-bottom: calc(30px + var(--band-pad, 0px));
+}
+.stat-grid[data-grid="b"].is-compact .stat-card {
+  padding: calc(20px + var(--band-pad, 0px)) 22px;
+}
 
-/* 编号信息：勾选背景后给内容铺底，色用 --info-bg */
+/* 编号信息：勾选背景后给内容铺底，色用 --info-bg；同行格子等高 */
 .info-grid[data-bg][data-layout="cols"],
 .info-grid[data-bg][data-layout="2"],
 .info-grid[data-bg][data-layout="split"] {
+  align-items: stretch;
+  align-content: stretch;
   gap: 20px;
   row-gap: 20px;
   column-gap: 20px;
   border: 0;
 }
 .info-grid[data-bg] .info {
-  padding: 28px 26px;
+  box-sizing: border-box;
+  align-self: stretch;
+  height: auto;
+  padding: calc(28px + var(--band-pad, 0px)) 26px;
   border-left: 0;
   border-right: 0;
   border-bottom: 0;
@@ -965,6 +986,7 @@ input.token-color::-moz-color-swatch { border: 0; }
   border-left: 1px solid var(--c-line);
 }
 .info-grid[data-bg][data-grid="b"] .info {
+  padding: calc(24px + var(--band-pad, 0px)) 22px calc(26px + var(--band-pad, 0px));
   border-radius: 0;
   border-right: 1px solid var(--c-line);
   border-bottom: 1px solid var(--c-line);
@@ -1056,15 +1078,23 @@ input.token-color::-moz-color-swatch { border: 0; }
   display: grid;
   grid-template-columns: repeat(var(--plain-cols, 4), minmax(0, 1fr));
 }
+.info-grid[data-aside][data-grid="b"],
 .plain-grid[data-aside][data-grid="b"],
 .pain-text-list[data-aside][data-grid="b"] {
   border-top: 0;
   border-left: 0;
 }
+.info-grid[data-aside][data-grid="b"] > .comp-main,
 .plain-grid[data-aside][data-grid="b"] > .comp-main,
 .pain-text-list[data-aside][data-grid="b"] > .comp-main {
+  align-items: stretch;
+  align-content: stretch;
   border-top: 1px solid var(--c-line);
   border-left: 1px solid var(--c-line);
+}
+.info-grid[data-aside][data-bg]:not([data-grid="b"]) > .comp-main {
+  align-items: stretch;
+  align-content: stretch;
 }
 .info-grid[data-aside] > .comp-media,
 .pain-text-list[data-aside] > .comp-media,

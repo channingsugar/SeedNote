@@ -253,6 +253,51 @@
     return (isAsideFrame(box) ? box : box?.closest?.('.comp-media'))?.querySelector?.('.shot') || null;
   };
   const isRowCenterHost = (box) => !!(box && box.matches('.stat-grid, .stat-row, .info-grid, .plain-grid, .pain-text-list, .point, .finding') && !isAsideHost(box));
+  const isBandHost = (box) => !!(box?.matches?.('.info-grid[data-bg], .info-grid[data-grid="b"], .plain-grid[data-grid="b"], .stat-grid[data-grid="b"], .pain-text-list[data-grid="b"]'));
+  const bandItemsOf = (host) => {
+    const root = host.querySelector(':scope > .comp-main') || host;
+    return [...root.children].filter((el) => el.matches?.('.info, .plain, .stat-card, .pain-topic'));
+  };
+  const bandContentHeight = (el) => {
+    const kids = [...el.children].filter((n) => n.nodeType === 1);
+    if (!kids.length) return 0;
+    const top = Math.min(...kids.map((k) => k.getBoundingClientRect().top));
+    const bottom = Math.max(...kids.map((k) => k.getBoundingClientRect().bottom));
+    return bottom - top;
+  };
+  const syncBandPad = (host) => {
+    if (!host || !isBandHost(host)) return;
+    const items = bandItemsOf(host);
+    if (!items.length) return;
+    const sized = host.classList.contains('is-sized') || host.classList.contains('is-aside-sized');
+    items.forEach((el) => el.style.setProperty('--band-pad', '0px'));
+    if (!sized) {
+      items.forEach((el) => el.style.removeProperty('--band-pad'));
+      return;
+    }
+    void host.offsetHeight;
+    const rows = [];
+    items.forEach((el) => {
+      const top = Math.round(el.getBoundingClientRect().top);
+      let row = rows.find((r) => Math.abs(r.top - top) <= 1);
+      if (!row) {
+        row = { top, items: [] };
+        rows.push(row);
+      }
+      row.items.push(el);
+    });
+    rows.forEach((row) => {
+      const maxContent = Math.max(...row.items.map(bandContentHeight), 0);
+      const cell = row.items[0];
+      const cs = getComputedStyle(cell);
+      const basePad = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      const pad = Math.max(0, (cell.clientHeight - maxContent - basePad) / 2);
+      row.items.forEach((el) => el.style.setProperty('--band-pad', `${Math.round(pad * 100) / 100}px`));
+    });
+  };
+  const syncAllBandPads = () => {
+    document.querySelectorAll('.info-grid[data-bg], .info-grid[data-grid="b"], .plain-grid[data-grid="b"], .stat-grid[data-grid="b"], .pain-text-list[data-grid="b"]').forEach(syncBandPad);
+  };
   const isIntrinsicHeight = (box) => !!(box && box.matches('.market-formula'));
   const parsePx = (value) => {
     if (!value || value === '100%' || value === 'auto') return null;
@@ -631,6 +676,8 @@
         requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
       });
     }
+    const bandHost = isAsideHost(box) ? box : (isBandHost(box) ? box : box.closest?.('.info-grid, .plain-grid, .stat-grid, .pain-text-list'));
+    if (bandHost) requestAnimationFrame(() => syncBandPad(bandHost));
   };
 
   const readMarkup = (node) => (isSvgText(node) ? node.textContent : node.innerHTML);
@@ -1025,6 +1072,7 @@
     if (!grid) return;
     if (kind === 'b') grid.setAttribute('data-grid', 'b');
     else grid.removeAttribute('data-grid');
+    requestAnimationFrame(() => syncBandPad(grid));
   };
   const infoBgOn = (host) => host?.hasAttribute?.('data-bg');
   const infoBgColorOf = (host) => {
@@ -1040,6 +1088,7 @@
       host.removeAttribute('data-bg');
       host.style.removeProperty('--info-bg');
     }
+    requestAnimationFrame(() => syncBandPad(host));
   };
 
   const asideHostOf = (node) => {
@@ -5370,6 +5419,7 @@
     window.addEventListener('resize', () => {
       if (activeText) placeDone(svgInput || activeText);
       if (activeBox) placeMediaChrome();
+      syncAllBandPads();
     });
     document.addEventListener('scroll', () => {
       if (activeText) placeDone(svgInput || activeText);
@@ -5387,6 +5437,7 @@
       const layout = readLayout(box);
       if (layout.height) writeLayout(box, layout);
     });
+    requestAnimationFrame(syncAllBandPads);
     if (!isCatalog) {
       idbGet('state', slug).then(async (saved) => {
         if (saved && (saved.texts || saved.media || saved.images || saved.markup || saved.variants)) {
@@ -5408,9 +5459,11 @@
             if (host.querySelector(':scope > .comp-media')) wrapAsideMain(host);
             host.querySelectorAll(':scope > .comp-media .shot').forEach(ensureAsideCaption);
           });
+          requestAnimationFrame(syncAllBandPads);
         }
       }).catch(() => {}).finally(() => {
         if (normalizeRepeatedContent(document)) persist();
+        requestAnimationFrame(syncAllBandPads);
       });
     }
   };
