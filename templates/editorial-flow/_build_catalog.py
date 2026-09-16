@@ -644,6 +644,16 @@ lib = "".join([
         "副题补充口径、范围或为什么这样判断，不另起一章。",
     )),
     lab("导语", '<div class="research-lead"><p>章头与证据之间的解释。写清边界、用户实际卡在哪几件事、这一章接下来用什么证据。不要把导语画进议题格、图文卡、公式或韦恩图。</p></div>'),
+    lab("自定义文本", """<article class="finding">
+        <h3>发现标题：既有“信息缺失”，更有“信息有误”</h3>
+        <hr class="rule is-soft">
+        <p>现状下用户需要靠二次核验才能完成决策。</p>
+        <p>① 信息有误——展示的和实际不符</p>
+        <p>实测 2 例：一家写“不可用”（实际部分档位可以）；另一家写 ¥100 / 晚（实际免费）。</p>
+        <p>② 信息缺失——决定能否使用的关键条件，平台不展示</p>
+        <p>50% 材料、时效要求 5 / 10 家要求许可证 / 有效证明。</p>
+        <p>30% 仅部分档位可用 3 / 10 家有档位限制。</p>
+      </article>"""),
     lab("来源", source_note(
         "《资料名称 A》",
         "《资料名称 B》",
@@ -757,16 +767,6 @@ lib = "".join([
     lab("观点", point("观点判断", "一句立场：问题不在供给有没有，而在如何找对象做流程简化和能力突破。")),
     lab("观点 · 浅底", point("", "<strong>顺序建议：</strong>首选覆盖最大的对象建立基础供给；第二家补足名额、规格和临近出发申请。", soft=True)),
     lab("议题格", PAIN_LIST),
-    lab("自定义文本", """<article class="finding">
-        <h3>发现标题：既有“信息缺失”，更有“信息有误”</h3>
-        <hr class="rule is-soft">
-        <p>现状下用户需要靠二次核验才能完成决策。</p>
-        <p>① 信息有误——展示的和实际不符</p>
-        <p>实测 2 例：一家写“不可用”（实际部分档位可以）；另一家写 ¥100 / 晚（实际免费）。</p>
-        <p>② 信息缺失——决定能否使用的关键条件，平台不展示</p>
-        <p>50% 材料、时效要求 5 / 10 家要求许可证 / 有效证明。</p>
-        <p>30% 仅部分档位可用 3 / 10 家有档位限制。</p>
-      </article>"""),
     lab("表格", """<div class="plain-table-wrap"><table class="airline-matrix">
         <thead><tr><th>权益类型</th>
           <th><span class="table-level">对象 A</span><span class="table-score">对照档</span></th>
@@ -817,7 +817,7 @@ html = f"""<!doctype html>
   <link rel="stylesheet" href="assets/template.css?v=8">
   <link rel="stylesheet" href="assets/flow.css?v=6">
   <link rel="stylesheet" href="assets/source.css?v=21">
-  <link rel="stylesheet" href="assets/lib.css?v=39">
+  <link rel="stylesheet" href="assets/lib.css?v=47">
   <link rel="stylesheet" href="assets/v2.css?v=12">
 </head>
 <body>
@@ -873,7 +873,7 @@ html = f"""<!doctype html>
             <h2>怎么用</h2>
             <ol>
               <li>这是流式模板。壳是文档栏：report-shell.is-flow、吸顶导航栏 <code>.topbar</code>、flow-stack 上下叠。封面右键切版式：左齐 / 居中 / 配图 / 图文分栏（<code>data-cover</code>：省略、<code>center</code>、<code>image</code>、<code>split</code>）；配图封面可右键替换图片，也可勾选「动效背景」切换 Ribbon Field / Halftone Flow / Matrix Field / Stream Convergence。拖组件排序时封面不显示。</li>
-              <li>合并后的父组件：<code>.stat-card</code> / <code>.stat-grid</code> 数字信息（横排数字是同一父组件的紧凑排：<code>.stat-grid.is-compact</code>；右键勾选前缀 / 后缀 / 说明，列数 2–5）；<code>.info</code> 编号信息（布局：格子 A 左侧竖线 / 格子 B 四周框 <code>data-grid="b"</code> / 列表 A <code>stack</code> / 列表 B <code>row</code>；<code>data-pos</code> 顶部 / 左侧；<code>data-index</code>：数字 / <code>alpha</code> / <code>q</code> 问题 / <code>label</code> 标签 / <code>off</code> 隐藏，即原无编号；<code>.is-lg</code> / <code>data-no="lg"</code> 大编号；格子列数 2–5；勾选「背景」<code>data-bg</code> 后可设 <code>--info-bg</code>（默认纯色 <code>--tint-2</code>，不用渐变）；整组右键勾选「配图」，图在一组信息的左 / 右 <code>data-aside</code>；配图可换裁切 / 可滚动 / 宽图 / 海报，底部保留 figcaption。尺寸只拖配图外框（和图片组一样），内部图高度始终铺满外框，拖高时整组与左侧信息跟着变高、不裁切文字和说明）；<code>.point</code> 观点（<code>.is-soft</code> 浅底）；<code>.shot</code> 图（<code>data-kind</code>：photo / crop / scroll / wide / poster；右键新增一条，列数 1–5；尺寸拖高后行均分、铺满裁切且不超出容器）。</li>
+              <li>合并后的父组件：<code>.stat-card</code> / <code>.stat-grid</code> 数字信息（横排数字是同一父组件的紧凑排：<code>.stat-grid.is-compact</code>；右键勾选前缀 / 后缀 / 说明，列数 2–5）；<code>.info</code> 编号信息（布局：格子 A 左侧竖线 / 格子 B 四周框 <code>data-grid="b"</code> / 列表 A <code>stack</code> / 列表 B <code>row</code>；<code>data-pos</code> 顶部 / 左侧；<code>data-index</code>：数字 / <code>alpha</code> / <code>q</code> 问题 / <code>label</code> 标签 / <code>off</code> 隐藏，即原无编号；<code>.is-lg</code> / <code>data-no="lg"</code> 大编号；格子列数 2–5；勾选「背景」<code>data-bg</code> 后可设 <code>--info-bg</code>（默认纯色 <code>--tint-2</code>，不用渐变）；整组右键勾选「配图」，图在一组信息的左 / 右 <code>data-aside</code>；配图可换裁切 / 可滚动 / 宽图 / 海报，底部保留 figcaption。尺寸只拖配图外框（和图片组一样），图和说明在配图区域内上下左右居中，拖高时整组与左侧信息跟着变高、不裁切文字和说明）；<code>.point</code> 观点（<code>.is-soft</code> 浅底）；<code>.shot</code> 图（<code>data-kind</code>：photo / crop / scroll / wide / poster；右键新增一条，列数 1–5；尺寸拖高后行均分、铺满裁切且不超出容器）。</li>
               <li>组件库必须带基础 token：间隔 <code>--s-in</code> / <code>--s-stack</code> / <code>--s-chapter</code>；字号 <code>--t-h1</code> / <code>--t-num</code> / <code>--t-no-lg</code> / <code>--t-body</code> / <code>--t-aux</code>；颜色 <code>--c-text</code> 档、<code>--c-line</code>、<code>--c-accent</code>、表数据栏 <code>--c-pos</code> / <code>--c-neg</code>；分割线 <code>.rule</code> / <code>.rule.is-soft</code>。</li>
               <li>仍独立：公式、议题格 <code>.pain-text-list</code> / <code>.pain-topic</code>、自定义文本 <code>.finding</code>、图文卡 <code>.transport-cards</code> / <code>.transport-card</code>、韦恩图、导语、来源、章头、分割线、导航栏 <code>.topbar</code>、折线图 <code>.rail-growth-chart</code>、四象限矩阵 <code>.ansoff-grid</code>、漏斗图 <code>.hotel-funnel-chart</code>、关系网络 <code>.hotel-city-network</code>、节点表 <code>.network-node-table</code>、排行榜 <code>.hotel-ranking-block</code>。关系网络和节点表是两个父组件，不要包在同一块里。</li>
               <li>同类块用父组件 + 变体，不要另起皮肤，也不要再收成 flow-block。</li>
@@ -892,14 +892,14 @@ html = f"""<!doctype html>
     </div>
   </div>
 {LIGHTBOX}
-  <link rel="stylesheet" href="editor/seed-edit.css?v=44">
+  <link rel="stylesheet" href="editor/seed-edit.css?v=52">
   <script src="design-system/design-data.js"></script>
   <script src="design-system/theme-runtime.js"></script>
-  <script src="assets/cover-fx.js?v=2"></script>
-  <script src="editor/seed-edit.js?v=50"></script>
+  <script src="assets/cover-fx.js?v=3"></script>
+  <script src="editor/seed-edit.js?v=62"></script>
   <script src="assets/template.js"></script>
-  <script src="assets/source.js?v=2"></script>
-  <script src="assets/network.js?v=16"></script>
+  <script src="assets/source.js?v=6"></script>
+  <script src="assets/network.js?v=17"></script>
 </body>
 </html>
 """

@@ -1,4 +1,61 @@
 (function () {
+  const cycleSlidesOf = (shot) => {
+    const frame = shot?.querySelector?.(':scope > .shot__frame') || shot?.querySelector?.('.shot__frame');
+    if (!frame) return [];
+    return [...frame.children].filter((node) => node.matches?.('img, video'));
+  };
+
+  const cycleHasSrc = (node) => {
+    const src = node?.currentSrc || node?.getAttribute?.('src') || node?.getAttribute?.('poster') || '';
+    return !!src && !node.classList.contains('is-cycle-broken');
+  };
+
+  const cycleBusy = new WeakSet();
+
+  const advanceShotCycle = (shot) => {
+    const all = cycleSlidesOf(shot);
+    const slides = all.filter(cycleHasSrc);
+    if (slides.length < 2 || cycleBusy.has(shot)) return false;
+    const i = Math.max(0, slides.findIndex((node) => node.classList.contains('is-cycle-on')));
+    const current = slides[i] || slides[0];
+    const next = slides[(i + 1) % slides.length];
+    if (!next || next === current) return false;
+    cycleBusy.add(shot);
+    all.forEach((node) => node.classList.remove('is-cycle-in'));
+    void next.offsetWidth;
+    next.classList.add('is-cycle-in');
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      next.removeEventListener('transitionend', onEnd);
+      all.forEach((node) => node.classList.remove('is-cycle-on', 'is-cycle-in'));
+      next.classList.add('is-cycle-on');
+      cycleBusy.delete(shot);
+    };
+    const onEnd = (event) => {
+      if (event && event.target !== next) return;
+      if (event && event.propertyName && event.propertyName !== 'opacity') return;
+      finish();
+    };
+    next.addEventListener('transitionend', onEnd);
+    window.setTimeout(finish, 520);
+    return true;
+  };
+
+  document.addEventListener('click', (event) => {
+    if (event.button) return;
+    if (document.documentElement.classList.contains('is-inline-editing')) return;
+    const node = event.target instanceof Element ? event.target : event.target?.parentElement;
+    if (!node) return;
+    if (node.closest('.seed-edit-menu, .seed-edit-grip, .seed-edit-handle, .seed-edit-handle-h, .seed-edit-media, figcaption, a, button')) return;
+    const shot = node.closest('.shot[data-cycle]');
+    if (!shot || !node.closest('.shot__frame')) return;
+    event.preventDefault();
+    event.stopPropagation();
+    advanceShotCycle(shot);
+  }, true);
+
   const lightbox = document.getElementById('mediaLightbox');
   if (!lightbox) return;
 
@@ -190,6 +247,7 @@
 
     const figure = node.closest('.shot, [data-lightbox-src]');
     if (!figure) return;
+    if (figure.hasAttribute('data-cycle')) return;
     if (figure.classList.contains('provider-card')) return;
     if (figure.getAttribute('data-kind') === 'scroll' && !node.closest('.gallery-open')) return;
     if (!itemFromFigure(figure).src) return;
@@ -211,6 +269,7 @@
     const figure = node.closest('.shot, [data-lightbox-src]');
     const image = figure?.querySelector('img');
     if (!figure || node !== image) return;
+    if (figure.hasAttribute('data-cycle')) return;
     if (figure.getAttribute('data-kind') === 'scroll') return;
     if (!itemFromFigure(figure).src) return;
     event.preventDefault();

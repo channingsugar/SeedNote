@@ -1,6 +1,7 @@
 (function () {
-  const host = document.querySelector('.hotel-city-network');
-  const tableHost = document.querySelector('.network-node-table') || host;
+  const outsideLibrary = (sel) => [...document.querySelectorAll(sel)].find((el) => !el.closest('.seed-edit-library'));
+  const host = outsideLibrary('.hotel-city-network');
+  const tableHost = outsideLibrary('.network-node-table') || host;
   if (!host && !tableHost) return;
 
   const MODE_LABEL = { flight: '方式 A', rail: '方式 B' };

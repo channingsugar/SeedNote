@@ -371,7 +371,7 @@
   };
 
   const apply = (cover) => {
-    if (!cover?.matches?.('.chapter-cover')) return;
+    if (!cover?.matches?.('.chapter-cover, .shot')) return;
     const spec = specOf(cover.getAttribute('data-fx'));
     const prev = running.get(cover);
     if (!spec) {
@@ -386,8 +386,10 @@
       return;
     }
     stop(cover);
-    ensureCoverMediaSlot(cover);
-    const media = cover.querySelector('.chapter-cover__media');
+    if (cover.matches('.chapter-cover')) ensureCoverMediaSlot(cover);
+    const media = cover.matches('.shot')
+      ? (cover.querySelector('.shot__frame') || cover)
+      : cover.querySelector('.chapter-cover__media');
     if (!media) return;
     cover.classList.add('has-fx');
     cover.querySelectorAll('canvas.chapter-cover__fx').forEach((node) => node.remove());
@@ -541,7 +543,7 @@
   };
 
   const mount = (root = document) => {
-    root.querySelectorAll?.('.chapter-cover[data-fx]').forEach(apply);
+    root.querySelectorAll?.('.chapter-cover[data-fx], .shot[data-fx]').forEach(apply);
   };
 
   window.SeedCoverFx = { specs: SPECS, specOf, paramsOf, apply, stop, mount };

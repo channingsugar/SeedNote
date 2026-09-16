@@ -547,6 +547,74 @@
   padding: 13px 14px 15px;
   border-top: 1px solid var(--c-line);
 }
+.shot[data-cycle] .shot__frame {
+  position: relative;
+}
+.shot[data-cycle] .shot__frame > img,
+.shot[data-cycle] .shot__frame > video {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+.shot[data-cycle] .shot__frame > img:not(.is-cycle-on):not(.is-cycle-in),
+.shot[data-cycle] .shot__frame > video:not(.is-cycle-on):not(.is-cycle-in) {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+.shot[data-cycle] img,
+.shot[data-cycle] video,
+.shot[data-kind="photo"][data-cycle] img,
+.shot[data-kind="crop"][data-cycle] img,
+.shot[data-kind="wide"][data-cycle] img,
+.shot[data-kind="poster"][data-cycle] img {
+  cursor: pointer;
+}
+.shot[data-cycle] .shot__frame > .is-cycle-on {
+  position: relative;
+  z-index: 1;
+  opacity: 1;
+  cursor: pointer;
+}
+.shot[data-cycle] .shot__frame > .is-cycle-in {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  height: 100%;
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity .45s ease;
+}
+.shot .shot__frame > img:not([src]),
+.shot .shot__frame > img[src=""],
+.shot .shot__frame > img.is-cycle-broken {
+  visibility: hidden;
+}
+.shot[data-cycle] .shot__frame > img:not([src]),
+.shot[data-cycle] .shot__frame > img[src=""],
+.shot[data-cycle] .shot__frame > img.is-cycle-broken {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.shot:not([data-cycle]) .shot__frame > img:nth-of-type(n+2),
+.shot:not([data-cycle]) .shot__frame > video:nth-of-type(n+2) {
+  display: none;
+}
+.shot.has-fx .shot__frame {
+  position: relative;
+}
+.shot.has-fx .chapter-cover__fx {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
 .shot figcaption b,
 .shot figcaption strong { display: block; font-size: 14px; }
 .shot figcaption span {
@@ -1102,12 +1170,15 @@ input.token-color::-moz-color-swatch { border: 0; }
   position: relative;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   grid-column: 2;
   grid-row: 1;
   align-self: stretch;
   width: auto;
   min-width: 0;
   min-height: 0;
+  overflow: hidden;
 }
 .info-grid[data-aside="left"] > .comp-media,
 .pain-text-list[data-aside="left"] > .comp-media,
@@ -1120,6 +1191,8 @@ input.token-color::-moz-color-swatch { border: 0; }
 .plain-grid[data-aside] > .comp-media .shot {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   flex: 1 1 auto;
   width: 100%;
   max-width: 100%;
@@ -1132,7 +1205,11 @@ input.token-color::-moz-color-swatch { border: 0; }
 .info-grid[data-aside] > .comp-media .shot__frame,
 .pain-text-list[data-aside] > .comp-media .shot__frame,
 .plain-grid[data-aside] > .comp-media .shot__frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex: 1 1 auto;
+  width: 100%;
   min-height: 0;
   height: auto;
   overflow: hidden;
@@ -1157,7 +1234,7 @@ input.token-color::-moz-color-swatch { border: 0; }
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: top;
+  object-position: center;
 }
 .info-grid[data-aside] > .comp-media .shot[data-fit="fit"] img,
 .pain-text-list[data-aside] > .comp-media .shot[data-fit="fit"] img,
@@ -1166,11 +1243,13 @@ input.token-color::-moz-color-swatch { border: 0; }
 .pain-text-list[data-aside] > .comp-media .shot[data-fit="fit"] video,
 .plain-grid[data-aside] > .comp-media .shot[data-fit="fit"] video {
   object-fit: contain;
+  object-position: center;
 }
 .info-grid[data-aside] > .comp-media .shot > figcaption,
 .pain-text-list[data-aside] > .comp-media .shot > figcaption,
 .plain-grid[data-aside] > .comp-media .shot > figcaption {
   flex: 0 0 auto;
+  width: 100%;
 }
 .comp-media .gallery-open { display: none; }
 

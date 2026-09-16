@@ -4,7 +4,7 @@
     '.report-pager',     '.seed-edit-menu', '.seed-edit-done', '.seed-edit-svg-input',
     '.seed-edit-color', '.seed-edit-palette', '.seed-edit-media', '.seed-edit-handle', '.seed-edit-handle-h',
     '.seed-edit-ghost', '.seed-edit-grip', '.seed-edit-bold', '.seed-edit-size', '.seed-edit-rule', '.seed-edit-trash',
-    '.seed-edit-dock', '.seed-edit-toast', '.seed-edit-banner', '.seed-edit-drop', '.topbar', 'nav.toc', '.tools',
+    '.seed-edit-dock', '.seed-edit-toast', '.seed-edit-banner', '.seed-edit-drop', '.seed-edit-library', '.seed-edit-mode', '.seed-edit-top', '.topbar', 'nav.toc', '.tools',
   ].join(', ');
 
   const EDIT_CHROME_SEL = [
@@ -13,6 +13,7 @@
     '.seed-edit-handle', '.seed-edit-handle-h', '.seed-edit-ghost',
     '.seed-edit-grip', '.seed-edit-bold', '.seed-edit-size',
     '.seed-edit-rule', '.seed-edit-trash', '.seed-edit-dock', '.seed-edit-toast', '.seed-edit-banner', '.seed-edit-drop',
+    '.seed-edit-library', '.seed-edit-mode', '.seed-edit-top',
   ].join(', ');
 
   const BLOCK_TAGS = new Set([
@@ -80,14 +81,30 @@
     return 'bin';
   };
 
+  const hash32 = (s) => {
+    let h = 2166136261;
+    for (let i = 0; i < String(s).length; i += 1) {
+      h ^= String(s).charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return (h >>> 0).toString(36);
+  };
+
   const mediaFileName = (key, file) => {
-    const id = String(key || 'm').replace(/[^a-zA-Z0-9]/g, '').slice(-16) || 'media';
-    return `${id}.${extOfFile(file)}`;
+    const raw = String(key || 'm');
+    const slide = (raw.split('::')[0] || 'm').replace(/[^a-zA-Z0-9]/g, '') || 'm';
+    return `${slide}-${hash32(raw)}.${extOfFile(file)}`;
   };
 
   const isSvgText = (node) => node instanceof SVGTextElement || node instanceof SVGTSpanElement;
 
     const isChrome = (node) => !!(node && (node.closest?.(CHROME) || node.closest?.('.seed-edit-menu, .seed-edit-done, .seed-edit-bold, .seed-edit-svg-input')));
+
+  const isPageRoot = (node) => node === document.documentElement || node === document.body;
+
+  const isBrandMedia = (node) => !!(node && node.closest?.('.brand-mark, .brand, .topbar, .icon, .gallery-open, .theme-control'));
+
+  const isContentMedia = (node) => !!(node && !isPageRoot(node) && !isChrome(node) && !isBrandMedia(node));
 
   const slideOf = (node) =>
     node.closest?.('.report-slide, .chapter, section[id], article[id]') || document.body;
@@ -101,14 +118,23 @@
       const tag = n.tagName;
       const same = [...parent.children].filter((c) => c.tagName === tag);
       const idx = same.indexOf(n);
-      parts.push(same.length > 1 ? `${tag}[${idx}]` : tag);
+      parts.push(`${tag}[${idx}]`);
       n = parent;
     }
     return parts.reverse().join('>');
   };
 
+  const ensureMediaId = (node) => {
+    if (!node?.matches?.('img, video, source')) return '';
+    if (!node.dataset.mediaId) {
+      node.dataset.mediaId = `m${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+    }
+    return node.dataset.mediaId;
+  };
+
   const fromPath = (path) => {
     const parts = (path || '').split('>').filter(Boolean);
+    if (!parts.length) return null;
     let n = document.documentElement;
     for (const part of parts) {
       const m = part.match(/^([A-Za-z0-9-]+)(?:\[(\d+)\])?$/);
@@ -190,7 +216,17 @@
     }
 
     const frame = node.closest('.shot__frame, .gallery-stage, .brand-concept-film, .shot, figure, .comp-media');
-    if (frame) return frame.querySelector('img, video, svg');
+    if (frame) {
+      const shot = node.closest('.shot');
+      if (shot?.hasAttribute?.('data-cycle')) {
+        const on = shot.querySelector(':scope > .shot__frame > .is-cycle-on, .shot__frame > .is-cycle-on');
+        if (on?.matches?.('img, video, svg')) return on;
+        const filled = [...(shot.querySelector('.shot__frame')?.children || [])]
+          .find((n) => n.matches?.('img, video') && (n.getAttribute('src') || n.getAttribute('poster') || n.currentSrc));
+        if (filled) return filled;
+      }
+      return frame.querySelector('img, video, svg');
+    }
     const cover = node.closest?.('.chapter-cover');
     if (cover && (cover.getAttribute('data-cover') === 'image' || cover.getAttribute('data-cover') === 'split')) {
       return cover.querySelector('.chapter-cover__media img') || null;
@@ -1091,8 +1127,10 @@
     requestAnimationFrame(() => syncBandPad(host));
   };
 
+  const NO_ASIDE = '.slide-head, .subsection, .research-lead, .source-note, hr.rule, .finding';
   const asideHostOf = (node) => {
     if (!node?.closest) return null;
+    if (node.closest(NO_ASIDE)) return null;
     return node.closest('.info-grid, .pain-text-list, .plain-grid');
   };
   const asideOn = (host) => !!(host && host.hasAttribute('data-aside') && host.querySelector(':scope > .comp-media'));
@@ -1512,7 +1550,7 @@
     return out;
   };
   const writeCoverFx = (host, id, params) => {
-    if (!host?.matches?.('.chapter-cover')) return;
+    if (!host?.matches?.('.chapter-cover, .shot')) return;
     const spec = COVER_FX_SPECS().find((s) => s.id === id) || (!id ? null : COVER_FX_SPECS()[0]) || null;
     const prev = spec ? readCoverFxParams(host, spec) : {};
     [...host.attributes].forEach((attr) => {
@@ -1524,8 +1562,10 @@
       host.querySelector('.chapter-cover__fx')?.remove();
       return;
     }
-    const kind = coverKindOf(host);
-    if (kind !== 'image' && kind !== 'split') writeCoverKind(host, 'image');
+    if (host.matches('.chapter-cover')) {
+      const kind = coverKindOf(host);
+      if (kind !== 'image' && kind !== 'split') writeCoverKind(host, 'image');
+    }
     host.setAttribute('data-fx', spec.id);
     const next = { ...prev, ...(params || {}) };
     spec.params.forEach((p) => {
@@ -1533,6 +1573,151 @@
       host.setAttribute(`data-fx-${p.key}`, String(v == null ? p.def : v));
     });
     window.SeedCoverFx?.apply?.(host);
+  };
+
+  const shotCycleOn = (shot) => !!shot?.hasAttribute?.('data-cycle');
+
+  const shotCycleSlides = (shot) => {
+    const frame = shot?.querySelector?.(':scope > .shot__frame') || shot?.querySelector?.('.shot__frame');
+    if (!frame) return [];
+    return [...frame.children].filter((node) => node.matches?.('img, video'));
+  };
+
+  const shotCycleSrcOf = (slide) => {
+    if (!slide) return '';
+    return String(slide.currentSrc || slide.getAttribute?.('src') || slide.getAttribute?.('poster') || '').trim();
+  };
+
+  const shotCycleHasSrc = (slide) => {
+    const src = shotCycleSrcOf(slide);
+    return !!src && !slide.classList.contains('is-cycle-broken');
+  };
+
+  const pruneEmptyCycleSlides = (shot) => {
+    const slides = shotCycleSlides(shot);
+    if (!slides.length) return false;
+    const filled = slides.filter(shotCycleHasSrc);
+    const empties = slides.filter((node) => !shotCycleHasSrc(node));
+    if (!empties.length) return false;
+    if (!filled.length) {
+      empties.slice(1).forEach((node) => node.remove());
+      return empties.length > 1;
+    }
+    empties.forEach((node) => node.remove());
+    return true;
+  };
+
+  const ensureShotCycleFrame = (shot) => {
+    let frame = shot.querySelector(':scope > .shot__frame') || shot.querySelector('.shot__frame');
+    if (frame) return frame;
+    frame = document.createElement('div');
+    frame.className = 'shot__frame';
+    const media = shot.querySelector('img, video');
+    if (media) {
+      media.before(frame);
+      frame.append(media);
+    } else {
+      shot.prepend(frame);
+    }
+    return frame;
+  };
+
+  const syncShotCycleOn = (shot, prefer) => {
+    pruneEmptyCycleSlides(shot);
+    const slides = shotCycleSlides(shot);
+    if (!slides.length) return;
+    bindShotCycleMedia(shot);
+    const current = slides.find((node) => node.classList.contains('is-cycle-on'));
+    const bySrc = [prefer, current, ...slides].find((node) => node && slides.includes(node) && shotCycleHasSrc(node));
+    const next = bySrc || (prefer && slides.includes(prefer) ? prefer : slides[0]);
+    slides.forEach((node) => node.classList.toggle('is-cycle-on', node === next));
+  };
+
+  const writeShotCycle = (shot, on) => {
+    if (!shot?.matches?.('.shot')) return;
+    const frame = ensureShotCycleFrame(shot);
+    pruneEmptyCycleSlides(shot);
+    let slides = shotCycleSlides(shot);
+    if (!slides.length) {
+      const img = document.createElement('img');
+      img.alt = '';
+      frame.prepend(img);
+      slides = [img];
+    }
+    if (on) {
+      shot.setAttribute('data-cycle', '');
+      syncShotCycleOn(shot);
+    } else {
+      shot.removeAttribute('data-cycle');
+      slides.forEach((node) => node.classList.remove('is-cycle-on'));
+    }
+  };
+
+  const addShotCycleSlide = (shot) => {
+    writeShotCycle(shot, true);
+    pruneEmptyCycleSlides(shot);
+    const vacant = shotCycleSlides(shot).find((node) => !shotCycleHasSrc(node));
+    if (vacant) return vacant;
+    const frame = ensureShotCycleFrame(shot);
+    const img = document.createElement('img');
+    img.alt = '';
+    ensureMediaId(img);
+    frame.append(img);
+    return img;
+  };
+
+  const removeShotCycleSlide = (shot, slide) => {
+    const slides = shotCycleSlides(shot);
+    if (!slide || !slides.includes(slide)) return;
+    if (slides.length <= 1) {
+      slide.removeAttribute('src');
+      slide.removeAttribute('poster');
+      slide.removeAttribute('data-src');
+      slide.classList.remove('is-cycle-broken', 'is-cycle-on', 'is-cycle-in');
+      return;
+    }
+    slide.remove();
+    syncShotCycleOn(shot);
+  };
+
+  const shotCycleThumbSrc = (slide) => shotCycleSrcOf(slide);
+
+  const bindShotCycleMedia = (shot) => {
+    shotCycleSlides(shot).forEach((slide) => {
+      if (slide.dataset.seedCycleBound) return;
+      slide.dataset.seedCycleBound = '1';
+      slide.addEventListener('error', () => {
+        slide.classList.add('is-cycle-broken');
+        syncShotCycleOn(shot);
+      });
+      slide.addEventListener('load', () => {
+        slide.classList.remove('is-cycle-broken');
+      });
+    });
+  };
+
+  const moveShotCycleSlide = (shot, from, to, after) => {
+    const slides = shotCycleSlides(shot);
+    const node = slides[from];
+    const dest = slides[to];
+    if (!node || !dest || node === dest) return false;
+    const prev = slides.slice();
+    if (after) dest.after(node);
+    else dest.before(node);
+    const next = shotCycleSlides(shot);
+    return next.some((el, i) => el !== prev[i]);
+  };
+
+  const snapShotCycle = (shot) => ({
+    html: shot.innerHTML,
+    on: shotCycleOn(shot),
+  });
+
+  const restoreShotCycle = (shot, snap) => {
+    if (!shot || !snap) return;
+    shot.innerHTML = snap.html;
+    writeShotCycle(shot, !!snap.on);
+    if (coverFxOn(shot)) window.SeedCoverFx?.apply?.(shot);
   };
 
   const snapshotVariant = (host) => {
@@ -2489,11 +2674,12 @@
   ];
 
   const BLOCK_TEMPLATES = [
-    { id: 'head', label: '章头', html: '<header class="slide-head"><div class="kicker">题域</div><h2>判断句写在这里</h2></header><hr class="rule">' },
-    { id: 'sub', label: '小节标题', html: '<div class="subsection"><h3>小节标题</h3></div>' },
-    { id: 'lead', label: '导语', html: '<div class="research-lead"><p>待填。写清边界、这一节接下来用什么证据。</p></div>' },
-    { id: 'source', label: '来源', html: '<p class="source-note">来源：待填</p>' },
-    { id: 'rule', label: '分割线', html: '<hr class="rule">' },
+    { id: 'head', label: '章头', noMedia: true, html: '<header class="slide-head"><div class="kicker">题域</div><h2>判断句写在这里</h2></header><hr class="rule">' },
+    { id: 'sub', label: '小节标题', noMedia: true, html: '<div class="subsection"><h3>小节标题</h3></div>' },
+    { id: 'lead', label: '导语', noMedia: true, html: '<div class="research-lead"><p>待填。写清边界、这一节接下来用什么证据。</p></div>' },
+    { id: 'finding', label: '自定义文本', noMedia: true, html: '<article class="finding"><p>待填。可改字号、颜色、加粗，可插入弱分割线。</p></article>' },
+    { id: 'source', label: '来源', noMedia: true, html: '<p class="source-note">来源：待填</p>' },
+    { id: 'rule', label: '分割线', noMedia: true, html: '<hr class="rule">' },
     { id: 'formula', label: '公式', html: '<div class="market-formula" aria-label="公式"><div class="market-factor"><div class="market-number"><span>A</span><i>单位</i></div><div class="market-factor-label">因子：基数</div></div><div class="market-operator" aria-hidden="true">×</div><div class="market-factor"><div class="market-number"><span>B</span><i>%</i></div><div class="market-factor-label">因子：转化率</div></div><div class="market-operator" aria-hidden="true">=</div><div class="market-factor market-result"><div class="market-number"><span>N</span><i>次</i></div><div class="market-factor-label">结果</div></div></div>' },
     { id: 'stat-row', label: '横排数字', html: '<div class="stat-grid is-compact" data-cols="5"><article class="stat-card" data-suffix><span class="stat-card__kicker"></span><strong class="stat-card__num"><span class="stat-card__prefix"></span>0<span class="stat-card__suffix">%</span></strong><h3>指标名称</h3></article><article class="stat-card" data-suffix><span class="stat-card__kicker"></span><strong class="stat-card__num"><span class="stat-card__prefix"></span>0<span class="stat-card__suffix">%</span></strong><h3>指标名称</h3></article><article class="stat-card" data-suffix><span class="stat-card__kicker"></span><strong class="stat-card__num"><span class="stat-card__prefix"></span>0<span class="stat-card__suffix">%</span></strong><h3>指标名称</h3></article></div>' },
     { id: 'stat', label: '数字信息', html: '<div class="stat-grid"><article class="stat-card"><span class="stat-card__kicker"></span><strong class="stat-card__num"><span class="stat-card__prefix"></span>0<span class="stat-card__suffix"></span></strong><h3>标题</h3><p>待填。</p></article><article class="stat-card"><span class="stat-card__kicker"></span><strong class="stat-card__num"><span class="stat-card__prefix"></span>0<span class="stat-card__suffix"></span></strong><h3>标题</h3><p>待填。</p></article></div>' },
@@ -2501,7 +2687,6 @@
     { id: 'plain', label: '无编号信息', html: '<div class="info-grid" data-layout="cols" data-cols="2" data-pos="top" data-index="off"><article class="info"><span class="info__no">01</span><h3>要点标题</h3><p>待填。</p></article><article class="info"><span class="info__no">02</span><h3>要点标题</h3><p>待填。</p></article></div>' },
     { id: 'point', label: '观点', html: '<aside class="point"><span>观点</span><p>待填。一句立场。</p></aside>' },
     { id: 'pain', label: '议题格', html: '<div class="pain-text-list" data-cols="2"><article class="pain-topic"><header class="pain-topic-head"><h3><span class="pain-topic-index">01</span>议题名称</h3><p class="pain-topic-summary">一句概括：这一格要回答什么问题。</p></header><div class="pain-topic-body"><ul class="pain-detail-list"><li>待填</li></ul></div></article></div>' },
-    { id: 'finding', label: '自定义文本', html: '<article class="finding"><p>待填。可改字号、颜色、加粗，可插入弱分割线。</p></article>' },
     { id: 'table', label: '表格', html: '<div class="plain-table-wrap"><table class="airline-matrix"><thead><tr><th>维度</th><th><span class="table-level">对象 A</span><span class="table-score">对照档</span></th><th><span class="table-level">对象 B</span><span class="table-score">对照档</span></th><th class="is-accent"><span class="table-level">对象 C</span><span class="table-score">强调档</span></th></tr></thead><tbody><tr><td>覆盖率</td><td>待填</td><td>待填</td><td>待填</td></tr><tr><td>申请截止</td><td>待填</td><td>待填</td><td>待填</td></tr><tr><td>基础价格</td><td>待填</td><td>待填</td><td>待填</td></tr></tbody></table></div>' },
     { id: 'chart', label: '折线图', html: '<figure class="rail-growth-chart" aria-label="折线图：同一指标随时间变化"><div class="rail-growth-chart-scroll"><svg viewBox="0 0 1160 230" role="img"><line class="chart-grid" x1="68" y1="178" x2="1120" y2="178"/><line class="chart-grid" x1="68" y1="141.5" x2="1120" y2="141.5"/><line class="chart-grid" x1="68" y1="105" x2="1120" y2="105"/><line class="chart-grid" x1="68" y1="68.5" x2="1120" y2="68.5"/><line class="chart-grid" x1="68" y1="32" x2="1120" y2="32"/><line class="chart-axis" x1="68" y1="32" x2="68" y2="178"/><text class="chart-tick" x="56" y="182" text-anchor="end">0</text><text class="chart-tick" x="56" y="145.5" text-anchor="end">100</text><text class="chart-tick" x="56" y="109" text-anchor="end">200</text><text class="chart-tick" x="56" y="72.5" text-anchor="end">300</text><text class="chart-tick" x="56" y="36" text-anchor="end">400</text><text class="chart-axis-label" x="17" y="112" text-anchor="middle" transform="rotate(-90 17 112)">数量</text><line class="chart-line chart-line--stations" x1="90" y1="176.2" x2="430" y2="168.9"/><line class="chart-line chart-line--stations" x1="430" y1="168.9" x2="770" y2="133.8"/><line class="chart-line chart-line--stations" x1="770" y1="133.8" x2="1110" y2="118.5"/><line class="chart-line chart-line--trains" x1="90" y1="174.4" x2="430" y2="164.1"/><line class="chart-line chart-line--trains" x1="430" y1="164.1" x2="770" y2="94.8"/><line class="chart-line chart-line--trains" x1="770" y1="94.8" x2="1110" y2="45.1"/><g aria-label="系列 B"><circle class="chart-point chart-point--stations" cx="90" cy="176.2" r="4"/><circle class="chart-point chart-point--stations" cx="430" cy="168.9" r="4"/><circle class="chart-point chart-point--stations" cx="770" cy="133.8" r="4"/><circle class="chart-point chart-point--stations" cx="1110" cy="118.5" r="4"/><text class="chart-value chart-value--stations" x="90" y="195" text-anchor="middle">5</text><text class="chart-value chart-value--stations" x="430" y="188" text-anchor="middle">25</text><text class="chart-value chart-value--stations" x="770" y="153" text-anchor="middle">121</text><text class="chart-value chart-value--stations" x="1110" y="138" text-anchor="end">163</text></g><g aria-label="系列 A"><circle class="chart-point chart-point--trains" cx="90" cy="174.4" r="4"/><circle class="chart-point chart-point--trains" cx="430" cy="164.1" r="4"/><circle class="chart-point chart-point--trains" cx="770" cy="94.8" r="4"/><circle class="chart-point chart-point--trains" cx="1110" cy="45.1" r="4"/><text class="chart-value" x="90" y="158" text-anchor="middle">10</text><text class="chart-value" x="430" y="148" text-anchor="middle">38</text><text class="chart-value" x="770" y="79" text-anchor="middle">228</text><text class="chart-value" x="1110" y="30" text-anchor="end">364</text></g><text class="chart-date" x="90" y="218" text-anchor="middle">T1</text><text class="chart-date" x="430" y="218" text-anchor="middle">T2</text><text class="chart-date" x="770" y="218" text-anchor="middle">T3</text><text class="chart-date" x="1110" y="218" text-anchor="end">T4</text><line class="chart-line chart-line--trains" x1="820" y1="18" x2="852" y2="18"/><text class="chart-legend" x="860" y="22">系列 A</text><line class="chart-line chart-line--stations" x1="960" y1="18" x2="992" y2="18"/><text class="chart-legend" x="1000" y="22">系列 B</text></svg></div></figure>' },
     { id: 'ansoff', label: '四象限矩阵', html: '<div class="ansoff-wrap"><div class="ansoff-grid" aria-label="四象限矩阵"><div class="ansoff-corner"></div><div class="ansoff-col-head"><span class="ansoff-kicker">横轴 · 低</span><span class="ansoff-title">象限 · 左</span></div><div class="ansoff-col-head"><span class="ansoff-kicker">横轴 · 高</span><span class="ansoff-title">象限 · 右</span></div><div class="ansoff-row-head"><span class="ansoff-kicker">纵轴 · 高</span></div><div class="ansoff-cell"><span class="cell-tag">I</span><h4>象限名称</h4><p>待填。</p></div><div class="ansoff-cell"><span class="cell-tag">II</span><h4>象限名称</h4><p>待填。</p></div><div class="ansoff-row-head"><span class="ansoff-kicker">纵轴 · 低</span></div><div class="ansoff-cell"><span class="cell-tag">III</span><h4>象限名称</h4><p>待填。</p></div><div class="ansoff-cell"><span class="cell-tag">IV</span><h4>象限名称</h4><p>待填。</p></div></div></div>' },
@@ -2746,6 +2931,8 @@
     if (document.documentElement.dataset.seedEditMounted) return;
     document.documentElement.dataset.seedEditMounted = '1';
     document.documentElement.classList.add('seed-edit-on');
+    document.documentElement.removeAttribute('data-edit-key');
+    document.body?.removeAttribute?.('data-edit-key');
 
     const slug = slugOf();
     const isCatalog = !!document.querySelector('.report-shell[data-catalog]');
@@ -2761,6 +2948,8 @@
     let svgInput = null;
     let restoredMarkup = false;
     let sorting = false;
+    let presenting = false;
+    let pendingInsertAt = null;
     let menuInsertAt = null;
     let menuHeading = null;
     let menuItemHit = null;
@@ -2784,7 +2973,6 @@
       '<button type="button" data-edit-copy-block hidden>复制组件</button>',
       '<div class="seed-edit-menu__insert" data-edit-insert hidden>',
       '<button type="button" data-edit-insert-toggle>新增组件</button>',
-      '<div class="seed-edit-menu__sub" data-edit-insert-list hidden></div>',
       '</div>',
       '<div class="seed-edit-menu__rule" data-edit-delete-rule hidden></div>',
       '<button type="button" data-edit-del-item hidden>删除本条</button>',
@@ -2815,13 +3003,62 @@
     const delGroupBtn = menu.querySelector('[data-edit-del-group]');
     const delBlockBtn = menu.querySelector('[data-edit-del-block]');
     const insertWrap = menu.querySelector('[data-edit-insert]');
-    const insertToggle = menu.querySelector('[data-edit-insert-toggle]');
-    const insertList = menu.querySelector('[data-edit-insert-list]');
-    insertList.innerHTML = BLOCK_TEMPLATES.map((t) => `<button type="button" data-edit-insert-id="${t.id}">${t.label}</button>`).join('');
     let menuText = null;
     let menuMedia = null;
     let menuVariant = null;
     let menuResize = null;
+    let cycleJustDragged = false;
+
+    const library = document.createElement('aside');
+    library.className = 'seed-edit-library';
+    library.hidden = true;
+    library.setAttribute('aria-label', '新增组件');
+    library.innerHTML = [
+      '<div class="seed-edit-library__head">',
+      '<strong>新增组件</strong>',
+      '<button type="button" data-edit-library-close aria-label="关闭">×</button>',
+      '</div>',
+      '<div class="seed-edit-library__grid"></div>',
+    ].join('');
+    const libraryGrid = library.querySelector('.seed-edit-library__grid');
+    BLOCK_TEMPLATES.forEach((spec) => {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'seed-edit-library__card';
+      card.dataset.editInsertId = spec.id;
+      if (spec.noMedia) card.classList.add('is-text');
+      if (!spec.noMedia) {
+        const preview = document.createElement('div');
+        preview.className = 'seed-edit-library__preview';
+        preview.setAttribute('aria-hidden', 'true');
+        preview.setAttribute('inert', '');
+        const stage = document.createElement('div');
+        stage.className = 'seed-edit-library__stage';
+        stage.innerHTML = spec.html;
+        preview.append(stage);
+        card.append(preview);
+      }
+      const name = document.createElement('span');
+      name.textContent = spec.label;
+      card.append(name);
+      libraryGrid.append(card);
+    });
+    document.body.appendChild(library);
+
+    const topTools = document.createElement('div');
+    topTools.className = 'seed-edit-top';
+    topTools.innerHTML = [
+      '<div class="seed-edit-mode" role="group" aria-label="页面模式">',
+      '<button type="button" data-seed-mode="present">演示</button>',
+      '<button type="button" data-seed-mode="edit">编辑</button>',
+      '</div>',
+    ].join('');
+    const modePresentBtn = topTools.querySelector('[data-seed-mode="present"]');
+    const modeEditBtn = topTools.querySelector('[data-seed-mode="edit"]');
+    const topbarInner = document.querySelector('.report-shell.is-flow > .topbar .topbar-inner')
+      || document.querySelector('.report-shell > .topbar .topbar-inner');
+    if (topbarInner) topbarInner.append(topTools);
+    else document.body.append(topTools);
 
     const mediaBar = document.createElement('div');
     mediaBar.className = 'seed-edit-media';
@@ -2904,7 +3141,6 @@
 
     const hideMenu = () => {
       menu.hidden = true;
-      insertList.hidden = true;
       menuSide.hidden = true;
       menuAsideSide.hidden = true;
       menu.classList.remove('is-split');
@@ -2922,7 +3158,7 @@
     };
 
     const paintVariantMenu = (host) => {
-      menu.querySelectorAll('[data-edit-variant], [data-edit-variant-rule], [data-edit-variant-label], [data-edit-variant-check], [data-edit-cols-stepper], [data-edit-bg-color], [data-edit-aside-check]').forEach((el) => el.remove());
+      menu.querySelectorAll('[data-edit-variant], [data-edit-variant-rule], [data-edit-variant-label], [data-edit-variant-check], [data-edit-cols-stepper], [data-edit-bg-color], [data-edit-aside-check], [data-edit-cycle-check], [data-edit-cycle-slide], [data-edit-cycle-add], [data-edit-cycle-del]').forEach((el) => el.remove());
       menuSide.replaceChildren();
       menuSide.hidden = true;
       menu.classList.remove('is-split');
@@ -2932,6 +3168,10 @@
       rule.className = 'seed-edit-menu__rule';
       rule.setAttribute('data-edit-variant-rule', '');
       menuMain.append(rule);
+      if (spec.group === 'shot') {
+        paintCoverFx(host, { side: !shotCycleOn(host) });
+        paintShotCycle(host);
+      }
       const active = new Set(variantActiveIds(host));
       const appendLabel = (parent, title) => {
         const label = document.createElement('div');
@@ -3043,7 +3283,134 @@
       if (spec.group === 'cover') paintCoverFx(host);
     };
 
-    const paintCoverFx = (host) => {
+    const recordShotCycle = (shot, fn) => {
+      if (!shot) return;
+      const before = snapShotCycle(shot);
+      fn();
+      const after = snapShotCycle(shot);
+      if (before.html === after.html && before.on === after.on) return;
+      record({
+        undo: () => { restoreShotCycle(shot, before); persist(); },
+        redo: () => { restoreShotCycle(shot, after); persist(); },
+      });
+      persist();
+    };
+
+    const paintShotCycle = (host) => {
+      menu.querySelectorAll('[data-edit-cycle-check], [data-edit-cycle-slide], [data-edit-cycle-add], [data-edit-cycle-del], [data-edit-cycle-row]').forEach((el) => el.remove());
+      if (!host?.matches?.('.shot')) return;
+      const on = shotCycleOn(host);
+      const check = document.createElement('label');
+      check.className = 'seed-edit-menu__check';
+      check.setAttribute('data-edit-cycle-check', '');
+      const title = document.createElement('span');
+      title.textContent = '点击轮播';
+      const box = document.createElement('input');
+      box.type = 'checkbox';
+      box.checked = on;
+      check.append(title, box);
+      menuMain.append(check);
+      if (!on) return;
+      const slides = shotCycleSlides(host);
+      let dragFrom = -1;
+      const clearCycleDrop = () => {
+        menuSide.querySelectorAll('[data-edit-cycle-row]').forEach((el) => {
+          el.classList.remove('is-drop-before', 'is-drop-after', 'is-dragging');
+        });
+      };
+      (slides.length ? slides : [null]).forEach((slide, i) => {
+        const row = document.createElement('div');
+        row.className = 'seed-edit-menu__row';
+        row.setAttribute('data-edit-cycle-row', '');
+        row.dataset.editCycleIndex = String(i);
+        row.draggable = slides.length > 1;
+        const thumb = document.createElement('span');
+        thumb.className = 'seed-edit-cycle-thumb';
+        thumb.setAttribute('aria-hidden', 'true');
+        const src = shotCycleThumbSrc(slide);
+        if (src && slide?.tagName === 'VIDEO') {
+          const preview = document.createElement('video');
+          preview.src = src;
+          preview.muted = true;
+          preview.playsInline = true;
+          preview.preload = 'metadata';
+          thumb.append(preview);
+        } else if (src) {
+          const preview = document.createElement('img');
+          preview.src = src;
+          preview.alt = '';
+          thumb.append(preview);
+        } else {
+          thumb.classList.add('is-empty');
+        }
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.draggable = false;
+        btn.dataset.editCycleSlide = String(i);
+        btn.textContent = `图${i + 1}`;
+        row.append(thumb, btn);
+        if (slides.length > 1) {
+          const del = document.createElement('button');
+          del.type = 'button';
+          del.draggable = false;
+          del.dataset.editCycleDel = String(i);
+          del.className = 'seed-edit-menu__icon';
+          del.setAttribute('aria-label', `删除图${i + 1}`);
+          del.textContent = '×';
+          row.append(del);
+        }
+        row.addEventListener('dragstart', (event) => {
+          if (event.target.closest('[data-edit-cycle-slide], [data-edit-cycle-del]')) {
+            event.preventDefault();
+            return;
+          }
+          dragFrom = i;
+          cycleJustDragged = true;
+          event.dataTransfer.effectAllowed = 'move';
+          event.dataTransfer.setData('text/plain', String(i));
+          row.classList.add('is-dragging');
+        });
+        row.addEventListener('dragend', () => {
+          clearCycleDrop();
+          dragFrom = -1;
+          setTimeout(() => { cycleJustDragged = false; }, 0);
+        });
+        row.addEventListener('dragover', (event) => {
+          if (dragFrom < 0 || dragFrom === i) return;
+          event.preventDefault();
+          event.dataTransfer.dropEffect = 'move';
+          const mid = row.getBoundingClientRect();
+          const before = event.clientY < mid.top + mid.height / 2;
+          row.classList.toggle('is-drop-before', before);
+          row.classList.toggle('is-drop-after', !before);
+        });
+        row.addEventListener('dragleave', (event) => {
+          if (event.relatedTarget?.closest?.('[data-edit-cycle-row]') === row) return;
+          row.classList.remove('is-drop-before', 'is-drop-after');
+        });
+        row.addEventListener('drop', (event) => {
+          event.preventDefault();
+          const from = dragFrom;
+          const after = event.clientY >= row.getBoundingClientRect().top + row.getBoundingClientRect().height / 2;
+          clearCycleDrop();
+          if (from < 0 || from === i) return;
+          recordShotCycle(host, () => moveShotCycleSlide(host, from, i, after));
+          refreshOpenMenu();
+        });
+        menuSide.append(row);
+      });
+      const add = document.createElement('button');
+      add.type = 'button';
+      add.dataset.editCycleAdd = '';
+      add.className = 'seed-edit-menu__add';
+      add.textContent = '+';
+      add.setAttribute('aria-label', '添加图片');
+      menuSide.append(add);
+      menuSide.hidden = false;
+      menu.classList.add('is-split');
+    };
+
+    const paintCoverFx = (host, opts = {}) => {
       menu.querySelectorAll('[data-edit-cover-fx], [data-edit-cover-fx-check], [data-edit-cover-fx-param]').forEach((el) => el.remove());
       const fxOn = coverFxOn(host);
       const check = document.createElement('label');
@@ -3057,7 +3424,7 @@
       box.checked = fxOn;
       check.append(title, box);
       menuMain.append(check);
-      if (!fxOn) return;
+      if (!fxOn || opts.side === false) return;
       menuSide.classList.add('seed-edit-menu__fx');
       const head = document.createElement('div');
       head.className = 'seed-edit-menu__label';
@@ -3208,7 +3575,6 @@
       delGroupBtn.hidden = !canDelGroup;
       delBlockBtn.hidden = !canDelBlock;
       insertWrap.hidden = !canInsert;
-      insertList.hidden = true;
       const hasPrimary = !textBtn.hidden || !imageBtn.hidden || !layoutBtn.hidden;
       structRule.hidden = !(hasPrimary && (canAddItem || canAddRow || canAddCol || canCopyBlock || canInsert));
       paintVariantMenu(menuVariant);
@@ -3224,8 +3590,8 @@
         if (!delBlockBtn.hidden) menuMain.append(delBlockBtn);
       }
       const hasAction = hasPrimary || menuVariant || menuAside
-        || canAddItem || canAddRow || canAddCol || canCopyBlock
-        || canDelItem || canDelRow || canDelCol || canDelGroup || canDelBlock || canInsert;
+        || canAddItem || canAddRow || canAddCol || canCopyBlock || canInsert
+        || canDelItem || canDelRow || canDelCol || canDelGroup || canDelBlock;
       if (!hasAction) return;
       for (const el of menuMain.children) {
         if (el.hidden) continue;
@@ -3307,61 +3673,117 @@
     };
 
     const isTransientSrc = (val) => !!val && (val.startsWith('blob:') || val.startsWith('data:'));
+    const liveFiles = new WeakMap();
 
     const blobForNode = async (el) => {
-      const key = el.getAttribute('data-edit-key');
-      if (key) {
-        const stored = await idbGet('blobs', `${slug}::${key}`).catch(() => null);
-        if (stored instanceof Blob) return stored;
-      }
+      if (!el?.matches?.('img, video, source')) return null;
+      const picked = liveFiles.get(el);
+      if (picked instanceof Blob) return picked;
       const src = el.getAttribute('src') || el.getAttribute('poster') || '';
       if (!isTransientSrc(src)) return null;
       try {
         const res = await fetch(src);
         if (res.ok) return res.blob();
       } catch { /* ignore */ }
-      return null;
+      const key = el.getAttribute('data-edit-key');
+      if (!key) return null;
+      const stored = await idbGet('blobs', `${slug}::${key}`).catch(() => null);
+      return stored instanceof Blob ? stored : null;
+    };
+
+    const syncShotLightbox = (shot) => {
+      if (!shot?.matches?.('.shot, [data-gallery]')) return;
+      const on = shot.querySelector(':scope > .shot__frame > .is-cycle-on, .shot__frame > .is-cycle-on')
+        || shot.querySelector('.shot__frame img, .shot__frame video, img, video');
+      const src = on?.getAttribute('src') || on?.getAttribute('poster') || '';
+      if (!src || isTransientSrc(src)) return;
+      shot.setAttribute('data-lightbox-src', src);
+      const alt = on.getAttribute?.('alt') || '';
+      if (alt) shot.setAttribute('data-lightbox-alt', alt);
     };
 
     const applyLocalMediaPath = (el, rel) => {
-      if (el.hasAttribute('src')) el.setAttribute('src', rel);
+      if (!el?.matches?.('img, video, source')) return;
+      if (el.hasAttribute('src') || el.matches?.('img, video, source')) el.setAttribute('src', rel);
       if (el.hasAttribute('poster') && isTransientSrc(el.getAttribute('poster'))) el.setAttribute('poster', rel);
       if (el.hasAttribute('data-src')) el.setAttribute('data-src', rel);
       const shot = el.closest?.('.shot, [data-gallery], .gallery-thumb');
-      if (shot?.hasAttribute('data-lightbox-src')) shot.setAttribute('data-lightbox-src', rel);
+      if (shot && (!shot.hasAttribute('data-cycle') || el.classList.contains('is-cycle-on'))) {
+        shot.setAttribute('data-lightbox-src', rel);
+        const alt = el.getAttribute('alt') || '';
+        if (alt) shot.setAttribute('data-lightbox-alt', alt);
+      }
       if (el.closest?.('.gallery-thumb')) el.closest('.gallery-thumb').setAttribute('data-src', rel);
     };
 
     const collectFolderPayload = async () => {
       const media = {};
       const rewrites = [];
-      const nodes = [...document.querySelectorAll('img, video, source, [data-src], [data-lightbox-src]')];
+      const mediaSel = 'img, video, source, [data-src]';
+      const liveAll = [...document.querySelectorAll(mediaSel)];
+      const nodes = liveAll.filter((el) => isContentMedia(el));
+      const usedNames = new Set();
+      const takenName = (src) => {
+        const m = String(src || '').match(/(?:^|\/)lib\/media\/([^/?#]+)/);
+        return m ? m[1] : '';
+      };
+      liveAll.forEach((el) => {
+        const src = el.getAttribute('src') || el.getAttribute('poster') || el.getAttribute('data-src') || '';
+        if (isTransientSrc(src)) return;
+        const name = takenName(src);
+        if (name) usedNames.add(name);
+      });
+      const uniqueName = (key, file) => {
+        const ext = extOfFile(file);
+        let name = mediaFileName(key, file);
+        if (!usedNames.has(name) && !media[name]) {
+          usedNames.add(name);
+          return name;
+        }
+        const stem = name.slice(0, -(ext.length + 1));
+        let i = 2;
+        let next = `${stem}-${i}.${ext}`;
+        while (usedNames.has(next) || media[next]) {
+          i += 1;
+          next = `${stem}-${i}.${ext}`;
+        }
+        usedNames.add(next);
+        return next;
+      };
       for (const el of nodes) {
-        const src = el.getAttribute('src') || el.getAttribute('poster') || el.getAttribute('data-src') || el.getAttribute('data-lightbox-src') || '';
+        if (el.matches?.('img, video')) ensureMediaId(el);
+        const src = el.getAttribute('src') || el.getAttribute('poster') || el.getAttribute('data-src') || '';
         if (!isTransientSrc(src)) continue;
-        const key = el.getAttribute('data-edit-key') || '';
+        const key = el.getAttribute('data-edit-key') || (el.dataset.mediaId ? `media::${el.dataset.mediaId}` : '');
         const rec = key ? state.media[key] : null;
         const blob = await blobForNode(el);
         if (!(blob instanceof Blob)) continue;
-        const name = mediaFileName(key || src, rec || blob);
+        const name = uniqueName(key || el.dataset.mediaId || src, rec || blob);
         media[name] = await blobToBase64(blob);
         rewrites.push({ el, rel: `lib/media/${name}` });
       }
 
       const root = document.documentElement.cloneNode(true);
+      const cloneAll = [...root.querySelectorAll(mediaSel)];
+      rewrites.forEach(({ el, rel }) => {
+        const idx = liveAll.indexOf(el);
+        if (idx >= 0 && cloneAll[idx]) applyLocalMediaPath(cloneAll[idx], rel);
+      });
+      cloneAll.forEach((el) => {
+        const shot = el.closest?.('.shot, [data-gallery]');
+        if (shot) syncShotLightbox(shot);
+      });
       root.querySelectorAll(EDIT_CHROME_SEL).forEach((node) => node.remove());
       stripSortAttrs(root);
       root.classList.remove('seed-edit-on');
       delete root.dataset.seedEditMounted;
       root.querySelectorAll('[contenteditable]').forEach((node) => node.removeAttribute('contenteditable'));
-      const cloneNodes = [...root.querySelectorAll('img, video, source, [data-src], [data-lightbox-src]')];
-      rewrites.forEach(({ el, rel }) => {
-        const idx = nodes.indexOf(el);
-        if (idx >= 0 && cloneNodes[idx]) applyLocalMediaPath(cloneNodes[idx], rel);
-      });
-      root.querySelectorAll('[data-edit-key], [data-edit-text]').forEach((node) => {
+      root.removeAttribute('data-edit-key');
+      root.removeAttribute('data-edit-text');
+      root.querySelectorAll('[data-edit-key], [data-edit-text], [data-seed-cycle-bound]').forEach((node) => {
         node.removeAttribute('data-edit-key');
         node.removeAttribute('data-edit-text');
+        node.removeAttribute('data-seed-cycle-bound');
       });
       root.querySelectorAll('[spellcheck]').forEach((node) => node.removeAttribute('spellcheck'));
       root.querySelectorAll('link[href^="chrome-extension:"], link[href^="moz-extension:"], script[src^="chrome-extension:"], script[src^="moz-extension:"]').forEach((node) => node.remove());
@@ -3406,7 +3828,14 @@
       const payload = await collectFolderPayload();
       const ok = await writeViaPost(payload).catch(() => false)
         || await writeViaDirectory(payload).catch(() => false);
-      if (ok) payload.rewrites.forEach(({ el, rel }) => applyLocalMediaPath(el, rel));
+      if (ok) {
+        payload.rewrites.forEach(({ el, rel }) => applyLocalMediaPath(el, rel));
+        payload.rewrites.forEach(({ el }) => {
+          const shot = el.closest?.('.shot, [data-gallery]');
+          if (shot) syncShotLightbox(shot);
+          liveFiles.delete(el);
+        });
+      }
       return ok;
     };
 
@@ -3448,11 +3877,12 @@
 
     const nodeByKey = (key) => {
       const live = document.querySelector(`[data-edit-key="${CSS.escape(key)}"]`);
-      if (live) return live;
+      if (live && !isPageRoot(live) && !isChrome(live) && !isBrandMedia(live)) return live;
       if (restoredMarkup) return null;
       const path = (key || '').split('::').slice(2).join('::');
       const node = fromPath(path);
-      if (node) node.dataset.editKey = key;
+      if (!node || isPageRoot(node) || isChrome(node) || isBrandMedia(node)) return null;
+      node.dataset.editKey = key;
       return node;
     };
 
@@ -3791,9 +4221,13 @@
       const clones = cluster.map((node) => {
         const clone = node.cloneNode(true);
         clone.removeAttribute('data-edit-key');
+        clone.removeAttribute('data-media-id');
         clone.removeAttribute('id');
         clone.removeAttribute('data-seed-editing-media');
-        clone.querySelectorAll('[data-edit-key]').forEach((el) => el.removeAttribute('data-edit-key'));
+        clone.querySelectorAll('[data-edit-key], [data-media-id]').forEach((el) => {
+          el.removeAttribute('data-edit-key');
+          el.removeAttribute('data-media-id');
+        });
         clone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
         return clone;
       });
@@ -3927,6 +4361,9 @@
       if (!nodes.length) return;
       recordInsert(nodes, at.parent, at.before || null);
       nodes.forEach((n) => refreshDataHost(n));
+      const last = nodes[nodes.length - 1];
+      if (last?.parentElement) pendingInsertAt = { parent: last.parentElement, before: last.nextSibling };
+      (last.nodeType === 1 ? last : last.parentElement)?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
     };
 
     const ghost = document.createElement('div');
@@ -3982,7 +4419,7 @@
     };
 
     const placeSortGrips = (node) => {
-      if (!node || sorting || activeText || activeBox) {
+      if (presenting || !node || sorting || activeText || activeBox) {
         hideSortGrips();
         return;
       }
@@ -4015,6 +4452,39 @@
       }
 
       if (gripBlock.hidden && gripItem.hidden) hideSortGrips();
+    };
+
+    const resolveInsertAt = () => {
+      if (pendingInsertAt?.parent?.isConnected) return pendingInsertAt;
+      const stack = document.querySelector('.report-slide.is-active:not(.is-chapter-cover) .flow-stack')
+        || document.querySelector('.report-section .flow-stack, .report-slide:not(.is-chapter-cover) .flow-stack');
+      return stack ? { parent: stack, before: null } : null;
+    };
+
+    const closeInsertLibrary = () => {
+      library.hidden = true;
+    };
+
+    const openInsertLibrary = (at) => {
+      if (presenting) return;
+      pendingInsertAt = at?.parent ? at : resolveInsertAt();
+      hideMenu();
+      library.hidden = false;
+    };
+
+    const applyPresenting = (next) => {
+      presenting = !!next;
+      document.documentElement.classList.toggle('is-seed-presenting', presenting);
+      modePresentBtn.classList.toggle('is-on', presenting);
+      modeEditBtn.classList.toggle('is-on', !presenting);
+      if (presenting) {
+        hideMenu();
+        hideSortGrips();
+        closeInsertLibrary();
+        if (activeText) stopTextEdit({ commit: true });
+        if (activeBox) stopMediaAdjust();
+      }
+      try { sessionStorage.setItem(`seed-present::${slug}`, presenting ? '1' : '0'); } catch (_) { /* ignore */ }
     };
 
     const pointerNearGrip = (event) => {
@@ -4377,6 +4847,13 @@
     };
 
     const ensureKey = (node, kind) => {
+      if (kind === 'media' && node.matches?.('img, video')) {
+        const slide = slideOf(node);
+        const base = slide?.id || slide?.dataset?.slide || 'page';
+        const key = `${base}::media::${ensureMediaId(node)}`;
+        node.dataset.editKey = key;
+        return key;
+      }
       if (node.dataset.editKey) return node.dataset.editKey;
       const slide = slideOf(node);
       const base = slide?.id || slide?.dataset?.slide || 'page';
@@ -4554,7 +5031,7 @@
     };
 
     const startTextEdit = (node) => {
-      if (!node) return;
+      if (presenting || !node) return;
       if (activeText && activeText !== node) stopTextEdit({ commit: true });
       const key = ensureKey(node, 'text');
       if (!(key in originals.texts)) originals.texts[key] = readMarkup(node);
@@ -4603,22 +5080,38 @@
     };
 
     const resolveMediaEl = (el) => {
-      if (!el) return null;
-      if (el.matches?.('img, video, svg')) return el;
-      return el.querySelector?.('img, video, svg')
-        || el.closest?.('.comp-media, .shot, figure, .shot__frame')?.querySelector?.('img, video, svg')
-        || null;
+      if (!el || isPageRoot(el) || isChrome(el) || isBrandMedia(el)) return null;
+      if (el.matches?.('img, video, svg')) return isContentMedia(el) ? el : null;
+      const root = el.matches?.('.shot, .shot__frame, figure, .comp-media')
+        ? el
+        : el.closest?.('.comp-media, .shot, figure, .shot__frame');
+      if (!root || isChrome(root)) return null;
+      const shot = root.matches?.('.shot') ? root : root.closest?.('.shot');
+      if (shot && shotCycleOn(shot)) {
+        pruneEmptyCycleSlides(shot);
+        const on = shot.querySelector(':scope > .shot__frame > .is-cycle-on, .shot__frame > .is-cycle-on');
+        if (on?.matches?.('img, video, svg') && isContentMedia(on) && shotCycleHasSrc(on)) return on;
+        const filled = shotCycleSlides(shot).find((node) => isContentMedia(node) && shotCycleHasSrc(node));
+        if (filled) return filled;
+      }
+      const media = root.querySelector('img, video, svg');
+      return isContentMedia(media) ? media : null;
     };
 
     const ensureMediaEl = (el) => {
+      if (el?.matches?.('img, video, svg') && isContentMedia(el)) return el;
       const live = resolveMediaEl(el);
       if (live) return live;
-      const frame = el?.querySelector?.('.shot__frame')
+      const shot = el?.matches?.('.shot') ? el : el?.closest?.('.shot');
+      const frame = shot?.querySelector?.('.shot__frame')
+        || el?.querySelector?.('.shot__frame')
         || el?.closest?.('.comp-media, .shot, figure')?.querySelector?.('.shot__frame');
       if (!frame) return el;
+      const existing = (shot ? shotCycleSlides(shot)[0] : null) || frame.querySelector('img, video');
+      if (existing) return existing;
       const img = document.createElement('img');
       img.alt = '';
-      frame.prepend(img);
+      frame.append(img);
       return img;
     };
 
@@ -4626,12 +5119,13 @@
       const kind = mediaKindOf(file);
       const isVideo = kind === 'video';
       const isImage = kind === 'image';
-      let node = ensureMediaEl(el);
-      if (!node) return el;
+      let node = (el?.matches?.('img, video, svg') && isContentMedia(el)) ? el : ensureMediaEl(el);
+      if (!node || !isContentMedia(node)) return el;
       const tag = node.tagName.toLowerCase();
 
       const swap = (next) => {
         next.dataset.editKey = node.dataset.editKey || el?.dataset?.editKey || '';
+        if (node.classList.contains('is-cycle-on')) next.classList.add('is-cycle-on');
         node.replaceWith(next);
         return next;
       };
@@ -4639,9 +5133,18 @@
       const stampShot = (media) => {
         const shot = media.closest?.('.shot, [data-gallery]');
         if (!shot) return;
+        if (shot.hasAttribute('data-cycle') && !media.classList.contains('is-cycle-on')) return;
         shot.setAttribute('data-lightbox-src', url);
         const alt = media.getAttribute?.('alt') || file?.name || '';
         if (alt) shot.setAttribute('data-lightbox-alt', alt);
+      };
+
+      const finish = (media) => {
+        media?.classList?.remove?.('is-cycle-broken');
+        const shot = media?.closest?.('.shot');
+        if (shot && shotCycleOn(shot)) syncShotCycleOn(shot, media);
+        stampShot(media);
+        return media;
       };
 
       if (tag === 'video') {
@@ -4651,13 +5154,11 @@
           });
           node.src = url;
           node.load();
-          stampShot(node);
-          return node;
+          return finish(node);
         }
         if (isImage) {
           node.poster = url;
-          stampShot(node);
-          return node;
+          return finish(node);
         }
       }
 
@@ -4665,11 +5166,11 @@
         if (isImage) {
           node.src = url;
           node.setAttribute('src', url);
+          if (file?.name) node.setAttribute('alt', file.name);
           if (node.hasAttribute('data-src')) node.setAttribute('data-src', url);
           const thumb = node.closest('.gallery-thumb');
           if (thumb) thumb.setAttribute('data-src', url);
-          stampShot(node);
-          return node;
+          return finish(node);
         }
         if (isVideo) {
           const video = document.createElement('video');
@@ -4679,8 +5180,7 @@
           video.style.cssText = node.getAttribute('style') || '';
           video.className = node.className;
           const next = swap(video);
-          stampShot(next);
-          return next;
+          return finish(next);
         }
       }
 
@@ -4697,9 +5197,9 @@
         media.style.display = 'block';
         const next = swap(media);
         stampShot(next);
-        return next;
+        return finish(next);
       }
-      return node;
+      return finish(node);
     };
 
     const captureMediaSnap = (el) => {
@@ -4760,11 +5260,40 @@
       return node;
     };
 
-    const pickMedia = (el) => {
-      const target = ensureMediaEl(el);
-      if (!target) return;
-      const key = ensureKey(target, 'media');
-      if (!(key in originals.media)) originals.media[key] = captureMediaSnap(target);
+    const isPickableFile = (file) => {
+      const type = String(file?.type || '').toLowerCase();
+      if (type.startsWith('image/') || type.startsWith('video/')) return true;
+      return /\.(png|jpe?g|gif|webp|avif|svg|bmp|heic|heif|mp4|webm|mov|m4v|ogv)$/i.test(file?.name || '');
+    };
+
+    const applyPickedFile = async (node, file) => {
+      if (!node || !file) return node;
+      const key = ensureKey(node, 'media');
+      if (!(key in originals.media)) originals.media[key] = captureMediaSnap(node);
+      const prevUrl = objectUrls.get(key);
+      if (prevUrl) URL.revokeObjectURL(prevUrl);
+      const url = URL.createObjectURL(file);
+      objectUrls.set(key, url);
+      liveFiles.set(node, file);
+      const applied = applyMediaFile(node, file, url) || node;
+      liveFiles.set(applied, file);
+      state.media[key] = { ...(state.media[key] || {}), name: file.name, type: file.type || mediaKindOf(file) };
+      try { await idbSet('blobs', `${slug}::${key}`, file); } catch (_) { /* keep live preview */ }
+      return applied;
+    };
+
+    let pickSeq = 0;
+    const pickMedia = (el, opts = {}) => {
+      const appendOnly = !!opts.append;
+      const locked = appendOnly
+        ? null
+        : ((el?.matches?.('img, video, svg') && isContentMedia(el)) ? el : resolveMediaEl(el));
+      const shot = (el?.matches?.('.shot') ? el : el?.closest?.('.shot')) || locked?.closest?.('.shot') || null;
+      if (!appendOnly && !locked) return;
+      if (appendOnly && !shot) return;
+      const lockedIndex = shot && locked ? shotCycleSlides(shot).indexOf(locked) : -1;
+      const key = locked ? ensureKey(locked, 'media') : '';
+      if (locked && !(key in originals.media)) originals.media[key] = captureMediaSnap(locked);
       if (!fileInput) {
         fileInput = document.createElement('input');
         fileInput.type = 'file';
@@ -4772,53 +5301,106 @@
         fileInput.hidden = true;
         document.body.appendChild(fileInput);
       }
+      fileInput.multiple = true;
+      const seq = ++pickSeq;
       fileInput.onchange = async () => {
-        const file = fileInput.files?.[0];
+        const files = [...(fileInput.files || [])].filter(isPickableFile);
         fileInput.value = '';
-        if (!file) return;
-        const node = ensureMediaEl(nodeByKey(key) || target);
-        if (!node) return;
-        if (node !== target && !node.dataset.editKey) node.dataset.editKey = key;
-        const beforeBlob = await idbGet('blobs', `${slug}::${key}`).catch(() => null);
-        const beforeSnap = captureMediaSnap(node);
-        const beforeRec = state.media[key] ? { ...state.media[key] } : null;
-        const prevUrl = objectUrls.get(key);
-        if (prevUrl) URL.revokeObjectURL(prevUrl);
-        const url = URL.createObjectURL(file);
-        objectUrls.set(key, url);
-        applyMediaFile(node, file, url);
-        const afterRec = { ...(beforeRec || {}), name: file.name, type: file.type || mediaKindOf(file) };
-        state.media[key] = afterRec;
-        try {
-          await idbSet('blobs', `${slug}::${key}`, file);
-        } catch (_) { /* keep live preview even if cache write fails */ }
+        if (!files.length || seq !== pickSeq) return;
+        const resolveLocked = () => {
+          if (!locked) return null;
+          if (locked.isConnected) return locked;
+          if (key) {
+            const byKey = nodeByKey(key);
+            if (byKey?.matches?.('img, video, svg')) return byKey;
+          }
+          if (shot?.isConnected && lockedIndex >= 0) return shotCycleSlides(shot)[lockedIndex] || null;
+          return null;
+        };
+        const replaceOne = async (node, file) => {
+          if (!node || !file) return;
+          if (!node.dataset.editKey && key) node.dataset.editKey = key;
+          const nodeKey = ensureKey(node, 'media');
+          const beforeBlob = await idbGet('blobs', `${slug}::${nodeKey}`).catch(() => null);
+          const beforeSnap = captureMediaSnap(node);
+          const beforeRec = state.media[nodeKey] ? { ...state.media[nodeKey] } : null;
+          await applyPickedFile(node, file);
+          const afterRec = state.media[nodeKey] ? { ...state.media[nodeKey] } : null;
+          record({
+            undo: async () => {
+              const cur = ensureMediaEl(nodeByKey(nodeKey));
+              if (!cur) return;
+              if (beforeBlob instanceof Blob) {
+                await idbSet('blobs', `${slug}::${nodeKey}`, beforeBlob).catch(() => {});
+                restoreMediaSnap(cur, beforeSnap, beforeBlob);
+                state.media[nodeKey] = beforeRec;
+                return;
+              }
+              restoreMediaSnap(cur, originals.media[nodeKey] || beforeSnap, null);
+              if (beforeRec) state.media[nodeKey] = beforeRec;
+              else delete state.media[nodeKey];
+            },
+            redo: async () => {
+              const cur = ensureMediaEl(nodeByKey(nodeKey));
+              if (!cur) return;
+              await idbSet('blobs', `${slug}::${nodeKey}`, file).catch(() => {});
+              const nextUrl = URL.createObjectURL(file);
+              const old = objectUrls.get(nodeKey);
+              if (old) URL.revokeObjectURL(old);
+              objectUrls.set(nodeKey, nextUrl);
+              applyMediaFile(cur, file, nextUrl);
+              state.media[nodeKey] = afterRec;
+            },
+          });
+        };
+
+        if (files.length === 1 && !appendOnly) {
+          const node = resolveLocked();
+          if (!node) return;
+          await replaceOne(node, files[0]);
+          persist();
+          refreshOpenMenu();
+          return;
+        }
+
+        const host = (shot?.isConnected && shot.matches?.('.shot'))
+          ? shot
+          : resolveLocked()?.closest?.('.shot');
+        if (!host?.matches?.('.shot')) {
+          const node = resolveLocked();
+          if (node) await replaceOne(node, files[0]);
+          persist();
+          refreshOpenMenu();
+          return;
+        }
+
+        const before = snapShotCycle(host);
+        const wasOn = shotCycleOn(host);
+        if (!wasOn) writeShotCycle(host, true);
+
+        let remaining = files;
+        if (!appendOnly) {
+          const node = resolveLocked();
+          const slides = shotCycleSlides(host);
+          const fillEmpty = node && slides.includes(node) && !shotCycleHasSrc(node);
+          const startCycle = node && !wasOn && slides.includes(node);
+          if (fillEmpty || startCycle) {
+            await applyPickedFile(node, files[0]);
+            remaining = files.slice(1);
+          }
+        }
+        for (const file of remaining) {
+          const added = addShotCycleSlide(host);
+          await applyPickedFile(added, file);
+        }
+
+        const after = snapShotCycle(host);
         record({
-          undo: async () => {
-            const cur = ensureMediaEl(nodeByKey(key));
-            if (!cur) return;
-            if (beforeBlob instanceof Blob) {
-              await idbSet('blobs', `${slug}::${key}`, beforeBlob).catch(() => {});
-              restoreMediaSnap(cur, beforeSnap, beforeBlob);
-              state.media[key] = beforeRec;
-              return;
-            }
-            restoreMediaSnap(cur, originals.media[key] || beforeSnap, null);
-            if (beforeRec) state.media[key] = beforeRec;
-            else delete state.media[key];
-          },
-          redo: async () => {
-            const cur = ensureMediaEl(nodeByKey(key));
-            if (!cur) return;
-            await idbSet('blobs', `${slug}::${key}`, file).catch(() => {});
-            const nextUrl = URL.createObjectURL(file);
-            const old = objectUrls.get(key);
-            if (old) URL.revokeObjectURL(old);
-            objectUrls.set(key, nextUrl);
-            applyMediaFile(cur, file, nextUrl);
-            state.media[key] = afterRec;
-          },
+          undo: () => { restoreShotCycle(host, before); persist(); },
+          redo: () => { restoreShotCycle(host, after); persist(); },
         });
         persist();
+        refreshOpenMenu();
       };
       fileInput.click();
     };
@@ -5065,12 +5647,11 @@
         const live = document.querySelector(`[data-edit-key="${CSS.escape(key)}"]`);
         const path = key.split('::').slice(2).join('::');
         let node = live || (restoredMarkup ? null : fromPath(path));
-        if (!node) continue;
+        if (!node || isPageRoot(node) || isChrome(node) || isBrandMedia(node)) continue;
         node.dataset.editKey = key;
         if (rec.layout) writeLayout(resizeBoxOf(node) || node, rec.layout);
-        const current = (ensureMediaEl(node) || node).getAttribute?.('src')
-          || node.getAttribute?.('src')
-          || '';
+        if (!node.matches?.('img, video, source')) continue;
+        const current = node.getAttribute('src') || node.getAttribute('poster') || '';
         if (current && !isTransientSrc(current)) continue;
         const blob = await idbGet('blobs', `${slug}::${key}`);
         if (!(blob instanceof Blob)) continue;
@@ -5078,7 +5659,7 @@
         if (prev) URL.revokeObjectURL(prev);
         const url = URL.createObjectURL(blob);
         objectUrls.set(key, url);
-        applyMediaFile(ensureMediaEl(node) || node, blob, url);
+        applyMediaFile(node, blob, url);
       }
       document.querySelectorAll('.market-formula').forEach((box) => {
         writeLayout(box, { ...readLayout(box), height: null });
@@ -5086,6 +5667,7 @@
     };
 
     document.addEventListener('contextmenu', (event) => {
+      if (presenting) return;
       const raw = event.target;
       const rawNode = raw instanceof Element ? raw : raw?.parentElement;
       const node = hitNodeAt(event.clientX, event.clientY, rawNode);
@@ -5133,28 +5715,9 @@
     menu.addEventListener('click', (event) => {
       if (event.target.closest('[data-edit-insert-toggle]')) {
         event.preventDefault();
-        insertList.hidden = !insertList.hidden;
-        if (!insertList.hidden) {
-          insertList.style.top = '0px';
-          insertList.style.left = 'calc(100% + 6px)';
-          insertList.style.right = 'auto';
-          const menuBox = menu.getBoundingClientRect();
-          const subBox = insertList.getBoundingClientRect();
-          if (menuBox.right + subBox.width > window.innerWidth - 8) {
-            insertList.style.left = 'auto';
-            insertList.style.right = 'calc(100% + 6px)';
-          }
-          let after = insertList.getBoundingClientRect();
-          if (after.bottom > window.innerHeight - 8) {
-            insertList.style.top = `${window.innerHeight - 8 - after.bottom}px`;
-          }
-          after = insertList.getBoundingClientRect();
-          if (after.top < 8) insertList.style.top = `${(parseFloat(insertList.style.top) || 0) + (8 - after.top)}px`;
-        }
+        openInsertLibrary(menuInsertAt);
         return;
       }
-      const insertId = event.target.closest('[data-edit-insert-id]')?.dataset.editInsertId;
-      if (insertId && menuInsertAt) insertBlock(insertId, menuInsertAt);
       if (event.target.closest('[data-edit-cols-stepper]')) {
         event.preventDefault();
         event.stopPropagation();
@@ -5172,6 +5735,40 @@
         return;
       }
       if (event.target.closest('[data-edit-bg-color]')) return;
+      if (event.target.closest('[data-edit-cycle-check]') && menuVariant) {
+        event.preventDefault();
+        event.stopPropagation();
+        const host = menuVariant;
+        recordShotCycle(host, () => writeShotCycle(host, !shotCycleOn(host)));
+        refreshOpenMenu();
+        return;
+      }
+      const cycleAdd = event.target.closest('[data-edit-cycle-add]');
+      if (cycleAdd && menuVariant) {
+        event.preventDefault();
+        event.stopPropagation();
+        pickMedia(menuVariant, { append: true });
+        return;
+      }
+      const cycleDel = event.target.closest('[data-edit-cycle-del]');
+      if (cycleDel && menuVariant) {
+        event.preventDefault();
+        event.stopPropagation();
+        const host = menuVariant;
+        const slide = shotCycleSlides(host)[Number.parseInt(cycleDel.dataset.editCycleDel, 10)];
+        if (slide) recordShotCycle(host, () => removeShotCycleSlide(host, slide));
+        refreshOpenMenu();
+        return;
+      }
+      const cycleSlide = event.target.closest('[data-edit-cycle-slide]');
+      if (cycleSlide && menuVariant) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (cycleJustDragged) return;
+        const slide = shotCycleSlides(menuVariant)[Number.parseInt(cycleSlide.dataset.editCycleSlide, 10)];
+        if (slide) pickMedia(slide);
+        return;
+      }
       if (event.target.closest('[data-edit-cover-fx-check]') && menuVariant) {
         event.preventDefault();
         event.stopPropagation();
@@ -5443,6 +6040,8 @@
     });
 
     document.addEventListener('pointerdown', (event) => {
+      if (presenting) return;
+      if (!library.hidden && !event.target.closest('.seed-edit-library, [data-edit-insert]')) closeInsertLibrary();
       if (!menu.hidden && !event.target.closest('.seed-edit-menu')) hideMenu();
       if (activeBox && !event.target.closest('.seed-edit-media, .seed-edit-handle, .seed-edit-handle-h, [data-seed-editing-media]')) {
         stopMediaAdjust();
@@ -5458,6 +6057,10 @@
     }, true);
 
     document.addEventListener('pointermove', (event) => {
+      if (presenting) {
+        hideSortGrips();
+        return;
+      }
       if (sorting || activeText || activeBox || !menu.hidden) return;
       if (event.target.closest?.('.seed-edit-menu, .seed-edit-done, .seed-edit-bold, .seed-edit-size, .seed-edit-rule, .seed-edit-color, .seed-edit-palette, .seed-edit-media, .seed-edit-handle, .seed-edit-handle-h, .seed-edit-trash')) return;
       if (pointerNearGrip(event)) return;
@@ -5471,6 +6074,11 @@
     });
 
     document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !library.hidden) {
+        closeInsertLibrary();
+        return;
+      }
+      if (presenting) return;
       const meta = event.metaKey || event.ctrlKey;
       if (meta && event.key.toLowerCase() === 'z') {
         if (activeText?.isConnected) return;
@@ -5562,6 +6170,11 @@
 
     enhanceColorTokens();
     hydrateEditorial();
+    let prunedCycle = false;
+    document.querySelectorAll('.shot').forEach((shot) => {
+      if (pruneEmptyCycleSlides(shot)) prunedCycle = true;
+      if (shotCycleOn(shot)) syncShotCycleOn(shot);
+    });
     document.querySelectorAll('.comp-media .shot').forEach(ensureAsideCaption);
     document.querySelectorAll('.market-formula').forEach((box) => {
       writeLayout(box, { ...readLayout(box), height: null });
@@ -5572,6 +6185,26 @@
       if (layout.height) writeLayout(box, layout);
     });
     requestAnimationFrame(syncAllBandPads);
+
+    library.addEventListener('click', (event) => {
+      if (event.target.closest('[data-edit-library-close]')) {
+        closeInsertLibrary();
+        return;
+      }
+      const id = event.target.closest('[data-edit-insert-id]')?.dataset.editInsertId;
+      if (!id || presenting) return;
+      insertBlock(id, resolveInsertAt());
+    });
+    modePresentBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      applyPresenting(true);
+    });
+    modeEditBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      applyPresenting(false);
+    });
+    try { applyPresenting(sessionStorage.getItem(`seed-present::${slug}`) === '1'); } catch (_) { applyPresenting(false); }
+
     if (!isCatalog) {
       idbGet('state', slug).then(async (saved) => {
         if (saved && (saved.texts || saved.media || saved.images || saved.markup || saved.variants)) {
@@ -5589,6 +6222,10 @@
           await applyStateToDom();
           stripItemAsides();
           hydrateEditorial();
+          document.querySelectorAll('.shot').forEach((shot) => {
+            pruneEmptyCycleSlides(shot);
+            if (shotCycleOn(shot)) syncShotCycleOn(shot);
+          });
           document.querySelectorAll('.info-grid[data-aside], .pain-text-list[data-aside], .plain-grid[data-aside]').forEach((host) => {
             if (host.querySelector(':scope > .comp-media')) wrapAsideMain(host);
             host.querySelectorAll(':scope > .comp-media .shot').forEach(ensureAsideCaption);
@@ -5596,7 +6233,10 @@
           requestAnimationFrame(syncAllBandPads);
         }
       }).catch(() => {}).finally(() => {
-        if (normalizeRepeatedContent(document)) persist();
+        document.querySelectorAll('.shot').forEach((shot) => {
+          if (pruneEmptyCycleSlides(shot)) prunedCycle = true;
+        });
+        if (normalizeRepeatedContent(document) || prunedCycle) persist();
         requestAnimationFrame(syncAllBandPads);
       });
     }
