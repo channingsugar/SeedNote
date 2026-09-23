@@ -1244,10 +1244,7 @@ html:has(.report-chrome-hotspot:focus-visible) .report-chrome,
   z-index: 0;
   background:
     radial-gradient(circle at 12% 18%, color-mix(in srgb, var(--accent-soft) 80%, transparent), transparent 34%),
-    linear-gradient(135deg, color-mix(in srgb, var(--accent) 6%, transparent), transparent 48%),
-    linear-gradient(color-mix(in srgb, var(--accent) 4%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--accent) 4%, transparent) 1px, transparent 1px);
-  background-size: auto, auto, 42px 42px, 42px 42px;
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 6%, transparent), transparent 48%);
   pointer-events: none;
 }
 .chapter-cover > *,
@@ -1259,7 +1256,7 @@ html:has(.report-chrome-hotspot:focus-visible) .report-chrome,
   z-index: 0;
   pointer-events: none;
 }
-.chapter-cover:not([data-cover="image"]):not([data-cover="split"]) .chapter-cover__media {
+.chapter-cover:not([data-cover="image"]):not([data-cover="split"]):not(.has-fx) .chapter-cover__media {
   display: none;
 }
 .chapter-cover__media img {
@@ -1281,7 +1278,24 @@ html:has(.report-chrome-hotspot:focus-visible) .report-chrome,
   overflow: hidden;
   background: #050505;
 }
-.chapter-cover.has-fx .chapter-cover__media img { opacity: 0; }
+.chapter-cover.has-fx:not([data-cover="image"]):not([data-cover="split"]) .chapter-cover__media {
+  display: block;
+}
+.chapter-cover.has-fx:not([data-cover="image"]):not([data-cover="split"]) .chapter-cover__media img {
+  opacity: 0;
+}
+.chapter-cover.has-fx[data-cover="image"] .chapter-cover__media img,
+.chapter-cover.has-fx[data-cover="split"] .chapter-cover__media img {
+  opacity: 1;
+}
+.chapter-cover.has-fx:not([data-cover="split"]) .chapter-cover__no,
+.chapter-cover.has-fx:not([data-cover="split"]) .chapter-cover__kicker,
+.chapter-cover.has-fx:not([data-cover="split"]) .chapter-cover__title {
+  color: var(--inverse);
+}
+.chapter-cover.has-fx:not([data-cover="split"]) .chapter-cover__lead {
+  color: color-mix(in srgb, var(--inverse) 78%, transparent);
+}
 .chapter-cover.has-fx[data-cover="image"]::before {
   background: linear-gradient(105deg, color-mix(in srgb, #000 36%, transparent) 0%, transparent 48%);
   background-size: auto;
@@ -1482,10 +1496,7 @@ html:has(.report-chrome-hotspot:focus-visible) .report-chrome,
   z-index: 0;
   background:
     radial-gradient(circle at 12% 18%, color-mix(in srgb, var(--accent-soft) 80%, transparent), transparent 34%),
-    linear-gradient(135deg, color-mix(in srgb, var(--accent) 6%, transparent), transparent 48%),
-    linear-gradient(color-mix(in srgb, var(--accent) 4%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--accent) 4%, transparent) 1px, transparent 1px);
-  background-size: auto, auto, 42px 42px, 42px 42px;
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 6%, transparent), transparent 48%);
   pointer-events: none;
 }
 .chapter-cover[data-cover="split"] .chapter-cover__media {

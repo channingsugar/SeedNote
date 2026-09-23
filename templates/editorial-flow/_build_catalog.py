@@ -637,12 +637,16 @@ LIGHTBOX = """
 lib = "".join([
     lab("基础 token", tokens()),
     lab("导航栏", topbar()),
-    lab("章头", head("01 · 题域", "判断句写在这里：这一章要让读者先信什么。")),
+    lab("章头", head(
+        "01 · 题域",
+        "判断句写在这里：这一章要让读者先信什么。",
+        "待填。写清边界、这一节接下来用什么证据。",
+    ) + rule()),
     lab("章头 · 副标题", head(
         "小节标签",
         "需要副题时把解释放在判断句下面。",
         "副题补充口径、范围或为什么这样判断，不另起一章。",
-    )),
+    ) + rule()),
     lab("导语", '<div class="research-lead"><p>章头与证据之间的解释。写清边界、用户实际卡在哪几件事、这一章接下来用什么证据。不要把导语画进议题格、图文卡、公式或韦恩图。</p></div>'),
     lab("自定义文本", """<article class="finding">
         <h3>发现标题：既有“信息缺失”，更有“信息有误”</h3>
@@ -814,11 +818,11 @@ html = f"""<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>知识汇报模板 · 流式 v2</title>
   <link rel="stylesheet" href="design-system/components.css">
-  <link rel="stylesheet" href="assets/template.css?v=8">
-  <link rel="stylesheet" href="assets/flow.css?v=6">
+  <link rel="stylesheet" href="assets/template.css?v=9">
+  <link rel="stylesheet" href="assets/flow.css?v=7">
   <link rel="stylesheet" href="assets/source.css?v=21">
-  <link rel="stylesheet" href="assets/lib.css?v=47">
-  <link rel="stylesheet" href="assets/v2.css?v=12">
+  <link rel="stylesheet" href="assets/lib.css?v=54">
+  <link rel="stylesheet" href="assets/v2.css?v=15">
 </head>
 <body>
   <div class="theme-control" id="themeControl" aria-label="主题控制">
@@ -872,13 +876,14 @@ html = f"""<!doctype html>
           <footer class="report-notes">
             <h2>怎么用</h2>
             <ol>
-              <li>这是流式模板。壳是文档栏：report-shell.is-flow、吸顶导航栏 <code>.topbar</code>、flow-stack 上下叠。封面右键切版式：左齐 / 居中 / 配图 / 图文分栏（<code>data-cover</code>：省略、<code>center</code>、<code>image</code>、<code>split</code>）；配图封面可右键替换图片，也可勾选「动效背景」切换 Ribbon Field / Halftone Flow / Matrix Field / Stream Convergence。拖组件排序时封面不显示。</li>
-              <li>合并后的父组件：<code>.stat-card</code> / <code>.stat-grid</code> 数字信息（横排数字是同一父组件的紧凑排：<code>.stat-grid.is-compact</code>；右键勾选前缀 / 后缀 / 说明，列数 2–5）；<code>.info</code> 编号信息（布局：格子 A 左侧竖线 / 格子 B 四周框 <code>data-grid="b"</code> / 列表 A <code>stack</code> / 列表 B <code>row</code>；<code>data-pos</code> 顶部 / 左侧；<code>data-index</code>：数字 / <code>alpha</code> / <code>q</code> 问题 / <code>label</code> 标签 / <code>off</code> 隐藏，即原无编号；<code>.is-lg</code> / <code>data-no="lg"</code> 大编号；格子列数 2–5；勾选「背景」<code>data-bg</code> 后可设 <code>--info-bg</code>（默认纯色 <code>--tint-2</code>，不用渐变）；整组右键勾选「配图」，图在一组信息的左 / 右 <code>data-aside</code>；配图可换裁切 / 可滚动 / 宽图 / 海报，底部保留 figcaption。尺寸只拖配图外框（和图片组一样），图和说明在配图区域内上下左右居中，拖高时整组与左侧信息跟着变高、不裁切文字和说明）；<code>.point</code> 观点（<code>.is-soft</code> 浅底）；<code>.shot</code> 图（<code>data-kind</code>：photo / crop / scroll / wide / poster；右键新增一条，列数 1–5；尺寸拖高后行均分、铺满裁切且不超出容器）。</li>
+              <li>这是流式模板。壳是文档栏：report-shell.is-flow、吸顶导航栏 <code>.topbar</code>、flow-stack 上下叠。封面右键切版式：左齐 / 居中 / 配图 / 图文分栏（<code>data-cover</code>：省略、<code>center</code>、<code>image</code>、<code>split</code>）。配图和动效背景互不绑定；左齐 / 居中 / 分栏不要格子。动效背景只给封面。章头可勾选背景（<code>data-head-bg</code>：颜色 / 配图 / 动效）。拖组件排序时封面不显示。</li>
+              <li>编辑器（<code>editor/seed-edit.js</code>）：顶栏最右侧「演示 / 编辑」切换，演示态只留阅读与看图，顶栏不要「新增组件」。空白右键仍出编辑菜单，只有点菜单里的「新增组件」才打开右侧卡片面板。添加章头必须带上 <code>.sub</code> 导语（写在分割线上方）和强线。章头 / 小节标题 / 导语 / 来源 / 分割线 / 自定义文本不配图。章头可勾选「背景」（颜色 / 配图 / 动效），有背景时不显示紧跟的分割线，但章头里的 <code>.sub</code> 导语必须还在。「动效背景」只出现在封面，不要出现在章头或其他不支持的组件。封面左齐 / 居中 / 图文分栏不要格子；配图和动效背景互不绑定。图片 / 视频容器（含封面）右键可「移除当前素材」，轮播只移除当前张。图片右键勾选「点击轮播」（<code>data-cycle</code>）：缩略图 + 图1 / +，没图只留灰底；点 + 可多选加入；勾选后点击渐现切换，不打开大图。「替换」可多选：未开轮播会自动打开并加入所选图，已开则追加。本条排序不能拖出组件；蓝条跟空手停的空挡。换图按原文件写入 <code>lib/media/</code>，每张图单独命名。HTTP 打开以磁盘 HTML 为真相，打开不自动保存，也不要用 IndexedDB 的 markup / 尺寸套回没改过的模块。点 tab 滚到该枚章头，不要滚到整章。视频悬停出播放条。浅底观点单列左对齐。</li>
+              <li>合并后的父组件：<code>.stat-card</code> / <code>.stat-grid</code> 数字信息（横排数字是同一父组件的紧凑排：<code>.stat-grid.is-compact</code>；右键勾选前缀 / 后缀 / 说明，列数 2–5）；<code>.info</code> 编号信息（布局：格子 A 左侧竖线 / 格子 B 四周框 <code>data-grid="b"</code> / 列表 A <code>stack</code> / 列表 B <code>row</code>；<code>data-pos</code> 顶部 / 左侧；<code>data-index</code>：数字 / <code>alpha</code> / <code>q</code> 问题 / <code>label</code> 标签 / <code>off</code> 隐藏，即原无编号；<code>.is-lg</code> / <code>data-no="lg"</code> 大编号；格子列数 2–5；勾选「背景」<code>data-bg</code> 后可设 <code>--info-bg</code>（默认纯色 <code>--tint-2</code>，不用渐变）；整组右键勾选「配图」，图在一组信息的左 / 右 <code>data-aside</code>；配图可换裁切 / 可滚动 / 宽图 / 海报，底部保留 figcaption。尺寸只拖配图外框（和图片组一样），图和说明在配图区域内上下左右居中，拖高时整组与左侧信息跟着变高、不裁切文字和说明）；<code>.point</code> 观点（默认左标签右正文、正文左对齐；<code>.is-soft</code> 浅底单列左对齐）；<code>.shot</code> 图（<code>data-kind</code>：photo / crop / scroll / wide / poster；<code>data-cycle</code> 点击轮播；右键新增一条，列数 1–5；尺寸拖高后行均分、铺满裁切且不超出容器）。</li>
               <li>组件库必须带基础 token：间隔 <code>--s-in</code> / <code>--s-stack</code> / <code>--s-chapter</code>；字号 <code>--t-h1</code> / <code>--t-num</code> / <code>--t-no-lg</code> / <code>--t-body</code> / <code>--t-aux</code>；颜色 <code>--c-text</code> 档、<code>--c-line</code>、<code>--c-accent</code>、表数据栏 <code>--c-pos</code> / <code>--c-neg</code>；分割线 <code>.rule</code> / <code>.rule.is-soft</code>。</li>
               <li>仍独立：公式、议题格 <code>.pain-text-list</code> / <code>.pain-topic</code>、自定义文本 <code>.finding</code>、图文卡 <code>.transport-cards</code> / <code>.transport-card</code>、韦恩图、导语、来源、章头、分割线、导航栏 <code>.topbar</code>、折线图 <code>.rail-growth-chart</code>、四象限矩阵 <code>.ansoff-grid</code>、漏斗图 <code>.hotel-funnel-chart</code>、关系网络 <code>.hotel-city-network</code>、节点表 <code>.network-node-table</code>、排行榜 <code>.hotel-ranking-block</code>。关系网络和节点表是两个父组件，不要包在同一块里。</li>
               <li>同类块用父组件 + 变体，不要另起皮肤，也不要再收成 flow-block。</li>
-              <li>公式、韦恩图、提问、议题格、图文卡只保留内容。章头 <code>.slide-head</code>、分割线 <code>.rule</code>、导语 <code>.research-lead</code> 是独立组件，不要画进这些块。报告里章头下方仍必须紧跟强线，那是排版规则，不是组件自带的。编辑器排序 / 复制 / 删除章头时会带上紧跟的强线；独立分割线可靠近线条右键删除。</li>
-              <li>报告中每个主标题（<code>.slide-head</code>）下方必须紧跟一条可见的<strong>强线</strong> <code>.rule</code>，不得省略，不得用下一块顶线替代，CSS 不得把这条线 <code>display:none</code>。小节标题下不加线，只用间隔。其余块之间不加线，只靠间距。表 / list / 卡内部只用 1px 弱线。编号信息不超过 4 条用 <code>data-layout="cols"</code>（编号在上），5 条及以上才用 <code>stack</code>。</li>
+              <li>公式、韦恩图、提问、议题格、图文卡只保留内容。章头 <code>.slide-head</code>、分割线 <code>.rule</code>、独立导语块 <code>.research-lead</code> 是独立组件，不要画进这些块。章头自己的导语是标题下、分割线上方的 <code>.sub</code>。编辑器排序 / 复制章头时带上紧跟的强线；删除标题只删标题（含 <code>.sub</code>）和强线。独立分割线可靠近线条右键删除。</li>
+              <li>报告中每个主标题（<code>.slide-head</code>）必须带 <code>.sub</code> 导语，写在分割线上方，下方必须紧跟一条可见的<strong>强线</strong> <code>.rule</code>。添加章头不得只插标题和线。不得用下一块顶线替代强线，CSS 不得把这条线 <code>display:none</code>（章头勾选背景时除外，且不得藏 <code>.sub</code>）。小节标题下不加线，只用间隔。其余块之间不加线，只靠间距。表 / list / 卡内部只用 1px 弱线。编号信息不超过 4 条用 <code>data-layout="cols"</code>（编号在上），5 条及以上才用 <code>stack</code>。</li>
               <li>间距分三档。区内 <code>--s-in</code>（16，含章头→强线）；章内换排 <code>--s-stack</code>（40，含强线→第一块）；换章 <code>--s-chapter</code>（96）。来源贴在所属证据块下面，不要和换章同一档。</li>
               <li>格内条目留在该卡里。例如议题格的百分比、图文卡的属性行，不要抬成新的一排。</li>
               <li>来源写一次。源格没有口径句，就不要补。</li>
@@ -892,13 +897,13 @@ html = f"""<!doctype html>
     </div>
   </div>
 {LIGHTBOX}
-  <link rel="stylesheet" href="editor/seed-edit.css?v=52">
+  <link rel="stylesheet" href="editor/seed-edit.css?v=57">
   <script src="design-system/design-data.js"></script>
   <script src="design-system/theme-runtime.js"></script>
-  <script src="assets/cover-fx.js?v=3"></script>
-  <script src="editor/seed-edit.js?v=62"></script>
-  <script src="assets/template.js"></script>
-  <script src="assets/source.js?v=6"></script>
+  <script src="assets/cover-fx.js?v=4"></script>
+  <script src="editor/seed-edit.js?v=76"></script>
+  <script src="assets/template.js?v=6"></script>
+  <script src="assets/source.js?v=9"></script>
   <script src="assets/network.js?v=17"></script>
 </body>
 </html>

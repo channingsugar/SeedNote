@@ -79,6 +79,12 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def end_headers(self):
+        path = (self.path or "").split("?", 1)[0]
+        if "/lib/media/" in path:
+            self.send_header("Cache-Control", "no-store")
+        super().end_headers()
+
     def log_message(self, format, *args):
         sys.stderr.write("%s\n" % (format % args))
 

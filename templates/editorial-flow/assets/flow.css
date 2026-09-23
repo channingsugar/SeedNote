@@ -135,6 +135,7 @@ html:has(.report-shell.is-flow) .theme-control__hint { display: none; }
   flex-direction: column;
   height: auto;
   overflow: visible;
+  padding-bottom: 70vh;
 }
 
 .report-shell.is-flow .report-slide {

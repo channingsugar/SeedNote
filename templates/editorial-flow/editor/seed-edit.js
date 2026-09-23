@@ -228,10 +228,71 @@
       return frame.querySelector('img, video, svg');
     }
     const cover = node.closest?.('.chapter-cover');
-    if (cover && (cover.getAttribute('data-cover') === 'image' || cover.getAttribute('data-cover') === 'split')) {
-      return cover.querySelector('.chapter-cover__media img') || null;
+    if (cover) {
+      const media = cover.querySelector('.chapter-cover__media img, .chapter-cover__media video');
+      if (media && (
+        cover.getAttribute('data-cover') === 'image'
+        || cover.getAttribute('data-cover') === 'split'
+        || node.closest('.chapter-cover__media')
+      )) return media;
+    }
+    const head = node.closest?.('.slide-head');
+    if (head && head.getAttribute('data-head-bg') === 'image') {
+      return head.querySelector('.slide-head__media img, .slide-head__media video') || null;
     }
     return null;
+  };
+
+  const mediaSrcOf = (el) => {
+    if (!el) return '';
+    return el.getAttribute?.('src')
+      || el.getAttribute?.('poster')
+      || el.getAttribute?.('data-src')
+      || el.currentSrc
+      || '';
+  };
+
+  const mediaHasSrc = (el) => {
+    if (!el) return false;
+    if (el.matches?.('img, video, source') && mediaSrcOf(el)) return true;
+    const shot = el.closest?.('.shot');
+    if (shot) {
+      const on = shot.querySelector('.is-cycle-on') || shot.querySelector('img, video');
+      return !!mediaSrcOf(on);
+    }
+    return !!(el.querySelector?.('img[src], video[src], video[poster]'));
+  };
+
+  const clearCurrentMedia = (el) => {
+    const shot = el?.closest?.('.shot') || (el?.matches?.('.shot') ? el : null);
+    let node = (el?.matches?.('img, video') ? el : null)
+      || shot?.querySelector('.is-cycle-on')
+      || shot?.querySelector('img, video')
+      || (el?.matches?.('img, video') ? el : el?.querySelector?.('img, video'));
+    if (!node) return false;
+    if (shot && shotCycleOn(shot) && shotCycleSlides(shot).length > 1) {
+      removeShotCycleSlide(shot, node);
+      return true;
+    }
+    if (node.matches('video')) {
+      const img = document.createElement('img');
+      img.alt = '';
+      if (node.dataset.mediaId) img.dataset.mediaId = node.dataset.mediaId;
+      img.className = node.className.replace(/\bis-cycle-on\b/g, '').trim();
+      node.replaceWith(img);
+      node = img;
+    }
+    node.removeAttribute('src');
+    node.removeAttribute('poster');
+    node.removeAttribute('data-src');
+    node.removeAttribute('data-media-id');
+    node.classList.remove('is-cycle-broken', 'is-cycle-on', 'is-cycle-in');
+    const box = node.closest?.('.shot, [data-gallery]');
+    if (box) {
+      box.removeAttribute('data-lightbox-src');
+      box.removeAttribute('data-lightbox-alt');
+    }
+    return true;
   };
 
   const COMPONENT_SEL = [
@@ -1015,6 +1076,13 @@
         { id: 'split', label: '图文分栏' },
       ],
     },
+    {
+      group: 'head',
+      sel: '.slide-head',
+      checks: [
+        { id: 'bg', label: '背景' },
+      ],
+    },
   ];
 
   const specOf = (host) => VARIANT_SPECS.find((spec) => host?.matches?.(spec.sel)) || null;
@@ -1550,7 +1618,7 @@
     return out;
   };
   const writeCoverFx = (host, id, params) => {
-    if (!host?.matches?.('.chapter-cover, .shot')) return;
+    if (!host?.matches?.('.chapter-cover, .shot, .slide-head')) return;
     const spec = COVER_FX_SPECS().find((s) => s.id === id) || (!id ? null : COVER_FX_SPECS()[0]) || null;
     const prev = spec ? readCoverFxParams(host, spec) : {};
     [...host.attributes].forEach((attr) => {
@@ -1562,10 +1630,6 @@
       host.querySelector('.chapter-cover__fx')?.remove();
       return;
     }
-    if (host.matches('.chapter-cover')) {
-      const kind = coverKindOf(host);
-      if (kind !== 'image' && kind !== 'split') writeCoverKind(host, 'image');
-    }
     host.setAttribute('data-fx', spec.id);
     const next = { ...prev, ...(params || {}) };
     spec.params.forEach((p) => {
@@ -1573,6 +1637,72 @@
       host.setAttribute(`data-fx-${p.key}`, String(v == null ? p.def : v));
     });
     window.SeedCoverFx?.apply?.(host);
+  };
+
+  const HEAD_BG_COLOR = '#F3F1EC';
+  const headBgOn = (host) => !!host?.getAttribute?.('data-head-bg');
+  const headBgModeOf = (host) => {
+    const v = host?.getAttribute?.('data-head-bg') || '';
+    return v === 'image' || v === 'fx' ? v : (headBgOn(host) ? 'color' : '');
+  };
+  const headBgColorOf = (host) => host?.style?.getPropertyValue('--head-bg')?.trim() || '';
+  const ensureHeadSub = (host) => {
+    if (!host?.matches?.('.slide-head')) return null;
+    let sub = host.querySelector(':scope > .sub');
+    if (sub) return sub;
+    sub = document.createElement('p');
+    sub.className = 'sub';
+    sub.textContent = '待填。写清边界、这一节接下来用什么证据。';
+    host.append(sub);
+    return sub;
+  };
+  const ensureHeadMedia = (host) => {
+    let media = host.querySelector(':scope > .slide-head__media');
+    if (!media) {
+      media = document.createElement('div');
+      media.className = 'slide-head__media';
+      host.prepend(media);
+    }
+    if (!media.querySelector('img, video')) {
+      const img = document.createElement('img');
+      img.alt = '';
+      media.append(img);
+    }
+    return media;
+  };
+  const clearHeadFx = (host) => {
+    if (!host) return;
+    [...host.attributes].forEach((attr) => {
+      if (attr.name === 'data-fx' || attr.name.startsWith('data-fx-')) host.removeAttribute(attr.name);
+    });
+    host.classList.remove('has-fx');
+    window.SeedCoverFx?.stop?.(host);
+    host.querySelector('.chapter-cover__fx')?.remove();
+  };
+  const writeHeadBg = (host, on, mode, color) => {
+    if (!host?.matches?.('.slide-head')) return;
+    if (!on) {
+      host.removeAttribute('data-head-bg');
+      host.style.removeProperty('--head-bg');
+      clearHeadFx(host);
+      host.querySelector(':scope > .slide-head__media')?.remove();
+      return;
+    }
+    const next = (mode === 'image' || mode === 'fx' || mode === 'color')
+      ? mode
+      : (headBgModeOf(host) || 'color');
+    host.setAttribute('data-head-bg', next);
+    ensureHeadSub(host);
+    if (next === 'color') {
+      host.style.setProperty('--head-bg', color || headBgColorOf(host) || HEAD_BG_COLOR);
+      clearHeadFx(host);
+      host.querySelector(':scope > .slide-head__media')?.remove();
+      return;
+    }
+    host.style.removeProperty('--head-bg');
+    ensureHeadMedia(host);
+    if (next === 'fx') writeCoverFx(host, coverFxIdOf(host) || 'ribbon-field');
+    else clearHeadFx(host);
   };
 
   const shotCycleOn = (shot) => !!shot?.hasAttribute?.('data-cycle');
@@ -1585,13 +1715,10 @@
 
   const shotCycleSrcOf = (slide) => {
     if (!slide) return '';
-    return String(slide.currentSrc || slide.getAttribute?.('src') || slide.getAttribute?.('poster') || '').trim();
+    return String(slide.getAttribute?.('src') || slide.getAttribute?.('poster') || slide.currentSrc || '').trim();
   };
 
-  const shotCycleHasSrc = (slide) => {
-    const src = shotCycleSrcOf(slide);
-    return !!src && !slide.classList.contains('is-cycle-broken');
-  };
+  const shotCycleHasSrc = (slide) => !!shotCycleSrcOf(slide);
 
   const pruneEmptyCycleSlides = (shot) => {
     const slides = shotCycleSlides(shot);
@@ -1687,6 +1814,7 @@
       if (slide.dataset.seedCycleBound) return;
       slide.dataset.seedCycleBound = '1';
       slide.addEventListener('error', () => {
+        if (shotCycleHasSrc(slide)) return;
         slide.classList.add('is-cycle-broken');
         syncShotCycleOn(shot);
       });
@@ -1780,6 +1908,17 @@
       };
     }
     if (spec.group === 'cover') return { group: 'cover', kind: coverKindOf(host) };
+    if (spec.group === 'head') {
+      const specFx = COVER_FX_SPECS().find((s) => s.id === coverFxIdOf(host));
+      return {
+        group: 'head',
+        bg: headBgOn(host),
+        mode: headBgModeOf(host) || 'color',
+        color: headBgColorOf(host),
+        fx: coverFxIdOf(host),
+        fxParams: specFx ? readCoverFxParams(host, specFx) : {},
+      };
+    }
     return { group: spec.group };
   };
 
@@ -1841,7 +1980,14 @@
       if ('shotCols' in snap) writeShotCols(host, snap.shotCols || 1);
       return;
     }
-    if (snap.group === 'cover') writeCoverKind(host, snap.kind);
+    if (snap.group === 'cover') {
+      writeCoverKind(host, snap.kind);
+      return;
+    }
+    if (snap.group === 'head') {
+      writeHeadBg(host, !!snap.bg, snap.mode, snap.color);
+      if (snap.bg && snap.mode === 'fx') writeCoverFx(host, snap.fx || 'ribbon-field', snap.fxParams);
+    }
   };
 
   const applyVariantId = (host, id) => {
@@ -1900,10 +2046,12 @@
       host.setAttribute('data-kind', id === 'photo' ? 'crop' : id);
     } else if (spec.group === 'cover') {
       writeCoverKind(host, id);
-      if (coverFxOn(host)) {
-        if (id === 'image' || id === 'split') window.SeedCoverFx?.apply?.(host);
-        else window.SeedCoverFx?.stop?.(host);
-      }
+      if (coverFxOn(host)) window.SeedCoverFx?.apply?.(host);
+    } else if (spec.group === 'head') {
+      if (id === 'bg') writeHeadBg(host, !headBgOn(host));
+      else if (id === 'bg-color') writeHeadBg(host, true, 'color');
+      else if (id === 'bg-image') writeHeadBg(host, true, 'image');
+      else if (id === 'bg-fx') writeHeadBg(host, true, 'fx');
     }
     return { before, after: snapshotVariant(host) };
   };
@@ -1958,6 +2106,11 @@
       return ids;
     }
     if (snap.group === 'cover') return [snap.kind || 'left'];
+    if (snap.group === 'head') {
+      const ids = [];
+      if (snap.bg) ids.push('bg', `bg-${snap.mode || 'color'}`);
+      return ids;
+    }
     return [];
   };
 
@@ -2674,7 +2827,7 @@
   ];
 
   const BLOCK_TEMPLATES = [
-    { id: 'head', label: '章头', noMedia: true, html: '<header class="slide-head"><div class="kicker">题域</div><h2>判断句写在这里</h2></header><hr class="rule">' },
+    { id: 'head', label: '章头', noMedia: true, html: '<header class="slide-head"><div class="kicker">题域</div><h2>判断句写在这里</h2><p class="sub">待填。写清边界、这一节接下来用什么证据。</p></header><hr class="rule">' },
     { id: 'sub', label: '小节标题', noMedia: true, html: '<div class="subsection"><h3>小节标题</h3></div>' },
     { id: 'lead', label: '导语', noMedia: true, html: '<div class="research-lead"><p>待填。写清边界、这一节接下来用什么证据。</p></div>' },
     { id: 'finding', label: '自定义文本', noMedia: true, html: '<article class="finding"><p>待填。可改字号、颜色、加粗，可插入弱分割线。</p></article>' },
@@ -2819,18 +2972,13 @@
     if (!anchor) return null;
     const lab = anchor.closest('.flow-lab');
     if (lab) return { anchor, nodes: [lab] };
-    const start = anchor;
-    const parent = start.parentElement;
-    if (!parent) return { anchor, nodes: [start] };
-    const kids = [...parent.children];
-    const i = kids.indexOf(start);
-    if (i < 0) return { anchor, nodes: [start] };
-    const nodes = [];
-    for (let j = i; j < kids.length; j += 1) {
-      const el = kids[j];
-      if (j > i && isHeadingStart(el)) break;
-      nodes.push(el);
+    if (anchor.matches?.('.subsection')) {
+      const title = anchor.querySelector(':scope > h2, :scope > h3');
+      return { anchor: title || anchor, nodes: title ? [title] : [anchor] };
     }
+    const nodes = [anchor];
+    const next = anchor.nextElementSibling;
+    if (next?.matches?.('hr.rule:not(.is-soft)')) nodes.push(next);
     return { anchor, nodes };
   };
 
@@ -2965,6 +3113,7 @@
       '<div class="seed-edit-menu__main">',
       '<button type="button" data-edit-text-action>编辑</button>',
       '<button type="button" data-edit-image-action>替换</button>',
+      '<button type="button" data-edit-remove-media hidden>移除当前素材</button>',
       '<button type="button" data-edit-layout-action>尺寸</button>',
       '<div class="seed-edit-menu__rule" data-edit-struct-rule hidden></div>',
       '<button type="button" data-edit-add-item hidden>新增一条</button>',
@@ -2990,6 +3139,7 @@
     const menuAsideSide = menu.querySelector('[data-edit-aside-side]');
     const textBtn = menu.querySelector('[data-edit-text-action]');
     const imageBtn = menu.querySelector('[data-edit-image-action]');
+    const removeMediaBtn = menu.querySelector('[data-edit-remove-media]');
     const layoutBtn = menu.querySelector('[data-edit-layout-action]');
     const structRule = menu.querySelector('[data-edit-struct-rule]');
     const deleteRule = menu.querySelector('[data-edit-delete-rule]');
@@ -3158,7 +3308,7 @@
     };
 
     const paintVariantMenu = (host) => {
-      menu.querySelectorAll('[data-edit-variant], [data-edit-variant-rule], [data-edit-variant-label], [data-edit-variant-check], [data-edit-cols-stepper], [data-edit-bg-color], [data-edit-aside-check], [data-edit-cycle-check], [data-edit-cycle-slide], [data-edit-cycle-add], [data-edit-cycle-del]').forEach((el) => el.remove());
+      menu.querySelectorAll('[data-edit-variant], [data-edit-variant-rule], [data-edit-variant-label], [data-edit-variant-check], [data-edit-cols-stepper], [data-edit-bg-color], [data-edit-aside-check], [data-edit-cycle-check], [data-edit-cycle-slide], [data-edit-cycle-add], [data-edit-cycle-del], [data-edit-cover-fx], [data-edit-cover-fx-check], [data-edit-cover-fx-param], [data-edit-head-bg]').forEach((el) => el.remove());
       menuSide.replaceChildren();
       menuSide.hidden = true;
       menu.classList.remove('is-split');
@@ -3168,10 +3318,7 @@
       rule.className = 'seed-edit-menu__rule';
       rule.setAttribute('data-edit-variant-rule', '');
       menuMain.append(rule);
-      if (spec.group === 'shot') {
-        paintCoverFx(host, { side: !shotCycleOn(host) });
-        paintShotCycle(host);
-      }
+      if (spec.group === 'shot') paintShotCycle(host);
       const active = new Set(variantActiveIds(host));
       const appendLabel = (parent, title) => {
         const label = document.createElement('div');
@@ -3281,6 +3428,7 @@
         appendColsStepper(menuMain, colsRangeOf(spec, host));
       }
       if (spec.group === 'cover') paintCoverFx(host);
+      if (spec.group === 'head' && headBgOn(host)) paintHeadBg(host);
     };
 
     const recordShotCycle = (shot, fn) => {
@@ -3359,6 +3507,37 @@
           del.textContent = '×';
           row.append(del);
         }
+        if (src) {
+          const pop = document.createElement('span');
+          pop.className = 'seed-edit-cycle-pop';
+          pop.setAttribute('aria-hidden', 'true');
+          if (slide?.tagName === 'VIDEO') {
+            const big = document.createElement('video');
+            big.src = src;
+            big.muted = true;
+            big.playsInline = true;
+            big.preload = 'metadata';
+            pop.append(big);
+          } else {
+            const big = document.createElement('img');
+            big.src = src;
+            big.alt = '';
+            pop.append(big);
+          }
+          row.append(pop);
+          thumb.addEventListener('pointerenter', () => {
+            if (row.classList.contains('is-dragging')) return;
+            row.classList.add('is-preview');
+            row.classList.remove('is-pop-right', 'is-pop-up');
+            const box = pop.getBoundingClientRect();
+            row.classList.toggle('is-pop-up', box.bottom > window.innerHeight - 8);
+            if (box.left < 8) row.classList.add('is-pop-right');
+          });
+          thumb.addEventListener('pointerleave', () => row.classList.remove('is-preview'));
+        }
+        row.addEventListener('pointerdown', () => {
+          row.classList.remove('is-preview');
+        });
         row.addEventListener('dragstart', (event) => {
           if (event.target.closest('[data-edit-cycle-slide], [data-edit-cycle-del]')) {
             event.preventDefault();
@@ -3369,6 +3548,8 @@
           event.dataTransfer.effectAllowed = 'move';
           event.dataTransfer.setData('text/plain', String(i));
           row.classList.add('is-dragging');
+          row.classList.remove('is-preview');
+          row.querySelector('.seed-edit-cycle-pop')?.remove();
         });
         row.addEventListener('dragend', () => {
           clearCycleDrop();
@@ -3413,17 +3594,19 @@
     const paintCoverFx = (host, opts = {}) => {
       menu.querySelectorAll('[data-edit-cover-fx], [data-edit-cover-fx-check], [data-edit-cover-fx-param]').forEach((el) => el.remove());
       const fxOn = coverFxOn(host);
-      const check = document.createElement('label');
-      check.className = 'seed-edit-menu__check';
-      check.setAttribute('data-edit-cover-fx-check', '');
-      const title = document.createElement('span');
-      title.textContent = '动效背景';
-      const box = document.createElement('input');
-      box.type = 'checkbox';
-      box.dataset.editCoverFx = fxOn ? 'off' : 'on';
-      box.checked = fxOn;
-      check.append(title, box);
-      menuMain.append(check);
+      if (opts.check !== false) {
+        const check = document.createElement('label');
+        check.className = 'seed-edit-menu__check';
+        check.setAttribute('data-edit-cover-fx-check', '');
+        const title = document.createElement('span');
+        title.textContent = '动效背景';
+        const box = document.createElement('input');
+        box.type = 'checkbox';
+        box.dataset.editCoverFx = fxOn ? 'off' : 'on';
+        box.checked = fxOn;
+        check.append(title, box);
+        menuMain.append(check);
+      }
       if (!fxOn || opts.side === false) return;
       menuSide.classList.add('seed-edit-menu__fx');
       const head = document.createElement('div');
@@ -3466,6 +3649,49 @@
       });
       menuSide.hidden = false;
       menu.classList.add('is-split');
+    };
+
+    const paintHeadBg = (host) => {
+      menu.querySelectorAll('[data-edit-head-bg]').forEach((el) => el.remove());
+      const mode = headBgModeOf(host) || 'color';
+      const label = document.createElement('div');
+      label.className = 'seed-edit-menu__label';
+      label.setAttribute('data-edit-head-bg', '');
+      label.textContent = '背景';
+      menuSide.append(label);
+      [
+        { id: 'color', label: '颜色' },
+        { id: 'image', label: '配图' },
+        { id: 'fx', label: '动效' },
+      ].forEach((item) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.editHeadBg = item.id;
+        btn.textContent = item.label;
+        btn.classList.toggle('is-on', mode === item.id);
+        menuSide.append(btn);
+      });
+      if (mode === 'color') {
+        const row = document.createElement('label');
+        row.className = 'seed-edit-menu__row';
+        row.setAttribute('data-edit-head-bg', 'color');
+        const title = document.createElement('span');
+        title.className = 'seed-edit-menu__row-label';
+        title.textContent = '背景色';
+        const input = document.createElement('input');
+        input.type = 'color';
+        input.className = 'seed-edit-menu__swatch';
+        input.setAttribute('data-edit-head-bg-color', '');
+        const current = headBgColorOf(host);
+        input.value = /^#[0-9a-fA-F]{6}$/.test(current) ? current : HEAD_BG_COLOR;
+        row.append(title, input);
+        menuSide.append(row);
+      }
+      if (mode === 'fx') paintCoverFx(host, { check: false });
+      else {
+        menuSide.hidden = false;
+        menu.classList.add('is-split');
+      }
     };
 
     const paintAsideCheck = (aside) => {
@@ -3528,11 +3754,13 @@
       menuInsertAt = insertAt || null;
       textBtn.hidden = !menuText;
       imageBtn.hidden = !(menuMedia || isAsideFrame(menuResize));
+      removeMediaBtn.hidden = !(menuMedia && mediaHasSrc(menuMedia));
       layoutBtn.hidden = menuMedia?.closest?.('.chapter-cover') ? true : !(menuMedia || menuResize);
       const canAddItem = !!(menuItemHit?.host);
       const canDelItem = !!(menuItemHit?.item && menuItemHit.host && menuItemHit.host.querySelectorAll(menuItemHit.spec.item).length > 1);
       const canDelGroup = !!(menuHeading?.nodes?.length);
       const canDelBlock = !!(menuBlock && !canDelGroup);
+      delGroupBtn.textContent = menuHeading?.anchor?.closest?.('.flow-lab') ? '删除本组' : '删除标题';
       const canInsert = !!menuInsertAt;
       const canCopyBlock = !!(menuBlock && !menuInsertAt);
       const grid = menuGridHit;
@@ -3575,7 +3803,7 @@
       delGroupBtn.hidden = !canDelGroup;
       delBlockBtn.hidden = !canDelBlock;
       insertWrap.hidden = !canInsert;
-      const hasPrimary = !textBtn.hidden || !imageBtn.hidden || !layoutBtn.hidden;
+      const hasPrimary = !textBtn.hidden || !imageBtn.hidden || !removeMediaBtn.hidden || !layoutBtn.hidden;
       structRule.hidden = !(hasPrimary && (canAddItem || canAddRow || canAddCol || canCopyBlock || canInsert));
       paintVariantMenu(menuVariant);
       paintAsideCheck(menuAside);
@@ -3632,6 +3860,8 @@
       }
       persist._tail = (async () => {
         try {
+          window.SeedFlow?.syncChapterTabs?.();
+          window.SeedMedia?.bindShotVideos?.();
           do {
             persist._dirty = false;
             normalizeRepeatedContent(document);
@@ -3674,6 +3904,24 @@
 
     const isTransientSrc = (val) => !!val && (val.startsWith('blob:') || val.startsWith('data:'));
     const liveFiles = new WeakMap();
+    const prevMediaNames = new WeakMap();
+
+    const takenMediaName = (src) => {
+      const m = String(src || '').match(/(?:^|\/)lib\/media\/([^/?#]+)/);
+      return m ? m[1] : '';
+    };
+
+    const rememberPrevMediaName = (el) => {
+      if (!el) return;
+      const shot = el.closest?.('.shot, [data-gallery]');
+      const name = takenMediaName(el.getAttribute?.('src'))
+        || takenMediaName(el.getAttribute?.('poster'))
+        || takenMediaName(el.getAttribute?.('data-src'))
+        || takenMediaName(shot?.getAttribute?.('data-lightbox-src'))
+        || prevMediaNames.get(el)
+        || '';
+      if (name) prevMediaNames.set(el, name);
+    };
 
     const blobForNode = async (el) => {
       if (!el?.matches?.('img, video, source')) return null;
@@ -3696,24 +3944,35 @@
       const on = shot.querySelector(':scope > .shot__frame > .is-cycle-on, .shot__frame > .is-cycle-on')
         || shot.querySelector('.shot__frame img, .shot__frame video, img, video');
       const src = on?.getAttribute('src') || on?.getAttribute('poster') || '';
+      if (on?.tagName === 'VIDEO' || window.SeedMedia?.isVideoFile?.(src)) {
+        shot.removeAttribute('data-lightbox-src');
+        return;
+      }
       if (!src || isTransientSrc(src)) return;
       shot.setAttribute('data-lightbox-src', src);
       const alt = on.getAttribute?.('alt') || '';
       if (alt) shot.setAttribute('data-lightbox-alt', alt);
     };
 
-    const applyLocalMediaPath = (el, rel) => {
+    const applyLocalMediaPath = (el, rel, opts = {}) => {
       if (!el?.matches?.('img, video, source')) return;
-      if (el.hasAttribute('src') || el.matches?.('img, video, source')) el.setAttribute('src', rel);
-      if (el.hasAttribute('poster') && isTransientSrc(el.getAttribute('poster'))) el.setAttribute('poster', rel);
-      if (el.hasAttribute('data-src')) el.setAttribute('data-src', rel);
+      const clean = String(rel || '').replace(/[?#].*$/, '');
+      const src = opts.bust ? `${clean}?v=${Date.now().toString(36)}` : clean;
+      if (el.hasAttribute('src') || el.matches?.('img, video, source')) el.setAttribute('src', src);
+      if (el.hasAttribute('poster') && isTransientSrc(el.getAttribute('poster'))) el.setAttribute('poster', src);
+      if (el.hasAttribute('data-src')) el.setAttribute('data-src', src);
       const shot = el.closest?.('.shot, [data-gallery], .gallery-thumb');
       if (shot && (!shot.hasAttribute('data-cycle') || el.classList.contains('is-cycle-on'))) {
-        shot.setAttribute('data-lightbox-src', rel);
-        const alt = el.getAttribute('alt') || '';
-        if (alt) shot.setAttribute('data-lightbox-alt', alt);
+        if (el.matches?.('video') || /\.(mp4|webm|mov|m4v|ogv)$/i.test(clean)) {
+          shot.removeAttribute('data-lightbox-src');
+        } else {
+          shot.setAttribute('data-lightbox-src', clean);
+          const alt = el.getAttribute('alt') || '';
+          if (alt) shot.setAttribute('data-lightbox-alt', alt);
+        }
       }
-      if (el.closest?.('.gallery-thumb')) el.closest('.gallery-thumb').setAttribute('data-src', rel);
+      if (el.closest?.('.gallery-thumb')) el.closest('.gallery-thumb').setAttribute('data-src', clean);
+      if (clean) prevMediaNames.set(el, takenMediaName(clean));
     };
 
     const collectFolderPayload = async () => {
@@ -3721,34 +3980,30 @@
       const rewrites = [];
       const mediaSel = 'img, video, source, [data-src]';
       const liveAll = [...document.querySelectorAll(mediaSel)];
+      const root = document.documentElement.cloneNode(true);
+      const cloneAll = [...root.querySelectorAll(mediaSel)];
       const nodes = liveAll.filter((el) => isContentMedia(el));
       const usedNames = new Set();
-      const takenName = (src) => {
-        const m = String(src || '').match(/(?:^|\/)lib\/media\/([^/?#]+)/);
-        return m ? m[1] : '';
-      };
+      const reserve = (name) => { if (name) usedNames.add(name); };
       liveAll.forEach((el) => {
         const src = el.getAttribute('src') || el.getAttribute('poster') || el.getAttribute('data-src') || '';
-        if (isTransientSrc(src)) return;
-        const name = takenName(src);
-        if (name) usedNames.add(name);
+        if (!isTransientSrc(src)) reserve(takenMediaName(src));
+        reserve(prevMediaNames.get(el));
+        reserve(takenMediaName(el.closest?.('.shot, [data-gallery]')?.getAttribute('data-lightbox-src')));
       });
       const uniqueName = (key, file) => {
         const ext = extOfFile(file);
-        let name = mediaFileName(key, file);
-        if (!usedNames.has(name) && !media[name]) {
-          usedNames.add(name);
-          return name;
-        }
-        const stem = name.slice(0, -(ext.length + 1));
+        const stamp = Date.now().toString(36);
+        const base = mediaFileName(key, file);
+        const stem = base.slice(0, -(ext.length + 1));
+        let name = `${stem}-${stamp}.${ext}`;
         let i = 2;
-        let next = `${stem}-${i}.${ext}`;
-        while (usedNames.has(next) || media[next]) {
+        while (usedNames.has(name) || media[name]) {
+          name = `${stem}-${stamp}-${i}.${ext}`;
           i += 1;
-          next = `${stem}-${i}.${ext}`;
         }
-        usedNames.add(next);
-        return next;
+        usedNames.add(name);
+        return name;
       };
       for (const el of nodes) {
         if (el.matches?.('img, video')) ensureMediaId(el);
@@ -3763,11 +4018,18 @@
         rewrites.push({ el, rel: `lib/media/${name}` });
       }
 
-      const root = document.documentElement.cloneNode(true);
-      const cloneAll = [...root.querySelectorAll(mediaSel)];
       rewrites.forEach(({ el, rel }) => {
-        const idx = liveAll.indexOf(el);
-        if (idx >= 0 && cloneAll[idx]) applyLocalMediaPath(cloneAll[idx], rel);
+        const mid = el.dataset.mediaId;
+        let target = null;
+        if (mid) {
+          const hits = [...root.querySelectorAll(`[data-media-id="${CSS.escape(mid)}"]`)];
+          if (hits.length === 1) target = hits[0];
+        }
+        if (!target) {
+          const idx = liveAll.indexOf(el);
+          target = idx >= 0 ? cloneAll[idx] : null;
+        }
+        if (target) applyLocalMediaPath(target, rel);
       });
       cloneAll.forEach((el) => {
         const shot = el.closest?.('.shot, [data-gallery]');
@@ -3780,13 +4042,45 @@
       root.querySelectorAll('[contenteditable]').forEach((node) => node.removeAttribute('contenteditable'));
       root.removeAttribute('data-edit-key');
       root.removeAttribute('data-edit-text');
-      root.querySelectorAll('[data-edit-key], [data-edit-text], [data-seed-cycle-bound]').forEach((node) => {
+      root.querySelectorAll('[data-edit-key], [data-edit-text], [data-seed-cycle-bound], [data-seed-video-hover]').forEach((node) => {
         node.removeAttribute('data-edit-key');
         node.removeAttribute('data-edit-text');
         node.removeAttribute('data-seed-cycle-bound');
+        node.removeAttribute('data-seed-video-hover');
+      });
+      root.querySelectorAll('.is-seed-hover-block, .is-seed-hover-item').forEach((node) => {
+        node.classList.remove('is-seed-hover-block', 'is-seed-hover-item');
       });
       root.querySelectorAll('[spellcheck]').forEach((node) => node.removeAttribute('spellcheck'));
       root.querySelectorAll('link[href^="chrome-extension:"], link[href^="moz-extension:"], script[src^="chrome-extension:"], script[src^="moz-extension:"]').forEach((node) => node.remove());
+      root.querySelectorAll('.report-edit-menu, .report-edit-done, input[type="file"]').forEach((node) => node.remove());
+      const lbImg = root.querySelector('#mediaLightboxImage');
+      if (lbImg) {
+        lbImg.removeAttribute('src');
+        lbImg.removeAttribute('style');
+        lbImg.removeAttribute('data-media-id');
+        lbImg.alt = '';
+      }
+      root.querySelectorAll('img, video, source').forEach((el) => {
+        el.removeAttribute('draggable');
+        el.classList.remove('is-cycle-broken', 'is-cycle-in');
+        ['src', 'poster', 'data-src'].forEach((attr) => {
+          const val = el.getAttribute(attr) || '';
+          if (!val || isTransientSrc(val)) return;
+          const clean = val.replace(/[?#].*$/, '');
+          if (clean !== val) el.setAttribute(attr, clean);
+        });
+      });
+      root.querySelectorAll('[data-lightbox-src]').forEach((el) => {
+        const val = el.getAttribute('data-lightbox-src') || '';
+        const clean = val.replace(/[?#].*$/, '');
+        const on = el.querySelector('.is-cycle-on, .shot__frame > video, .shot__frame > img, video, img');
+        if (on?.tagName === 'VIDEO' || window.SeedMedia?.isVideoFile?.(clean)) {
+          el.removeAttribute('data-lightbox-src');
+          return;
+        }
+        if (clean && clean !== val) el.setAttribute('data-lightbox-src', clean);
+      });
       root.removeAttribute('data-media-switch-bound');
       if (!root.className) root.removeAttribute('class');
       return { html: `<!doctype html>\n${root.outerHTML}`, media, rewrites };
@@ -3829,7 +4123,7 @@
       const ok = await writeViaPost(payload).catch(() => false)
         || await writeViaDirectory(payload).catch(() => false);
       if (ok) {
-        payload.rewrites.forEach(({ el, rel }) => applyLocalMediaPath(el, rel));
+        payload.rewrites.forEach(({ el, rel }) => applyLocalMediaPath(el, rel, { bust: true }));
         payload.rewrites.forEach(({ el }) => {
           const shot = el.closest?.('.shot, [data-gallery]');
           if (shot) syncShotLightbox(shot);
@@ -3976,7 +4270,12 @@
     };
 
     const resetClonedItem = (node, spec, host) => {
-      node.querySelectorAll('[data-edit-key]').forEach((el) => el.removeAttribute('data-edit-key'));
+      node.removeAttribute('data-edit-key');
+      node.removeAttribute('data-media-id');
+      node.querySelectorAll('[data-edit-key], [data-media-id]').forEach((el) => {
+        el.removeAttribute('data-edit-key');
+        el.removeAttribute('data-media-id');
+      });
       node.querySelectorAll('.comp-media').forEach((el) => el.remove());
       node.removeAttribute('data-aside');
       node.querySelectorAll('[data-aside]').forEach((el) => el.removeAttribute('data-aside'));
@@ -4041,6 +4340,15 @@
         if (title) title.textContent = '指标名称';
         if (num) num.textContent = '0';
       } else if (spec.host === '.shot-grid') {
+        node.removeAttribute('data-cycle');
+        node.removeAttribute('data-lightbox-src');
+        node.removeAttribute('data-lightbox-alt');
+        const frame = node.querySelector('.shot__frame');
+        if (frame) {
+          const img = document.createElement('img');
+          img.alt = '';
+          frame.replaceChildren(img);
+        }
         const title = node.querySelector('figcaption b');
         const cap = node.querySelector('figcaption span');
         if (title) title.textContent = '图片标题';
@@ -4621,20 +4929,26 @@
       return n + kids.filter((kid) => !!(el.compareDocumentPosition(kid) & Node.DOCUMENT_POSITION_PRECEDING)).length;
     };
 
-    const viewportMidY = () => {
-      const topbar = document.querySelector('.report-shell.is-flow > .topbar, .topbar');
-      const topEdge = topbar ? topbar.getBoundingClientRect().bottom : 0;
-      const trashTop = trash.hidden ? window.innerHeight : trash.getBoundingClientRect().top;
-      return (topEdge + Math.min(window.innerHeight, trashTop)) / 2;
+    const scrollingRoot = () => document.scrollingElement || document.documentElement;
+
+    const keepViewport = (holdY, node) => {
+      if (holdY == null || !node?.isConnected) return;
+      const dy = node.getBoundingClientRect().top - holdY;
+      if (Math.abs(dy) < 1) return;
+      const root = scrollingRoot();
+      root.scrollTop = Math.max(0, root.scrollTop + dy);
     };
 
-    const centerDrop = () => {
-      if (drop.hidden || !drop.parentNode) return;
-      const box = drop.getBoundingClientRect();
-      const dy = (box.top + box.height / 2) - viewportMidY();
-      if (Math.abs(dy) < 1) return;
-      const root = document.scrollingElement || document.documentElement;
-      root.scrollTop = Math.max(0, root.scrollTop + dy);
+    const keepViewportSoon = (holdY, node) => {
+      keepViewport(holdY, node);
+      requestAnimationFrame(() => keepViewport(holdY, node));
+    };
+
+    const revealSorted = (node) => {
+      if (!node?.isConnected) return;
+      requestAnimationFrame(() => {
+        node.scrollIntoView({ block: 'center', behavior: 'smooth', inline: 'nearest' });
+      });
     };
 
     const applyInsertPoint = (el, mode, spec, point) => {
@@ -4655,6 +4969,7 @@
       const clusterLast = cluster[cluster.length - 1];
       const fromBefore = clusterLast.nextSibling;
       const spec = mode === 'item' ? itemSpecOf(el) : null;
+      const holdStartY = el.getBoundingClientRect().top;
       if (mode === 'item') enterItemSort(spec, el);
       else enterBlockSort();
       cluster.forEach((node) => node.classList.add('is-seed-drag'));
@@ -4673,16 +4988,16 @@
       fromParent.insertBefore(drop, el);
       drop.hidden = false;
       markDropHost(fromParent, mode, spec);
+      keepViewportSoon(holdStartY, drop);
       let appliedIndex = originInsertIndex(el, fromParent, points());
       const EDGE = 56;
-      const ARM = 12;
+      const ARM = 24;
       const startX = event.clientX;
       const startY = event.clientY;
       let lastX = event.clientX;
       let lastY = event.clientY;
       let armed = false;
       let edgeRaf = 0;
-      let lastEdgeAt = 0;
       const overTrash = (x, y) => {
         const box = trash.getBoundingClientRect();
         return y >= box.top && x >= 0 && x <= window.innerWidth;
@@ -4714,26 +5029,35 @@
         });
         const { kids, asideMedia } = sortKidsOf(el, parent);
         const flow = flowAxisOf(parent, kids);
-        let before = asideMedia || null;
-        if (kids.length) {
-          let nearest = kids[0];
-          let nearestDist = Infinity;
-          kids.forEach((kid) => {
-            const d = distToBox(x, y, kid.getBoundingClientRect());
-            if (d < nearestDist) {
-              nearestDist = d;
-              nearest = kid;
-            }
-          });
-          const box = nearest.getBoundingClientRect();
-          const after = flow === 'x' ? x > box.left + box.width / 2 : y > box.top + box.height / 2;
-          if (after) {
-            const next = kids[kids.indexOf(nearest) + 1];
-            before = next || asideMedia || null;
-          } else {
-            before = nearest;
+        const coord = flow === 'x' ? x : y;
+        const shell = (dropHostShell(parent, mode, spec) || parent).getBoundingClientRect();
+        const start = flow === 'x' ? shell.left : shell.top;
+        const end = flow === 'x' ? shell.right : shell.bottom;
+        const mids = kids.map((kid) => {
+          const box = kid.getBoundingClientRect();
+          return flow === 'x' ? (box.left + box.right) / 2 : (box.top + box.bottom) / 2;
+        });
+        const edges = [start, ...mids, end];
+        let hit = kids.length;
+        for (let i = 0; i < edges.length - 1; i += 1) {
+          if (coord < edges[i + 1]) {
+            hit = i;
+            break;
           }
         }
+        const gapOf = (point) => {
+          if (!point || point.parent !== parent) return -1;
+          if (point.before && kids.includes(point.before)) return kids.indexOf(point.before);
+          return kids.length;
+        };
+        const sticky = 40;
+        const curGap = gapOf(list[appliedIndex]);
+        if (curGap >= 0) {
+          const lo = (edges[curGap] ?? start) - sticky;
+          const hi = (edges[curGap + 1] ?? end) + sticky;
+          if (coord >= lo && coord <= hi) return appliedIndex;
+        }
+        const before = hit < kids.length ? kids[hit] : (asideMedia || null);
         const idx = list.findIndex((point) => point.parent === parent && point.before === before);
         return idx >= 0 ? idx : appliedIndex;
       };
@@ -4744,7 +5068,6 @@
         if (next === appliedIndex && drop.parentNode) return false;
         appliedIndex = next;
         applyInsertPoint(el, mode, spec, list[next]);
-        centerDrop();
         return true;
       };
       const edgeDir = () => {
@@ -4764,7 +5087,6 @@
         if (!sorting) return;
         const dir = (!armed || overTrash(lastX, lastY)) ? 0 : edgeDir();
         if (dir) {
-          const now = performance.now();
           const topbar = document.querySelector('.report-shell.is-flow > .topbar, .topbar');
           const topEdge = topbar ? topbar.getBoundingClientRect().bottom : 0;
           const trashTop = trash.hidden ? window.innerHeight : trash.getBoundingClientRect().top;
@@ -4773,11 +5095,11 @@
             : (dir < 0
               ? (lastY <= topEdge ? 1 : 1 - (lastY - topEdge) / EDGE)
               : 1 - (trashTop - lastY) / EDGE);
-          const interval = 170 - Math.max(0, Math.min(1, t)) * 100;
-          if (now - lastEdgeAt >= interval) {
-            lastEdgeAt = now;
-            moveToIndex(appliedIndex + dir);
-          }
+          const speed = 2 + Math.max(0, Math.min(1, t)) * 4;
+          const root = document.scrollingElement || document.documentElement;
+          if (axis === 'x') root.scrollLeft = Math.max(0, root.scrollLeft + dir * speed);
+          else root.scrollTop = Math.max(0, root.scrollTop + dir * speed);
+          moveToIndex(insertIndexAtPointer(lastX, lastY));
         }
         edgeRaf = requestAnimationFrame(applyEdgeStep);
       };
@@ -4824,11 +5146,17 @@
         const toParent = el.parentElement;
         const toBefore = clusterLast.nextSibling;
         const moved = fromParent !== toParent || fromBefore !== toBefore;
+        cluster.forEach((node) => node.classList.remove('is-seed-drag'));
+        const holdEndY = el.getBoundingClientRect().top;
         clearSortAttrs();
+        keepViewport(holdEndY, el);
         if (moved) {
           syncHost(fromParent);
           if (toParent !== fromParent) syncHost(toParent);
           recordMove(cluster, fromParent, fromBefore, toParent, toBefore);
+          revealSorted(el);
+        } else {
+          keepViewportSoon(holdEndY, el);
         }
       };
       document.addEventListener('pointermove', onMove);
@@ -5125,6 +5453,7 @@
 
       const swap = (next) => {
         next.dataset.editKey = node.dataset.editKey || el?.dataset?.editKey || '';
+        if (node.dataset.mediaId) next.dataset.mediaId = node.dataset.mediaId;
         if (node.classList.contains('is-cycle-on')) next.classList.add('is-cycle-on');
         node.replaceWith(next);
         return next;
@@ -5133,6 +5462,10 @@
       const stampShot = (media) => {
         const shot = media.closest?.('.shot, [data-gallery]');
         if (!shot) return;
+        if (media.tagName === 'VIDEO' || isVideo) {
+          shot.removeAttribute('data-lightbox-src');
+          return;
+        }
         if (shot.hasAttribute('data-cycle') && !media.classList.contains('is-cycle-on')) return;
         shot.setAttribute('data-lightbox-src', url);
         const alt = media.getAttribute?.('alt') || file?.name || '';
@@ -5144,6 +5477,7 @@
         const shot = media?.closest?.('.shot');
         if (shot && shotCycleOn(shot)) syncShotCycleOn(shot, media);
         stampShot(media);
+        if (media?.tagName === 'VIDEO') window.SeedMedia?.bindShotVideos?.(shot || document);
         return media;
       };
 
@@ -5153,24 +5487,34 @@
             source.src = url;
           });
           node.src = url;
+          node.removeAttribute('poster');
           node.load();
           return finish(node);
         }
         if (isImage) {
-          node.poster = url;
-          return finish(node);
+          const img = document.createElement('img');
+          img.src = url;
+          if (file?.name) img.alt = file.name;
+          else if (node.getAttribute('alt')) img.alt = node.getAttribute('alt');
+          img.style.cssText = node.getAttribute('style') || '';
+          img.className = node.className;
+          const next = swap(img);
+          return finish(next);
         }
       }
 
       if (tag === 'img') {
         if (isImage) {
-          node.src = url;
-          node.setAttribute('src', url);
-          if (file?.name) node.setAttribute('alt', file.name);
-          if (node.hasAttribute('data-src')) node.setAttribute('data-src', url);
-          const thumb = node.closest('.gallery-thumb');
-          if (thumb) thumb.setAttribute('data-src', url);
-          return finish(node);
+          const img = document.createElement('img');
+          img.src = url;
+          if (file?.name) img.alt = file.name;
+          else if (node.getAttribute('alt')) img.alt = node.getAttribute('alt');
+          img.style.cssText = node.getAttribute('style') || '';
+          img.className = node.className;
+          const next = swap(img);
+          const prev = prevMediaNames.get(node);
+          if (prev) prevMediaNames.set(next, prev);
+          return finish(next);
         }
         if (isVideo) {
           const video = document.createElement('video');
@@ -5268,6 +5612,9 @@
 
     const applyPickedFile = async (node, file) => {
       if (!node || !file) return node;
+      rememberPrevMediaName(node);
+      node.removeAttribute('data-media-id');
+      node.removeAttribute('data-edit-key');
       const key = ensureKey(node, 'media');
       if (!(key in originals.media)) originals.media[key] = captureMediaSnap(node);
       const prevUrl = objectUrls.get(key);
@@ -5319,37 +5666,39 @@
         };
         const replaceOne = async (node, file) => {
           if (!node || !file) return;
-          if (!node.dataset.editKey && key) node.dataset.editKey = key;
-          const nodeKey = ensureKey(node, 'media');
-          const beforeBlob = await idbGet('blobs', `${slug}::${nodeKey}`).catch(() => null);
+          const beforeKey = node.dataset.editKey || '';
+          const beforeBlob = beforeKey ? await idbGet('blobs', `${slug}::${beforeKey}`).catch(() => null) : null;
           const beforeSnap = captureMediaSnap(node);
-          const beforeRec = state.media[nodeKey] ? { ...state.media[nodeKey] } : null;
-          await applyPickedFile(node, file);
-          const afterRec = state.media[nodeKey] ? { ...state.media[nodeKey] } : null;
+          const beforeRec = beforeKey && state.media[beforeKey] ? { ...state.media[beforeKey] } : null;
+          const applied = await applyPickedFile(node, file);
+          const afterKey = applied?.dataset?.editKey || '';
+          const afterRec = afterKey && state.media[afterKey] ? { ...state.media[afterKey] } : null;
           record({
             undo: async () => {
-              const cur = ensureMediaEl(nodeByKey(nodeKey));
+              const cur = (applied?.isConnected && applied)
+                || (afterKey && nodeByKey(afterKey))
+                || ensureMediaEl(node);
               if (!cur) return;
               if (beforeBlob instanceof Blob) {
-                await idbSet('blobs', `${slug}::${nodeKey}`, beforeBlob).catch(() => {});
+                if (beforeKey) await idbSet('blobs', `${slug}::${beforeKey}`, beforeBlob).catch(() => {});
                 restoreMediaSnap(cur, beforeSnap, beforeBlob);
-                state.media[nodeKey] = beforeRec;
+                if (beforeKey) {
+                  cur.dataset.editKey = beforeKey;
+                  state.media[beforeKey] = beforeRec;
+                }
                 return;
               }
-              restoreMediaSnap(cur, originals.media[nodeKey] || beforeSnap, null);
-              if (beforeRec) state.media[nodeKey] = beforeRec;
-              else delete state.media[nodeKey];
+              restoreMediaSnap(cur, (beforeKey && originals.media[beforeKey]) || beforeSnap, null);
+              if (beforeKey && beforeRec) state.media[beforeKey] = beforeRec;
+              else if (beforeKey) delete state.media[beforeKey];
             },
             redo: async () => {
-              const cur = ensureMediaEl(nodeByKey(nodeKey));
+              const cur = (applied?.isConnected && applied)
+                || (afterKey && nodeByKey(afterKey))
+                || ensureMediaEl(node);
               if (!cur) return;
-              await idbSet('blobs', `${slug}::${nodeKey}`, file).catch(() => {});
-              const nextUrl = URL.createObjectURL(file);
-              const old = objectUrls.get(nodeKey);
-              if (old) URL.revokeObjectURL(old);
-              objectUrls.set(nodeKey, nextUrl);
-              applyMediaFile(cur, file, nextUrl);
-              state.media[nodeKey] = afterRec;
+              await applyPickedFile(cur, file);
+              if (afterKey && afterRec) state.media[afterKey] = afterRec;
             },
           });
         };
@@ -5476,7 +5825,7 @@
     };
     const restoreCoverFx = (host, snap) => {
       if (!host) return;
-      if (snap?.kind) writeCoverKind(host, snap.kind);
+      if (snap?.kind && host.matches?.('.chapter-cover')) writeCoverKind(host, snap.kind);
       writeCoverFx(host, snap?.id || '', snap?.params);
     };
     const mutateCoverFx = (host, fn) => {
@@ -5613,7 +5962,8 @@
     bindResizeHandle(handleH, 'y');
 
     const applyStateToDom = async () => {
-      if (state.markup) {
+      const trustDisk = !isCatalog && location.protocol !== 'file:';
+      if (state.markup && !trustDisk) {
         const root = markupRootOf();
         if (root) {
           root.innerHTML = state.markup;
@@ -5649,7 +5999,7 @@
         let node = live || (restoredMarkup ? null : fromPath(path));
         if (!node || isPageRoot(node) || isChrome(node) || isBrandMedia(node)) continue;
         node.dataset.editKey = key;
-        if (rec.layout) writeLayout(resizeBoxOf(node) || node, rec.layout);
+        if (rec.layout && !trustDisk) writeLayout(resizeBoxOf(node) || node, rec.layout);
         if (!node.matches?.('img, video, source')) continue;
         const current = node.getAttribute('src') || node.getAttribute('poster') || '';
         if (current && !isTransientSrc(current)) continue;
@@ -5695,12 +6045,13 @@
       const stack = nearestStack(node, event.clientY);
       const insertAt = blank && stack ? insertPointFromY(stack, event.clientY) : null;
       const gridHit = insertAt || ruleHit ? null : gridHitOf(node);
+      const keepMedia = !!(inAsideShot || both || !text || node.closest?.('.slide-head[data-head-bg="image"], .chapter-cover[data-cover="image"], .chapter-cover[data-cover="split"], .shot, .chapter-cover__media'));
       if (!text && !media && !variant && !resize && !heading && !itemHit && !insertAt && !block && !aside && !gridHit) return;
       event.preventDefault();
       event.stopPropagation();
       showMenu(event, {
         text: insertAt ? null : text,
-        media: insertAt ? null : (inAsideShot || both || !text ? media : null),
+        media: insertAt ? null : (keepMedia ? media : null),
         variant: insertAt ? null : variant,
         resize: insertAt || media ? null : resize,
         heading: insertAt ? null : heading,
@@ -5830,9 +6181,39 @@
           return;
         }
       }
+      const headBgBtn = event.target.closest('button[data-edit-head-bg]');
+      if (headBgBtn && menuVariant) {
+        event.preventDefault();
+        event.stopPropagation();
+        const mode = headBgBtn.dataset.editHeadBg;
+        applyVariant(menuVariant, `bg-${mode}`);
+        refreshOpenMenu();
+        return;
+      }
       if (event.target.closest('[data-edit-text-action]') && menuText) startTextEdit(menuText);
       if (event.target.closest('[data-edit-image-action]') && (menuMedia || menuResize)) {
         pickMedia(menuMedia || menuResize);
+        hideMenu();
+        return;
+      }
+      if (event.target.closest('[data-edit-remove-media]') && menuMedia) {
+        const target = menuMedia;
+        const shot = target.closest?.('.shot');
+        const before = shot ? snapShotCycle(shot) : captureMediaSnap(target);
+        if (clearCurrentMedia(target)) {
+          const after = shot ? snapShotCycle(shot) : captureMediaSnap(shot?.querySelector('img, video') || target);
+          record({
+            undo: () => {
+              if (shot) restoreShotCycle(shot, before);
+              else restoreMediaSnap(target, before);
+            },
+            redo: () => {
+              if (shot) restoreShotCycle(shot, after);
+              else clearCurrentMedia(target);
+            },
+          });
+          persist();
+        }
         hideMenu();
         return;
       }
@@ -5861,6 +6242,8 @@
     menu.addEventListener('input', (event) => {
       const color = event.target.closest('[data-edit-bg-color-input]');
       if (color && menuVariant) writeInfoBg(menuVariant, true, color.value);
+      const headColor = event.target.closest('[data-edit-head-bg-color]');
+      if (headColor && menuVariant) writeHeadBg(menuVariant, true, 'color', headColor.value);
       const range = event.target.closest('input[data-edit-cover-fx-param]');
       if (range && menuVariant) {
         const key = range.dataset.editCoverFxParam;
@@ -5872,7 +6255,7 @@
       }
     });
     menu.addEventListener('change', (event) => {
-      const color = event.target.closest('[data-edit-bg-color-input]');
+      const color = event.target.closest('[data-edit-bg-color-input], [data-edit-head-bg-color]');
       if (color && menuVariant) {
         const host = menuVariant;
         const key = ensureKey(host, 'variant');
@@ -5897,6 +6280,9 @@
       }
     });
 
+    doneBtn.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') event.preventDefault();
+    });
     doneBtn.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -6116,10 +6502,31 @@
         document.execCommand('bold');
         return;
       }
-      if (event.key === 'Enter' && !event.shiftKey && !activeText.matches?.('.finding')) {
+      if (event.key === 'Enter' && (event.target === svgInput || svgInput?.contains?.(event.target) || event.target === doneBtn)) {
         event.preventDefault();
-        stopTextEdit({ commit: true });
+        event.stopPropagation();
       }
+    });
+
+    document.addEventListener('paste', (event) => {
+      if (presenting) return;
+      const inSvg = svgInput && (event.target === svgInput || svgInput.contains(event.target));
+      const inText = activeText && (event.target === activeText || activeText.contains(event.target));
+      if (!inSvg && !inText) return;
+      const text = event.clipboardData?.getData('text/plain');
+      if (text == null) return;
+      event.preventDefault();
+      if (inSvg) {
+        const input = svgInput;
+        const start = input.selectionStart ?? input.value.length;
+        const end = input.selectionEnd ?? start;
+        input.value = `${input.value.slice(0, start)}${text}${input.value.slice(end)}`;
+        const caret = start + text.length;
+        input.setSelectionRange(caret, caret);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        return;
+      }
+      document.execCommand('insertText', false, text);
     });
 
     document.addEventListener('focusin', (event) => {
@@ -6148,6 +6555,7 @@
         if (hex && swatch) swatch.value = hex;
         if (hex && !colorPick.hidden) colorPick.value = hex;
       }
+      if (event.target.closest?.('.slide-head .kicker')) window.SeedFlow?.syncChapterTabs?.();
     });
 
     document.addEventListener('change', (event) => {
@@ -6234,9 +6642,10 @@
         }
       }).catch(() => {}).finally(() => {
         document.querySelectorAll('.shot').forEach((shot) => {
-          if (pruneEmptyCycleSlides(shot)) prunedCycle = true;
+          pruneEmptyCycleSlides(shot);
+          if (shotCycleOn(shot)) syncShotCycleOn(shot);
         });
-        if (normalizeRepeatedContent(document) || prunedCycle) persist();
+        normalizeRepeatedContent(document);
         requestAnimationFrame(syncAllBandPads);
       });
     }

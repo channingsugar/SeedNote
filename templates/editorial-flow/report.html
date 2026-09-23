@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="assets/v2.css">
 </head>
 <body>
-  <!-- 报告壳：不要加 data-catalog。导航用 .topbar，不要用 .document-nav。主题导入导出只在 index.html。 -->
+  <!-- 报告壳：不要加 data-catalog。导航用 .topbar，不要用 .document-nav。主题导入导出只在 index.html。编辑器：顶栏「演示 / 编辑」；空白右键菜单里的「新增组件」打开右侧卡片库；添加章头必须带 .sub 导语（分割线上方）和强线。图片可勾选 data-cycle 点击轮播。HTTP 打开以磁盘 HTML 为真相，打开不自动保存。点 tab 滚到章头题域。浅底观点单列左对齐。 -->
   <div class="report-shell is-flow">
     <header class="topbar" aria-label="文档导航">
       <div class="topbar-inner">
@@ -49,6 +49,7 @@
             <header class="slide-head">
               <div class="kicker">01 · 题域</div>
               <h2>这一章的判断句</h2>
+              <p class="sub">待填。写清边界、这一节接下来用什么证据。</p>
             </header>
             <hr class="rule">
             <div class="research-lead">
@@ -78,11 +79,13 @@
       </div>
     </div>
   </dialog>
-  <link rel="stylesheet" href="editor/seed-edit.css">
+  <!-- 挂 editor/ 后顶栏出演示/编辑；右键「新增组件」出右侧卡片库；图可勾选点击轮播。不要把编辑逻辑再抄进 template.js。 -->
+  <link rel="stylesheet" href="editor/seed-edit.css?v=57">
   <script src="design-system/design-data.js"></script>
   <script src="design-system/theme-runtime.js"></script>
-  <script src="editor/seed-edit.js"></script>
-  <script src="assets/template.js"></script>
-  <script src="assets/source.js"></script>
+  <script src="assets/cover-fx.js?v=4"></script>
+  <script src="editor/seed-edit.js?v=76"></script>
+  <script src="assets/template.js?v=6"></script>
+  <script src="assets/source.js?v=9"></script>
 </body>
 </html>

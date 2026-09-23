@@ -59,6 +59,7 @@
   margin: 0;
   padding-bottom: 0;
   border-bottom: 0;
+  scroll-margin-top: calc(var(--chrome-height, 56px) + 8px);
 }
 .report-shell.is-flow .kicker {
   font-size: 12px;
@@ -109,6 +110,24 @@
   height: var(--rule) !important;
   background: var(--c-text) !important;
   margin-top: var(--s-in);
+}
+.report-shell.is-flow .slide-head[data-head-bg] {
+  padding: 28px 32px;
+  overflow: visible;
+}
+.report-shell.is-flow .slide-head[data-head-bg] > .sub {
+  display: block !important;
+  visibility: visible;
+}
+.report-shell.is-flow .slide-head[data-head-bg] + .rule {
+  display: none !important;
+  height: 0 !important;
+  margin: 0 !important;
+  overflow: hidden;
+  pointer-events: none;
+}
+.report-shell.is-flow .slide-head[data-head-bg]::after {
+  display: none !important;
 }
 .report-shell.is-flow .slide-head + .rule + * {
   margin-top: var(--s-stack);

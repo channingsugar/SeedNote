@@ -304,8 +304,14 @@
     const slides = [...slidesRoot.querySelectorAll(':scope > .report-slide')];
     if (!slides.length) return false;
 
+    const ensureEndPad = () => {
+      if (parseFloat(getComputedStyle(slidesRoot).paddingBottom) >= window.innerHeight * 0.4) return;
+      slidesRoot.style.paddingBottom = '70vh';
+    };
+    ensureEndPad();
+
     const nav = document.querySelector('[data-component-id="navigation"]');
-    const links = [...(nav?.querySelectorAll('a') || [])];
+    let links = [...(nav?.querySelectorAll('a') || [])];
     let index = 0;
 
     const setChromeHeight = () => {
@@ -331,13 +337,14 @@
       });
     };
 
-    const activateNav = (chapter) => {
+    const activateNav = (id) => {
       const track = nav?.matches?.('.toc, .document-nav__links')
         ? nav
         : nav?.querySelector('.document-nav__links, .toc');
+      const key = String(id || '').replace(/^#/, '');
       links.forEach((link) => {
         const href = (link.getAttribute('href') || '').replace('#', '');
-        const on = href === chapter;
+        const on = href === key;
         link.classList.toggle('is-active', on);
         if (!on || !track) return;
         const linkBox = link.getBoundingClientRect();
@@ -351,20 +358,118 @@
       });
     };
 
+    const tocTrack = () => (nav?.matches?.('.toc, .document-nav__links')
+      ? nav
+      : nav?.querySelector('.document-nav__links, .toc'));
+
+    const isCoverSlide = (slide) => (
+      slide.dataset.chapter === 'cover'
+      || slide.id === 'cover'
+      || slide.classList.contains('is-chapter-cover')
+    );
+
+    const kickerText = (el) => (
+      (el?.matches?.('.kicker') ? el.textContent : el?.querySelector?.('.kicker')?.textContent || '')
+        .replace(/\s+/g, ' ')
+        .trim()
+    );
+
+    const chromeOffset = () => {
+      const navEl = document.querySelector('.document-nav') || document.querySelector('.topbar');
+      return Math.round(navEl?.getBoundingClientRect().height || 56);
+    };
+
+    let navLockUntil = 0;
+    const lockNav = (ms = 160) => {
+      navLockUntil = Math.max(navLockUntil, Date.now() + ms);
+    };
+    const navLocked = () => Date.now() < navLockUntil;
+
+    const ensureHeadId = (head, slide, i) => {
+      if (head.id && head.id !== slide.id) return head.id;
+      const slideId = slide.id || slide.dataset.chapter || 'ch';
+      let n = i + 1;
+      let id = `${slideId}-h${n}`;
+      while (document.getElementById(id) && document.getElementById(id) !== head) {
+        n += 1;
+        id = `${slideId}-h${n}`;
+      }
+      head.id = id;
+      return id;
+    };
+
+    const firstHeadOf = (slide) => (
+      [...(slide?.querySelectorAll?.('.slide-head') || [])].find((head) => kickerText(head)) || null
+    );
+
+    const tabEntriesOf = () => {
+      const entries = [];
+      slides.forEach((slide) => {
+        if (isCoverSlide(slide)) {
+          const id = slide.id || slide.dataset.chapter || 'cover';
+          entries.push({ id, label: '封面', node: slide });
+          return;
+        }
+        [...slide.querySelectorAll('.slide-head')].forEach((head, i) => {
+          const label = kickerText(head);
+          if (!label) return;
+          entries.push({ id: ensureHeadId(head, slide, i), label, node: head });
+        });
+      });
+      return entries;
+    };
+
+    const targetNodeOf = (id) => {
+      if (!id) return null;
+      const el = document.getElementById(id);
+      if (!el) {
+        const slide = slides.find((item) => item.dataset.chapter === id);
+        return slide ? (isCoverSlide(slide) ? slide : firstHeadOf(slide) || slide) : null;
+      }
+      if (el.matches('.slide-head, .chapter-cover')) return el;
+      if (el.classList.contains('report-slide')) {
+        return isCoverSlide(el) ? el : (firstHeadOf(el) || el);
+      }
+      return el.closest?.('.slide-head') || el;
+    };
+
     const slideIndexForHash = (hash) => {
       const id = (hash || '').replace('#', '');
       if (!id) return 0;
-      const el = document.getElementById(id);
-      if (!el) {
+      const node = targetNodeOf(id) || document.getElementById(id);
+      if (!node) {
         const byChapter = slides.findIndex((slide) => slide.dataset.chapter === id);
         return byChapter >= 0 ? byChapter : 0;
       }
-      const slide = el.classList.contains('report-slide') ? el : el.closest('.report-slide');
+      const slide = node.classList.contains('report-slide') ? node : node.closest('.report-slide');
       const found = slides.indexOf(slide);
       return found >= 0 ? found : 0;
     };
 
-    const show = (next, { hash = true, motion = 'auto', targetId = '' } = {}) => {
+    const scrollToNode = (node) => {
+      if (!node) return;
+      const root = document.scrollingElement || document.documentElement;
+      const y = root.scrollTop + node.getBoundingClientRect().top - chromeOffset() - 8;
+      const html = document.documentElement;
+      const prev = html.style.scrollBehavior;
+      html.style.scrollBehavior = 'auto';
+      root.scrollTop = Math.max(0, Math.round(y));
+      html.style.scrollBehavior = prev;
+    };
+
+    const syncActiveTab = () => {
+      if (navLocked()) return;
+      const entries = tabEntriesOf();
+      if (!entries.length) return;
+      const line = chromeOffset() + 24;
+      let current = entries[0];
+      entries.forEach((entry) => {
+        if (entry.node.getBoundingClientRect().top <= line + 8) current = entry;
+      });
+      activateNav(current.id);
+    };
+
+    const show = (next, { hash = true, targetId = '' } = {}) => {
       const clamped = Math.max(0, Math.min(slides.length - 1, next));
       const to = slides[clamped];
       index = clamped;
@@ -373,23 +478,50 @@
         slide.removeAttribute('inert');
         slide.setAttribute('aria-hidden', 'false');
       });
-      activateNav(to.dataset.chapter);
-      const hashEl = targetId ? document.getElementById(targetId) : null;
-      const id = (hashEl && hashEl.id) || to.id;
+      const node = targetNodeOf(targetId) || (isCoverSlide(to) ? to : firstHeadOf(to)) || to;
+      const id = node.id || targetId || to.id || to.dataset.chapter;
+      lockNav();
+      activateNav(id);
       if (hash && id) history.replaceState(null, '', `#${id}`);
-      (hashEl || to).scrollIntoView({ behavior: motion === 'none' ? 'auto' : 'smooth', block: 'start' });
+      scrollToNode(node);
+      window.setTimeout(syncActiveTab, 180);
       document.dispatchEvent(new CustomEvent('seed:slidechange'));
     };
 
-    links.forEach((link) => {
-      link.addEventListener('click', (event) => {
+    const syncChapterTabs = () => {
+      const track = tocTrack();
+      if (!track || shell.hasAttribute('data-catalog')) return;
+      const next = tabEntriesOf().map((entry) => {
+        const href = `#${entry.id}`;
+        let a = track.querySelector(`a[href="${href}"]`);
+        if (!a) {
+          a = document.createElement('a');
+          a.setAttribute('href', href);
+        }
+        if ((a.textContent || '').trim() !== entry.label) a.textContent = entry.label;
+        return a;
+      });
+      track.replaceChildren(...next);
+      links = next;
+      syncNavAlign();
+      syncActiveTab();
+    };
+
+    window.SeedFlow = Object.assign(window.SeedFlow || {}, { syncChapterTabs });
+
+    if (nav && !nav.dataset.seedTabBound) {
+      nav.dataset.seedTabBound = '1';
+      nav.addEventListener('click', (event) => {
+        const link = event.target.closest('a[href^="#"]');
+        if (!link || !nav.contains(link)) return;
         const href = link.getAttribute('href') || '';
         if (!href.startsWith('#')) return;
         event.preventDefault();
-        show(slideIndexForHash(href), { motion: 'chapter', targetId: href.slice(1) });
+        event.stopPropagation();
+        show(slideIndexForHash(href), { targetId: href.slice(1) });
         link.blur();
       });
-    });
+    }
 
     document.addEventListener('click', (event) => {
       const anchor = event.target.closest('a[href^="#"]');
@@ -400,6 +532,7 @@
       if (document.getElementById(href.slice(1)) || slides[next]) {
         event.preventDefault();
         show(next, { targetId: href.slice(1) });
+        event.stopPropagation();
       }
     });
 
@@ -434,20 +567,17 @@
     };
 
     const flowObserver = new IntersectionObserver((entries) => {
+      if (navLocked()) return;
       const visible = entries
         .filter((entry) => entry.isIntersecting)
         .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
       if (!visible) return;
       const slide = visible.target;
       const i = slides.indexOf(slide);
-      if (i < 0 || i === index) return;
+      if (i < 0) return;
       index = i;
       slides.forEach((item) => item.classList.toggle('is-active', item === slide));
-      activateNav(slide.dataset.chapter);
-      const current = (location.hash || '').replace('#', '');
-      const currentEl = current ? document.getElementById(current) : null;
-      if (currentEl && slide.contains(currentEl) && currentEl !== slide) return;
-      if (slide.id) history.replaceState(null, '', `#${slide.id}`);
+      syncActiveTab();
     }, {
       rootMargin: '-18% 0px -62% 0px',
       threshold: [0.12, 0.35, 0.6],
@@ -455,12 +585,22 @@
     slides.forEach((slide) => flowObserver.observe(slide));
 
     window.addEventListener('hashchange', () => {
-      show(slideIndexForHash(location.hash), { hash: false, motion: 'none', targetId: location.hash.slice(1) });
+      show(slideIndexForHash(location.hash), { hash: false, targetId: location.hash.slice(1) });
     });
+    let tabTick = 0;
+    window.addEventListener('scroll', () => {
+      if (navLocked() || tabTick) return;
+      tabTick = window.requestAnimationFrame(() => {
+        tabTick = 0;
+        syncActiveTab();
+      });
+    }, { passive: true });
     window.addEventListener('resize', () => {
       setChromeHeight();
+      ensureEndPad();
       syncNavAlign();
       syncTableTracks();
+      syncActiveTab();
       layoutAllEvidence();
       drawLineCharts();
     });
@@ -472,8 +612,9 @@
     setChromeHeight();
     syncNavAlign();
     syncTableTracks();
+    syncChapterTabs();
     syncFlowHeadings();
-    show(slideIndexForHash(location.hash), { hash: false, motion: 'none', targetId: location.hash.replace('#', '') });
+    show(slideIndexForHash(location.hash), { hash: false, targetId: location.hash.replace('#', '') });
     return true;
   };
 

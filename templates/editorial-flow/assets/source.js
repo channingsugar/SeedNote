@@ -6,21 +6,24 @@
   };
 
   const cycleHasSrc = (node) => {
-    const src = node?.currentSrc || node?.getAttribute?.('src') || node?.getAttribute?.('poster') || '';
-    return !!src && !node.classList.contains('is-cycle-broken');
+    const src = node?.getAttribute?.('src') || node?.getAttribute?.('poster') || node?.currentSrc || '';
+    return !!String(src).trim();
   };
 
-  const cycleBusy = new WeakSet();
+  const cycleBusy = new WeakMap();
 
   const advanceShotCycle = (shot) => {
     const all = cycleSlidesOf(shot);
-    const slides = all.filter(cycleHasSrc);
+    const ready = all.filter((node) => cycleHasSrc(node) && !node.classList.contains('is-cycle-broken'));
+    const slides = ready.length >= 2 ? ready : all.filter(cycleHasSrc);
     if (slides.length < 2 || cycleBusy.has(shot)) return false;
     const i = Math.max(0, slides.findIndex((node) => node.classList.contains('is-cycle-on')));
     const current = slides[i] || slides[0];
     const next = slides[(i + 1) % slides.length];
     if (!next || next === current) return false;
-    cycleBusy.add(shot);
+    const prevTimer = cycleBusy.get(shot);
+    if (prevTimer) window.clearTimeout(prevTimer);
+    cycleBusy.set(shot, 0);
     all.forEach((node) => node.classList.remove('is-cycle-in'));
     void next.offsetWidth;
     next.classList.add('is-cycle-in');
@@ -39,18 +42,53 @@
       finish();
     };
     next.addEventListener('transitionend', onEnd);
-    window.setTimeout(finish, 520);
+    cycleBusy.set(shot, window.setTimeout(finish, 520));
     return true;
   };
+
+  const isVideoFile = (val) => /\.(mp4|webm|mov|m4v|ogv)(?:[?#].*)?$/i.test(String(val || '').split('?')[0]);
+
+  const onVideoControls = (event, node) => {
+    const video = node?.closest?.('video');
+    if (!video) return false;
+    const box = video.getBoundingClientRect();
+    return event.clientY > box.bottom - 64;
+  };
+
+  const boundVideos = new WeakSet();
+  const bindShotVideos = (root = document) => {
+    const scope = root.matches?.('video') ? root.parentElement || document : root;
+    scope.querySelectorAll('.shot video').forEach((video) => {
+      video.removeAttribute('data-seed-video-hover');
+      video.playsInline = true;
+      video.controls = true;
+      video.setAttribute('controls', '');
+      if (!video.getAttribute('preload')) video.preload = 'metadata';
+      const host = video.closest('.shot') || video.parentElement;
+      if (host && (video.classList.contains('is-cycle-on') || !host.hasAttribute('data-cycle'))) {
+        host.removeAttribute('data-lightbox-src');
+      }
+      if (!host || boundVideos.has(video)) return;
+      boundVideos.add(video);
+      const hold = () => host.classList.add('is-video-hold');
+      const release = () => host.classList.remove('is-video-hold');
+      video.addEventListener('pointerdown', hold);
+      document.addEventListener('pointerup', release);
+    });
+  };
+  bindShotVideos();
+  document.addEventListener('seed:slidechange', () => bindShotVideos());
+  window.SeedMedia = Object.assign(window.SeedMedia || {}, { bindShotVideos, isVideoFile });
 
   document.addEventListener('click', (event) => {
     if (event.button) return;
     if (document.documentElement.classList.contains('is-inline-editing')) return;
     const node = event.target instanceof Element ? event.target : event.target?.parentElement;
     if (!node) return;
-    if (node.closest('.seed-edit-menu, .seed-edit-grip, .seed-edit-handle, .seed-edit-handle-h, .seed-edit-media, figcaption, a, button')) return;
+    if (node.closest('.seed-edit-menu, .seed-edit-grip, .seed-edit-handle, .seed-edit-handle-h, .seed-edit-media, figcaption, a, button, .media-lightbox')) return;
+    if (onVideoControls(event, node)) return;
     const shot = node.closest('.shot[data-cycle]');
-    if (!shot || !node.closest('.shot__frame')) return;
+    if (!shot) return;
     event.preventDefault();
     event.stopPropagation();
     advanceShotCycle(shot);
@@ -248,6 +286,8 @@
     const figure = node.closest('.shot, [data-lightbox-src]');
     if (!figure) return;
     if (figure.hasAttribute('data-cycle')) return;
+    const shown = figure.querySelector('.is-cycle-on, .shot__frame > video, .shot__frame > img, video, img');
+    if (shown?.tagName === 'VIDEO' || isVideoFile(figure.getAttribute('data-lightbox-src'))) return;
     if (figure.classList.contains('provider-card')) return;
     if (figure.getAttribute('data-kind') === 'scroll' && !node.closest('.gallery-open')) return;
     if (!itemFromFigure(figure).src) return;
@@ -269,6 +309,8 @@
     const figure = node.closest('.shot, [data-lightbox-src]');
     const image = figure?.querySelector('img');
     if (!figure || node !== image) return;
+    if (figure.querySelector('video.is-cycle-on, .shot__frame > video, video')?.tagName === 'VIDEO') return;
+    if (isVideoFile(figure.getAttribute('data-lightbox-src'))) return;
     if (figure.hasAttribute('data-cycle')) return;
     if (figure.getAttribute('data-kind') === 'scroll') return;
     if (!itemFromFigure(figure).src) return;

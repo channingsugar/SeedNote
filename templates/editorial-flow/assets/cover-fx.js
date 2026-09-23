@@ -354,6 +354,15 @@
     return media;
   };
 
+  const ensureHeadMediaSlot = (head) => {
+    let media = head.querySelector(':scope > .slide-head__media');
+    if (media) return media;
+    media = document.createElement('div');
+    media.className = 'slide-head__media';
+    head.prepend(media);
+    return media;
+  };
+
   const stop = (cover) => {
     const rec = running.get(cover);
     if (!rec) return;
@@ -371,7 +380,7 @@
   };
 
   const apply = (cover) => {
-    if (!cover?.matches?.('.chapter-cover, .shot')) return;
+    if (!cover?.matches?.('.chapter-cover, .shot, .slide-head')) return;
     const spec = specOf(cover.getAttribute('data-fx'));
     const prev = running.get(cover);
     if (!spec) {
@@ -386,10 +395,11 @@
       return;
     }
     stop(cover);
-    if (cover.matches('.chapter-cover')) ensureCoverMediaSlot(cover);
     const media = cover.matches('.shot')
       ? (cover.querySelector('.shot__frame') || cover)
-      : cover.querySelector('.chapter-cover__media');
+      : cover.matches('.slide-head')
+        ? ensureHeadMediaSlot(cover)
+        : ensureCoverMediaSlot(cover);
     if (!media) return;
     cover.classList.add('has-fx');
     cover.querySelectorAll('canvas.chapter-cover__fx').forEach((node) => node.remove());
@@ -543,7 +553,7 @@
   };
 
   const mount = (root = document) => {
-    root.querySelectorAll?.('.chapter-cover[data-fx], .shot[data-fx]').forEach(apply);
+    root.querySelectorAll?.('.chapter-cover[data-fx], .shot[data-fx], .slide-head[data-fx]').forEach(apply);
   };
 
   window.SeedCoverFx = { specs: SPECS, specOf, paramsOf, apply, stop, mount };
